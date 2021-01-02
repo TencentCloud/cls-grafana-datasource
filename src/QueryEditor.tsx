@@ -1,50 +1,99 @@
-import defaults from 'lodash/defaults';
+import React, { ChangeEvent, PureComponent } from 'react'
+import { InlineFieldRow, InlineField, Input, Select } from '@grafana/ui'
+import { QueryEditorProps, SelectableValue } from '@grafana/data'
+import * as _ from 'lodash'
+import * as Constants from './common/constants'
+import { DataSource } from './DataSource'
+import { defaultQuery, MyDataSourceOptions, MyQuery } from './types'
 
-import React, { ChangeEvent, PureComponent } from 'react';
-import { LegacyForms } from '@grafana/ui';
-import { QueryEditorProps } from '@grafana/data';
-import { DataSource } from './DataSource';
-import { defaultQuery, MyDataSourceOptions, MyQuery } from './types';
-
-const { FormField } = LegacyForms;
-
-type Props = QueryEditorProps<DataSource, MyQuery, MyDataSourceOptions>;
+type Props = QueryEditorProps<DataSource, MyQuery, MyDataSourceOptions>
 
 export class QueryEditor extends PureComponent<Props> {
-  onQueryTextChange = (event: ChangeEvent<HTMLInputElement>) => {
-    const { onChange, query } = this.props;
-    onChange({ ...query, queryText: event.target.value });
-  };
+  onInputChange = (event: ChangeEvent<HTMLInputElement>) => {
+    const { onChange, query } = this.props
+    const targetDataset: any = event?.target.dataset
+    onChange({ ...query, [targetDataset.key]: event.target.value })
+  }
 
-  onConstantChange = (event: ChangeEvent<HTMLInputElement>) => {
-    const { onChange, query, onRunQuery } = this.props;
-    onChange({ ...query, constant: parseFloat(event.target.value) });
-    // executes the query
-    onRunQuery();
-  };
+  onFormatChange = (val: SelectableValue) => {
+    const { onChange, query, onRunQuery } = this.props
+    onChange({ ...query, format: val.value })
+    onRunQuery()
+  }
 
   render() {
-    const query = defaults(this.props.query, defaultQuery);
-    const { queryText, constant } = query;
-
+    const query = _.defaults(this.props.query, defaultQuery)
     return (
-      <div className="gf-form">
-        <FormField
-          width={4}
-          value={constant}
-          onChange={this.onConstantChange}
-          label="Constant"
-          type="number"
-          step="0.1"
-        />
-        <FormField
-          labelWidth={8}
-          value={queryText || ''}
-          onChange={this.onQueryTextChange}
-          label="Query Text"
-          tooltip="Not used yet"
-        />
+      <div>
+        <InlineFieldRow>
+          <InlineField label="Query" labelWidth={12} grow>
+            <Input
+              placeholder="log query"
+              value={query.Query || ''}
+              data-key="Query"
+              onChange={this.onInputChange}
+              onBlur={this.props.onRunQuery}
+              css={false}
+            />
+          </InlineField>
+        </InlineFieldRow>
+        <InlineFieldRow>
+          <InlineField label="Format" labelWidth={12} grow tooltip={<span />}>
+            <Select
+              onChange={this.onFormatChange}
+              value={query.format}
+              options={Constants.QueryEditorFormatOptions}
+            />
+          </InlineField>
+        </InlineFieldRow>
+        {query.format === 'Graph' && (
+          <InlineFieldRow>
+            <InlineField label="Metrics" labelWidth={12} grow>
+              <Input
+                placeholder="metrics"
+                value={query.metrics || ''}
+                data-key="metrics"
+                onChange={this.onInputChange}
+                css={false}
+              />
+            </InlineField>
+            <InlineField label="Bucket" labelWidth={12} grow>
+              <Input
+                placeholder="bucket"
+                value={query.bucket || ''}
+                data-key="bucket"
+                onChange={this.onInputChange}
+                css={false}
+              />
+            </InlineField>
+            <InlineField label="Time" labelWidth={12} grow>
+              <Input
+                placeholder="timeSeries"
+                value={query.timeSeriesKey || ''}
+                data-key="timeSeriesKey"
+                onChange={this.onInputChange}
+                css={false}
+              />
+            </InlineField>
+          </InlineFieldRow>
+        )}
+        {query.format === 'Log' && (
+          <InlineFieldRow>
+            <InlineField label="Limit" labelWidth={12} grow>
+              <Input
+                value={query.Limit}
+                data-key="Limit"
+                onChange={this.onInputChange}
+                onKeyPress={(event) => /[\d]/.test(String.fromCharCode(event.keyCode))}
+                css={false}
+                type="number"
+                step={1}
+                min={1}
+              />
+            </InlineField>
+          </InlineFieldRow>
+        )}
       </div>
-    );
+    )
   }
 }
