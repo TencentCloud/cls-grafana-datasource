@@ -1,6 +1,6 @@
 {
   "type": "datasource",
-  "name": "qcloud-log-service-datasource",
+  "name": "tencent-cls-grafana-datasource",
   "id": "tencent-qcloud-log-service-datasource",
   "metrics": true,
   "backend": true,

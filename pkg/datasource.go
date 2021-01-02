@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"time"
 
@@ -11,6 +12,8 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend/instancemgmt"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
+	"github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/common"
+	"github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/common/errors"
 )
 
 // newDatasource returns datasource.ServeOpts.
@@ -61,7 +64,14 @@ func (td *clsDatasource) QueryData(ctx context.Context, req *backend.QueryDataRe
 }
 
 type queryModel struct {
-	Format string `json:"format"`
+	Query string `json:"Query"`
+	Limit int64  `json:"Limit,omitempty"`
+	Sort  string `json:"Sort,omitempty"`
+	// 解析使用字段
+	Format        string `json:"format,omitempty"`
+	TimeSeriesKey string `json:"timeSeriesKey,omitempty"`
+	Bucket        string `json:"bucket,omitempty"`
+	Metrics       string `json:"metrics,omitempty"`
 }
 
 func (td *clsDatasource) query(ctx context.Context, query backend.DataQuery) backend.DataResponse {
@@ -104,21 +114,25 @@ func (td *clsDatasource) query(ctx context.Context, query backend.DataQuery) bac
 // datasource configuration page which allows users to verify that
 // a datasource is working as expected.
 func (td *clsDatasource) CheckHealth(ctx context.Context, req *backend.CheckHealthRequest) (*backend.CheckHealthResult, error) {
-	result, err := SearchLog()
-	var out, _ = json.Marshal(result)
-	log.DefaultLogger.Info(string(out))
-	var out1, _ = json.Marshal(req)
-	log.DefaultLogger.Info(string(out1))
+	dsData, opts := GetInsSetting(*req.PluginContext.DataSourceInstanceSettings)
 
-	var status = backend.HealthStatusOk
-	var message = "default Success"
+	response, err := SearchLog(&SearchLogParam{
+		TopicId: common.StringPtr(dsData.TopicId),
+		From:    common.Int64Ptr(time.Now().AddDate(0, 0, -1).UnixNano() / 1e6),
+		To:      common.Int64Ptr(time.Now().UnixNano() / 1e6),
+		Query:   common.StringPtr(""),
+		Limit:   common.Int64Ptr(2),
+	}, opts)
 
-	if err != nil {
-		log.DefaultLogger.Info(err.Error())
-		status = backend.HealthStatusError
-		message = "default error"
+	if response != nil {
+		log.DefaultLogger.Info(string(response.ToJsonString()))
 	}
-
+	var status = backend.HealthStatusOk
+	var message = "CheckHealth Success"
+	if _, ok := err.(*errors.TencentCloudSDKError); ok {
+		status = backend.HealthStatusError
+		message = fmt.Sprintf("An API error has returned: %s", err)
+	}
 	return &backend.CheckHealthResult{
 		Status:  status,
 		Message: message,
