@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"github.com/araddon/dateparse"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	cls "github.com/tencentcloud/tencent-cls-grafana-datasource/pkg/cls/v20201016"
@@ -39,16 +40,16 @@ func Aggregate(list []map[string]string,
 	if len(aggregateKey) > 0 {
 		groupedData := GroupBy(list, aggregateKey)
 		for k, v := range groupedData {
-			frames = append(frames, TransferRecordToFields(v, k, metricNames, timeSeriesKey))
+			frames = append(frames, TransferRecordToFrame(v, metricNames, timeSeriesKey, "", k))
 		}
 	} else {
-		frames = append(frames, TransferRecordToFields(list, refId, metricNames, timeSeriesKey))
+		frames = append(frames, TransferRecordToFrame(list, metricNames, timeSeriesKey, refId, ""))
 	}
 	return frames
 }
 
-func TransferRecordToFields(list []map[string]string, fieldName string, colNames []string, timeSeriesKey string) *data.Frame {
-	frame := data.NewFrame(fieldName)
+func TransferRecordToFrame(list []map[string]string, colNames []string, timeSeriesKey string, framaName string, fieldName string) *data.Frame {
+	frame := data.NewFrame(framaName)
 
 	if len(timeSeriesKey) > 0 {
 		var timeValues []time.Time
@@ -65,6 +66,10 @@ func TransferRecordToFields(list []map[string]string, fieldName string, colNames
 	}
 
 	for _, col := range colNames {
+		newFieldName := col
+		if len(fieldName) > 0 {
+			newFieldName = fieldName
+		}
 		colType := typeInfer(list[0][col])
 		switch colType {
 		case "int64":
@@ -78,7 +83,7 @@ func TransferRecordToFields(list []map[string]string, fieldName string, colNames
 						m = append(m, num)
 					}
 				}
-				frame.Fields = append(frame.Fields, data.NewField(col, nil, m))
+				frame.Fields = append(frame.Fields, data.NewField(newFieldName, nil, m))
 			}
 		case "float64":
 			{
@@ -91,7 +96,7 @@ func TransferRecordToFields(list []map[string]string, fieldName string, colNames
 						m = append(m, num)
 					}
 				}
-				frame.Fields = append(frame.Fields, data.NewField(col, nil, m))
+				frame.Fields = append(frame.Fields, data.NewField(newFieldName, nil, m))
 			}
 		case "string":
 			{
@@ -99,11 +104,41 @@ func TransferRecordToFields(list []map[string]string, fieldName string, colNames
 				for _, v := range list {
 					m = append(m, v[col])
 				}
-				frame.Fields = append(frame.Fields, data.NewField(col, nil, m))
+				frame.Fields = append(frame.Fields, data.NewField(newFieldName, nil, m))
 			}
 		}
 	}
 	return frame
+}
+
+func TransferRecordToTable(list []map[string]string, colNames []string, refId string) []*data.Frame {
+	frame := data.NewFrame(refId)
+	for _, col := range colNames {
+		var colValues []string
+		for _, item := range list {
+			colValues = append(colValues, item[col])
+		}
+		frame.Fields = append(frame.Fields, data.NewField(col, nil, colValues))
+	}
+	return []*data.Frame{frame}
+}
+
+func GetLog(logInfos []*cls.LogInfo, refId string) []*data.Frame {
+	frame := data.NewFrame(refId)
+	var timeValues []time.Time
+	var logValues []string
+	for _, v := range logInfos {
+		timeValues = append(timeValues, time.Unix(*v.Time/1e3, *v.Time%1e3))
+		jsonLog, jsonErr := json.Marshal(ArrayToMap(v.Logs))
+		if jsonErr != nil {
+			logValues = append(logValues, string(""))
+		} else {
+			logValues = append(logValues, string(jsonLog))
+		}
+	}
+	frame.Fields = append(frame.Fields, data.NewField("Time", nil, timeValues))
+	frame.Fields = append(frame.Fields, data.NewField("Log", nil, logValues))
+	return []*data.Frame{frame}
 }
 
 func convertToTime(val string) time.Time {

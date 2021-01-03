@@ -1,10 +1,12 @@
 {
   "type": "datasource",
   "name": "tencent-cls-grafana-datasource",
-  "id": "tencent-qcloud-log-service-datasource",
+  "id": "tencent-cls-grafana-datasource",
+  "logs": true,
   "metrics": true,
   "backend": true,
-  "executable": "gpx_qcloud-log-service-datasource",
+  "alerting": true,
+  "executable": "gpx_cls-datasource",
   "info": {
     "description": "Tencent Cloud Log Service datasource plugin",
     "author": {

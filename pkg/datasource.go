@@ -115,21 +115,28 @@ func (td *clsDatasource) query(ctx context.Context, query backend.DataQuery, api
 				}
 				dataRes.Frames = Aggregate(logItems, metricNames, qm.Bucket, qm.TimeSeriesKey, query.RefID)
 			} else {
-				log.DefaultLogger.Info("searchLogResult.Analysis", false)
-				dataRes.Frames = nil
+				dataRes.Frames = GetLog(searchLogResult.Results, query.RefID)
 			}
 		}
 	case "Table":
 		{
 			if *searchLogResult.Analysis {
-
+				var logItems []map[string]string
+				for _, v := range searchLogResult.AnalysisResults {
+					logItems = append(logItems, ArrayToMap(v.Data))
+				}
+				var colNames []string
+				for _, col := range searchLogResult.ColNames {
+					colNames = append(colNames, *col)
+				}
+				dataRes.Frames = TransferRecordToTable(logItems, colNames, query.RefID)
 			} else {
-
+				dataRes.Frames = GetLog(searchLogResult.Results, query.RefID)
 			}
 		}
 	case "Log":
 		{
-
+			dataRes.Frames = GetLog(searchLogResult.Results, query.RefID)
 		}
 	}
 	return dataRes
