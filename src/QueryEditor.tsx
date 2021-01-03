@@ -15,6 +15,13 @@ export class QueryEditor extends PureComponent<Props> {
     onChange({ ...query, [targetDataset.key]: event.target.value })
   }
 
+  onNumberChange = (event: ChangeEvent<HTMLInputElement>) => {
+    const { onChange, query } = this.props
+    const targetDataset: any = event?.target.dataset
+    const val = isNaN(Number(event.target.value)) ? 0 : Number(event.target.value)
+    onChange({ ...query, [targetDataset.key]: val })
+  }
+
   onFormatChange = (val: SelectableValue) => {
     const { onChange, query, onRunQuery } = this.props
     onChange({ ...query, format: val.value })
@@ -83,7 +90,7 @@ export class QueryEditor extends PureComponent<Props> {
               <Input
                 value={query.Limit}
                 data-key="Limit"
-                onChange={this.onInputChange}
+                onChange={this.onNumberChange}
                 onKeyPress={(event) => /[\d]/.test(String.fromCharCode(event.keyCode))}
                 css={false}
                 type="number"

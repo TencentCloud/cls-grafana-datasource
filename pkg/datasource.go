@@ -5,13 +5,13 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/datasource"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/instancemgmt"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
-	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/common"
 	"github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/common/errors"
 )
@@ -47,13 +47,11 @@ type clsDatasource struct {
 // contains Frames ([]*Frame).
 func (td *clsDatasource) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
 	log.DefaultLogger.Info("QueryData", "request", req)
-
-	// create response struct
 	response := backend.NewQueryDataResponse()
 
-	// loop over queries and execute them individually.
+	apiOpts := GetInsSetting(*req.PluginContext.DataSourceInstanceSettings)
 	for _, q := range req.Queries {
-		res := td.query(ctx, q)
+		res := td.query(ctx, q, apiOpts)
 
 		// save the response in a hashmap
 		// based on with RefID as identifier
@@ -74,39 +72,67 @@ type queryModel struct {
 	Metrics       string `json:"metrics,omitempty"`
 }
 
-func (td *clsDatasource) query(ctx context.Context, query backend.DataQuery) backend.DataResponse {
+func (td *clsDatasource) query(ctx context.Context, query backend.DataQuery, apiOpts ApiOpts) backend.DataResponse {
 	// Unmarshal the json into our queryModel
 	var qm queryModel
-
-	response := backend.DataResponse{}
-
-	response.Error = json.Unmarshal(query.JSON, &qm)
-	if response.Error != nil {
-		return response
+	dataRes := backend.DataResponse{}
+	dataRes.Error = json.Unmarshal(query.JSON, &qm)
+	if dataRes.Error != nil {
+		return dataRes
 	}
 
-	// Log a warning if `Format` is empty.
-	if qm.Format == "" {
-		log.DefaultLogger.Warn("format is empty. defaulting to time series")
+	searchLogResponse, searchLogErr := SearchLog(&SearchLogParam{
+		TopicId: common.StringPtr(apiOpts.TopicId),
+		From:    common.Int64Ptr(query.TimeRange.From.UnixNano() / 1e6),
+		To:      common.Int64Ptr(query.TimeRange.To.UnixNano() / 1e6),
+		Query:   common.StringPtr(qm.Query),
+		Limit:   common.Int64Ptr(qm.Limit),
+		Sort:    common.StringPtr(qm.Sort),
+	}, apiOpts)
+
+	if searchLogErr != nil {
+		dataRes.Error = searchLogErr
+		return dataRes
 	}
+	searchLogResult := *searchLogResponse.Response
 
-	// create data frame response
-	frame := data.NewFrame("response")
+	switch qm.Format {
+	case "Graph":
+		{
+			if *searchLogResult.Analysis {
+				var logItems []map[string]string
+				for _, v := range searchLogResult.AnalysisResults {
+					logItems = append(logItems, ArrayToMap(v.Data))
+				}
+				var metricNames []string
+				for _, name := range strings.Split(qm.Metrics, ",") {
+					for _, me := range searchLogResult.ColNames {
+						if name == *me {
+							metricNames = append(metricNames, *me)
+							break
+						}
+					}
+				}
+				dataRes.Frames = Aggregate(logItems, metricNames, qm.Bucket, qm.TimeSeriesKey, query.RefID)
+			} else {
+				log.DefaultLogger.Info("searchLogResult.Analysis", false)
+				dataRes.Frames = nil
+			}
+		}
+	case "Table":
+		{
+			if *searchLogResult.Analysis {
 
-	// add the time dimension
-	frame.Fields = append(frame.Fields,
-		data.NewField("time", nil, []time.Time{query.TimeRange.From, query.TimeRange.To}),
-	)
+			} else {
 
-	// add values
-	frame.Fields = append(frame.Fields,
-		data.NewField("values", nil, []int64{10, 20}),
-	)
+			}
+		}
+	case "Log":
+		{
 
-	// add the frames to the response
-	response.Frames = append(response.Frames, frame)
-
-	return response
+		}
+	}
+	return dataRes
 }
 
 // CheckHealth handles health checks sent from Grafana to the plugin.
@@ -114,14 +140,14 @@ func (td *clsDatasource) query(ctx context.Context, query backend.DataQuery) bac
 // datasource configuration page which allows users to verify that
 // a datasource is working as expected.
 func (td *clsDatasource) CheckHealth(ctx context.Context, req *backend.CheckHealthRequest) (*backend.CheckHealthResult, error) {
-	dsData, opts := GetInsSetting(*req.PluginContext.DataSourceInstanceSettings)
+	opts := GetInsSetting(*req.PluginContext.DataSourceInstanceSettings)
 
 	response, err := SearchLog(&SearchLogParam{
-		TopicId: common.StringPtr(dsData.TopicId),
+		TopicId: common.StringPtr(opts.TopicId),
 		From:    common.Int64Ptr(time.Now().AddDate(0, 0, -1).UnixNano() / 1e6),
 		To:      common.Int64Ptr(time.Now().UnixNano() / 1e6),
 		Query:   common.StringPtr(""),
-		Limit:   common.Int64Ptr(2),
+		Limit:   common.Int64Ptr(1),
 	}, opts)
 
 	if response != nil {

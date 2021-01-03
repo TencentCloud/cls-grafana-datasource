@@ -9,7 +9,7 @@ import (
 	"github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/common/profile"
 )
 
-type DsJsonData struct {
+type dsJsonData struct {
 	Region  string `json:"region"`
 	TopicId string `json:"topicId"`
 }
@@ -18,6 +18,7 @@ type ApiOpts struct {
 	SecretId  string `json:"secretId"`
 	SecretKey string `json:"secretKey"`
 	Region    string `json:"region"`
+	TopicId   string `json:"topicId"`
 }
 
 type SearchLogParam struct {
@@ -47,9 +48,6 @@ type SearchLogParam struct {
 }
 
 func SearchLog(param *SearchLogParam, opts ApiOpts) (response *cls.SearchLogResponse, err error) {
-	var paramStr, _ = json.Marshal(param)
-	log.DefaultLogger.Info(string(paramStr))
-
 	credential := common.NewCredential(opts.SecretId, opts.SecretKey)
 	cpf := profile.NewClientProfile()
 	cpf.Debug = true
@@ -73,7 +71,8 @@ func SearchLog(param *SearchLogParam, opts ApiOpts) (response *cls.SearchLogResp
 	return
 }
 
-func GetInsSetting(instanceSettings backend.DataSourceInstanceSettings) (dsData DsJsonData, opts ApiOpts) {
+func GetInsSetting(instanceSettings backend.DataSourceInstanceSettings) (opts ApiOpts) {
+	var dsData dsJsonData
 	err := json.Unmarshal(instanceSettings.JSONData, &dsData)
 	if err != nil {
 		log.DefaultLogger.Error(err.Error())
@@ -82,6 +81,7 @@ func GetInsSetting(instanceSettings backend.DataSourceInstanceSettings) (dsData 
 		SecretId:  instanceSettings.DecryptedSecureJSONData["secretId"],
 		SecretKey: instanceSettings.DecryptedSecureJSONData["secretKey"],
 		Region:    dsData.Region,
+		TopicId:   dsData.TopicId,
 	}
 	return
 }
