@@ -4,8 +4,10 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"golang.org/x/time/rate"
 	"net/http"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
@@ -45,19 +47,23 @@ type clsDatasource struct {
 // req contains the queries []DataQuery (where each query contains RefID as a unique identifer).
 // The QueryDataResponse contains a map of RefID to the response for each query, and each response
 // contains Frames ([]*Frame).
+var limiter = rate.NewLimiter(10, 10)
+
 func (td *clsDatasource) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
 	log.DefaultLogger.Info("QueryData", "request", req)
 	response := backend.NewQueryDataResponse()
 
 	apiOpts := GetInsSetting(*req.PluginContext.DataSourceInstanceSettings)
-	for _, q := range req.Queries {
-		res := td.query(ctx, q, apiOpts)
-
-		// save the response in a hashmap
-		// based on with RefID as identifier
-		response.Responses[q.RefID] = res
+	var wg sync.WaitGroup
+	for _, query := range req.Queries {
+		wg.Add(1)
+		_ = limiter.Wait(ctx)
+		go func(q backend.DataQuery) {
+			response.Responses[q.RefID] = td.query(ctx, q, apiOpts)
+			wg.Done()
+		}(query)
 	}
-
+	wg.Wait()
 	return response, nil
 }
 
@@ -81,14 +87,17 @@ func (td *clsDatasource) query(ctx context.Context, query backend.DataQuery, api
 		return dataRes
 	}
 
-	searchLogResponse, searchLogErr := SearchLog(&SearchLogParam{
+	requestParam := SearchLogParam{
 		TopicId: common.StringPtr(apiOpts.TopicId),
 		From:    common.Int64Ptr(query.TimeRange.From.UnixNano() / 1e6),
 		To:      common.Int64Ptr(query.TimeRange.To.UnixNano() / 1e6),
 		Query:   common.StringPtr(qm.Query),
-		Limit:   common.Int64Ptr(qm.Limit),
 		Sort:    common.StringPtr(qm.Sort),
-	}, apiOpts)
+	}
+	if qm.Format == "Log" {
+		requestParam.Limit = common.Int64Ptr(qm.Limit)
+	}
+	searchLogResponse, searchLogErr := SearchLog(&requestParam, apiOpts)
 
 	if searchLogErr != nil {
 		dataRes.Error = searchLogErr
@@ -149,7 +158,7 @@ func (td *clsDatasource) query(ctx context.Context, query backend.DataQuery, api
 func (td *clsDatasource) CheckHealth(ctx context.Context, req *backend.CheckHealthRequest) (*backend.CheckHealthResult, error) {
 	opts := GetInsSetting(*req.PluginContext.DataSourceInstanceSettings)
 
-	response, err := SearchLog(&SearchLogParam{
+	_, err := SearchLog(&SearchLogParam{
 		TopicId: common.StringPtr(opts.TopicId),
 		From:    common.Int64Ptr(time.Now().AddDate(0, 0, -1).UnixNano() / 1e6),
 		To:      common.Int64Ptr(time.Now().UnixNano() / 1e6),
@@ -157,9 +166,6 @@ func (td *clsDatasource) CheckHealth(ctx context.Context, req *backend.CheckHeal
 		Limit:   common.Int64Ptr(1),
 	}, opts)
 
-	if response != nil {
-		log.DefaultLogger.Info(string(response.ToJsonString()))
-	}
 	var status = backend.HealthStatusOk
 	var message = "CheckHealth Success"
 	if _, ok := err.(*errors.TencentCloudSDKError); ok {

@@ -6,7 +6,7 @@
   "metrics": true,
   "backend": true,
   "alerting": true,
-  "executable": "gpx_cls-datasource",
+  "executable": "cls-datasource",
   "info": {
     "description": "Tencent Cloud Log Service datasource plugin",
     "author": {

@@ -45,7 +45,7 @@ export class QueryEditor extends PureComponent<Props> {
           </InlineField>
         </InlineFieldRow>
         <InlineFieldRow>
-          <InlineField label="Format" labelWidth={12} grow tooltip={<span />}>
+          <InlineField label="Format" labelWidth={12} grow tooltip="待展示图表类型">
             <Select
               onChange={this.onFormatChange}
               value={query.format}
@@ -55,7 +55,7 @@ export class QueryEditor extends PureComponent<Props> {
         </InlineFieldRow>
         {query.format === 'Graph' && (
           <InlineFieldRow>
-            <InlineField label="Metrics" labelWidth={12} grow>
+            <InlineField label="Metrics" labelWidth={12} tooltip="待统计指标" grow>
               <Input
                 placeholder="metrics"
                 value={query.metrics || ''}
@@ -64,7 +64,7 @@ export class QueryEditor extends PureComponent<Props> {
                 css={false}
               />
             </InlineField>
-            <InlineField label="Bucket" labelWidth={12} grow>
+            <InlineField label="Bucket" labelWidth={12} tooltip="聚合列名称（选填）" grow>
               <Input
                 placeholder="bucket"
                 value={query.bucket || ''}
@@ -73,7 +73,12 @@ export class QueryEditor extends PureComponent<Props> {
                 css={false}
               />
             </InlineField>
-            <InlineField label="Time" labelWidth={12} grow>
+            <InlineField
+              label="Time"
+              labelWidth={12}
+              tooltip="若查询结果为连续时间数据，则需指定 time 字段。否则不填写"
+              grow
+            >
               <Input
                 placeholder="timeSeries"
                 value={query.timeSeriesKey || ''}
@@ -86,7 +91,7 @@ export class QueryEditor extends PureComponent<Props> {
         )}
         {query.format === 'Log' && (
           <InlineFieldRow>
-            <InlineField label="Limit" labelWidth={12} grow>
+            <InlineField label="Limit" labelWidth={12} tooltip="用于指定返回日志检索结果条数" grow>
               <Input
                 value={query.Limit}
                 data-key="Limit"

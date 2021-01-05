@@ -55,7 +55,6 @@ func SearchLog(param *SearchLogParam, opts ApiOpts) (response *cls.SearchLogResp
 	// 实例化要请求产品（以 cvm 为例）的 client 对象
 	client, _ := cls.NewClient(credential, opts.Region, cpf)
 	// 实例化一个请求对象，根据调用的接口和实际情况，可以进一步设置请求参数
-	//request := cls.NewSearchLogRequest()
 	request := cls.NewSearchLogRequest()
 	request.TopicId = param.TopicId
 	request.From = param.From

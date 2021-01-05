@@ -1,5 +1,5 @@
 import React, { ChangeEvent, PureComponent } from 'react'
-import { LegacyForms, Legend } from '@grafana/ui'
+import { LegacyForms, Legend, Icon, Tooltip } from '@grafana/ui'
 import { DataSourcePluginOptionsEditorProps } from '@grafana/data'
 import { MyDataSourceOptions, MySecureJsonData } from './types'
 const { FormField, SecretFormField } = LegacyForms
@@ -64,7 +64,27 @@ export class ConfigEditor extends PureComponent<Props, State> {
     return (
       <>
         <div className="gf-form-group">
-          <Legend>Security Credentials</Legend>
+          <Legend>
+            Security Credentials
+            <Tooltip
+              content={
+                <span>
+                  SecretId、SecretKey：API请求密钥，用于身份鉴权。获取地址前往
+                  <a
+                    style={{ marginLeft: 5 }}
+                    href="https://console.cloud.tencent.com/cam/capi"
+                    target="_blank"
+                  >
+                    API密钥管理
+                  </a>
+                </span>
+              }
+              placement="top"
+            >
+              <Icon name="info-circle" />
+            </Tooltip>
+          </Legend>
+
           <div className="gf-form">
             <SecretFormField
               isConfigured={secureJsonFields?.secretId as boolean}
@@ -91,9 +111,40 @@ export class ConfigEditor extends PureComponent<Props, State> {
           </div>
         </div>
         <div className="gf-form-group">
-          <Legend>Log Service Info</Legend>
+          <Legend>
+            Log Service Info
+            <Tooltip
+              content={
+                <span>
+                  SecretId、SecretKey：API请求密钥，用于身份鉴权。获取地址前往
+                  <a
+                    style={{ marginLeft: 5 }}
+                    href="https://console.cloud.tencent.com/cam/capi"
+                    target="_blank"
+                  >
+                    API密钥管理
+                  </a>
+                </span>
+              }
+              placement="top"
+            >
+              <Icon style={{ marginLeft: 5 }} name="info-circle" />
+            </Tooltip>
+          </Legend>
           <div className="gf-form">
             <FormField
+              tooltip={
+                <span>
+                  日志服务区域简称，例如北京区域填写ap-beijing，完整区域列表格式参考
+                  <a
+                    style={{ marginLeft: 5 }}
+                    href="https://cloud.tencent.com/document/product/614/18940"
+                    target="_blank"
+                  >
+                    地域列表
+                  </a>
+                </span>
+              }
               label="Region"
               labelWidth={6}
               inputWidth={20}
@@ -105,6 +156,13 @@ export class ConfigEditor extends PureComponent<Props, State> {
           </div>
           <div className="gf-form">
             <FormField
+              tooltip={
+                <span>
+                  <a href="https://cloud.tencent.com/document/product/614/35677" target="_blank">
+                    日志主题ID
+                  </a>
+                </span>
+              }
               label="TopicId"
               labelWidth={6}
               inputWidth={20}
