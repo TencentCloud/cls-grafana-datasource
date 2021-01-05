@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"golang.org/x/time/rate"
 	"net/http"
 	"strings"
 	"sync"
@@ -47,7 +46,6 @@ type clsDatasource struct {
 // req contains the queries []DataQuery (where each query contains RefID as a unique identifer).
 // The QueryDataResponse contains a map of RefID to the response for each query, and each response
 // contains Frames ([]*Frame).
-var limiter = rate.NewLimiter(10, 10)
 
 func (td *clsDatasource) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
 	log.DefaultLogger.Info("QueryData", "request", req)
@@ -57,7 +55,6 @@ func (td *clsDatasource) QueryData(ctx context.Context, req *backend.QueryDataRe
 	var wg sync.WaitGroup
 	for _, query := range req.Queries {
 		wg.Add(1)
-		_ = limiter.Wait(ctx)
 		go func(q backend.DataQuery) {
 			response.Responses[q.RefID] = td.query(ctx, q, apiOpts)
 			wg.Done()
@@ -97,7 +94,7 @@ func (td *clsDatasource) query(ctx context.Context, query backend.DataQuery, api
 	if qm.Format == "Log" {
 		requestParam.Limit = common.Int64Ptr(qm.Limit)
 	}
-	searchLogResponse, searchLogErr := SearchLog(&requestParam, apiOpts)
+	searchLogResponse, searchLogErr := SearchLog(ctx, &requestParam, apiOpts)
 
 	if searchLogErr != nil {
 		dataRes.Error = searchLogErr
@@ -158,7 +155,7 @@ func (td *clsDatasource) query(ctx context.Context, query backend.DataQuery, api
 func (td *clsDatasource) CheckHealth(ctx context.Context, req *backend.CheckHealthRequest) (*backend.CheckHealthResult, error) {
 	opts := GetInsSetting(*req.PluginContext.DataSourceInstanceSettings)
 
-	_, err := SearchLog(&SearchLogParam{
+	_, err := SearchLog(ctx, &SearchLogParam{
 		TopicId: common.StringPtr(opts.TopicId),
 		From:    common.Int64Ptr(time.Now().AddDate(0, 0, -1).UnixNano() / 1e6),
 		To:      common.Int64Ptr(time.Now().UnixNano() / 1e6),

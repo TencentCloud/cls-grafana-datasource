@@ -13,7 +13,7 @@
     "eslint": "eslint -c .eslintrc --fix 'src/**/*.{tsx,ts,jsx,js,css,vue}'"
   },
   "engines": {
-    "node": ">=12"
+    "node": ">=14"
   },
   "resolutions": {
     "rxjs": "6.6.3"

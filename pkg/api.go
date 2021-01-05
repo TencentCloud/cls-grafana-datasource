@@ -1,12 +1,14 @@
 package main
 
 import (
+	"context"
 	"encoding/json"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
 	cls "github.com/tencentcloud/tencent-cls-grafana-datasource/pkg/cls/v20201016"
 	"github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/common"
 	"github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/common/profile"
+	"golang.org/x/time/rate"
 )
 
 type dsJsonData struct {
@@ -47,12 +49,13 @@ type SearchLogParam struct {
 	HighLight *bool `json:"HighLight,omitempty" name:"HighLight"`
 }
 
-func SearchLog(param *SearchLogParam, opts ApiOpts) (response *cls.SearchLogResponse, err error) {
+var limiter = rate.NewLimiter(10, 10)
+
+func SearchLog(ctx context.Context, param *SearchLogParam, opts ApiOpts) (response *cls.SearchLogResponse, err error) {
+	_ = limiter.Wait(ctx)
+
 	credential := common.NewCredential(opts.SecretId, opts.SecretKey)
 	cpf := profile.NewClientProfile()
-	cpf.Debug = true
-
-	// 实例化要请求产品（以 cvm 为例）的 client 对象
 	client, _ := cls.NewClient(credential, opts.Region, cpf)
 	// 实例化一个请求对象，根据调用的接口和实际情况，可以进一步设置请求参数
 	request := cls.NewSearchLogRequest()
@@ -64,7 +67,6 @@ func SearchLog(param *SearchLogParam, opts ApiOpts) (response *cls.SearchLogResp
 	request.Context = param.Context
 	request.Sort = param.Sort
 	request.HighLight = param.HighLight
-
 	// 通过 client 对象调用想要访问的接口，需要传入请求对象
 	response, err = client.SearchLog(request)
 	return
