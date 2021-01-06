@@ -92,9 +92,7 @@
 query语句：
 
 ```sql
-*
-|
-select histogram(cast(__TIMESTAMP__ as timestamp), interval 1 minute) as time, count(*) as pv,count( distinct remote_addr) as uv
+* | select histogram(cast(__TIMESTAMP__ as timestamp), interval 1 minute) as time, count(*) as pv,count( distinct remote_addr) as uv
 group by time
 order by time limit 1000
 ```
@@ -116,9 +114,7 @@ Time : **time**
 query语句：
 
 ```sql
-*
-|
-select count(*) as count, status
+* | select count(*) as count, status
 group by status
 ```
 
@@ -139,9 +135,7 @@ Time：不是连续时间数据，**不填**
 query语句：
 
 ```sql
-*
-|
-select http_referer, avg(request_time) as lagency group by http_referer
+* | select http_referer, avg(request_time) as lagency group by http_referer
 order by count desc limit 10
 ```
 
@@ -162,9 +156,7 @@ Time：不是连续时间数据，**不填**
 query语句：
 
 ```sql
-*
-|
-select remote_addr, count(*) as count
+* | select remote_addr, count(*) as count
 group by remote_addr
 order by count desc limit 10
 ```
