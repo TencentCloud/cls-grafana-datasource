@@ -48,7 +48,6 @@ type clsDatasource struct {
 // contains Frames ([]*Frame).
 
 func (td *clsDatasource) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
-	log.DefaultLogger.Info("QueryData", "request", req)
 	response := backend.NewQueryDataResponse()
 
 	apiOpts := GetInsSetting(*req.PluginContext.DataSourceInstanceSettings)
@@ -95,8 +94,9 @@ func (td *clsDatasource) query(ctx context.Context, query backend.DataQuery, api
 		requestParam.Limit = common.Int64Ptr(qm.Limit)
 	}
 	searchLogResponse, searchLogErr := SearchLog(ctx, &requestParam, apiOpts)
-
+	log.DefaultLogger.Info("CLS_API_INFO", Stringify(query), Stringify(searchLogResponse))
 	if searchLogErr != nil {
+		log.DefaultLogger.Error("CLS_API_ERROR", Stringify(query), Stringify(searchLogErr))
 		dataRes.Error = searchLogErr
 		return dataRes
 	}

@@ -50,6 +50,9 @@ func Aggregate(list []map[string]string,
 
 func TransferRecordToFrame(list []map[string]string, colNames []string, timeSeriesKey string, framaName string, fieldName string) *data.Frame {
 	frame := data.NewFrame(framaName)
+	if len(list) == 0 {
+		return frame
+	}
 
 	if len(timeSeriesKey) > 0 {
 		var timeValues []time.Time
