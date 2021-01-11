@@ -12,12 +12,12 @@ interface State {}
 export class ConfigEditor extends PureComponent<Props, State> {
   onJsonDataChange = (event: ChangeEvent<HTMLInputElement>) => {
     const { onOptionsChange, options } = this.props
-    const targetDataset = event?.target.dataset
-    console.log('event', event)
+    const targetDataset = event?.target?.dataset
+    const targetValue = (event?.target?.value || '').trim()
     if (targetDataset.key) {
       const jsonData = {
         ...options.jsonData,
-        [targetDataset.key]: event.target.value,
+        [targetDataset.key]: targetValue,
       }
       onOptionsChange({ ...options, jsonData })
     }
@@ -26,14 +26,14 @@ export class ConfigEditor extends PureComponent<Props, State> {
   // Secure field (only sent to the backend)
   onSecureJsonChange = (event: ChangeEvent<HTMLInputElement>) => {
     const { onOptionsChange, options } = this.props
-    const targetDataset = event?.target.dataset
-    console.log('event', event)
+    const targetDataset = event?.target?.dataset
+    const targetValue = (event?.target?.value || '').trim()
     if (targetDataset.key) {
       onOptionsChange({
         ...options,
         secureJsonData: {
           ...options.secureJsonData,
-          [targetDataset.key]: event.target.value,
+          [targetDataset.key]: targetValue,
         },
       })
     }
@@ -71,7 +71,7 @@ export class ConfigEditor extends PureComponent<Props, State> {
                 <span>
                   SecretId、SecretKey：API请求密钥，用于身份鉴权。获取地址前往
                   <a
-                    style={{ marginLeft: 5 }}
+                    style={{ marginLeft: 5, textDecoration: 'underline' }}
                     href="https://console.cloud.tencent.com/cam/capi"
                     target="_blank"
                   >
@@ -111,33 +111,14 @@ export class ConfigEditor extends PureComponent<Props, State> {
           </div>
         </div>
         <div className="gf-form-group">
-          <Legend>
-            Log Service Info
-            <Tooltip
-              content={
-                <span>
-                  SecretId、SecretKey：API请求密钥，用于身份鉴权。获取地址前往
-                  <a
-                    style={{ marginLeft: 5 }}
-                    href="https://console.cloud.tencent.com/cam/capi"
-                    target="_blank"
-                  >
-                    API密钥管理
-                  </a>
-                </span>
-              }
-              placement="top"
-            >
-              <Icon style={{ marginLeft: 5 }} name="info-circle" />
-            </Tooltip>
-          </Legend>
+          <Legend>Log Service Info</Legend>
           <div className="gf-form">
             <FormField
               tooltip={
                 <span>
                   日志服务区域简称，例如北京区域填写ap-beijing，完整区域列表格式参考
                   <a
-                    style={{ marginLeft: 5 }}
+                    style={{ marginLeft: 5, textDecoration: 'underline' }}
                     href="https://cloud.tencent.com/document/product/614/18940"
                     target="_blank"
                   >
@@ -158,7 +139,11 @@ export class ConfigEditor extends PureComponent<Props, State> {
             <FormField
               tooltip={
                 <span>
-                  <a href="https://cloud.tencent.com/document/product/614/35677" target="_blank">
+                  <a
+                    href="https://cloud.tencent.com/document/product/614/35677"
+                    target="_blank"
+                    style={{ textDecoration: 'underline' }}
+                  >
                     日志主题ID
                   </a>
                 </span>

@@ -12,7 +12,9 @@ export class QueryEditor extends PureComponent<Props> {
   onInputChange = (event: ChangeEvent<HTMLInputElement>) => {
     const { onChange, query } = this.props
     const targetDataset: any = event?.target.dataset
-    onChange({ ...query, [targetDataset.key]: event.target.value })
+    const targetValue =
+      targetDataset?.key === 'Query' ? event.target.value : (event.target.value || '').trim()
+    onChange({ ...query, [targetDataset.key]: targetValue })
   }
 
   onNumberChange = (event: ChangeEvent<HTMLInputElement>) => {
@@ -61,6 +63,7 @@ export class QueryEditor extends PureComponent<Props> {
                 value={query.metrics || ''}
                 data-key="metrics"
                 onChange={this.onInputChange}
+                onBlur={this.props.onRunQuery}
                 css={false}
               />
             </InlineField>
@@ -70,6 +73,7 @@ export class QueryEditor extends PureComponent<Props> {
                 value={query.bucket || ''}
                 data-key="bucket"
                 onChange={this.onInputChange}
+                onBlur={this.props.onRunQuery}
                 css={false}
               />
             </InlineField>
@@ -84,6 +88,7 @@ export class QueryEditor extends PureComponent<Props> {
                 value={query.timeSeriesKey || ''}
                 data-key="timeSeriesKey"
                 onChange={this.onInputChange}
+                onBlur={this.props.onRunQuery}
                 css={false}
               />
             </InlineField>
@@ -97,6 +102,7 @@ export class QueryEditor extends PureComponent<Props> {
                 data-key="Limit"
                 onChange={this.onNumberChange}
                 onKeyPress={(event) => /[\d]/.test(String.fromCharCode(event.keyCode))}
+                onBlur={this.props.onRunQuery}
                 css={false}
                 type="number"
                 step={1}
