@@ -21,6 +21,9 @@ func GroupBy(list []map[string]string, groupBy string) map[string][]map[string]s
 	m := map[string][]map[string]string{}
 	for _, item := range list {
 		groupByKey := item[groupBy]
+		if len(groupByKey) == 0 {
+			groupByKey = "__null__"
+		}
 		if _, ok := m[groupByKey]; ok {
 			m[groupByKey] = append(m[groupByKey], item)
 		} else {
