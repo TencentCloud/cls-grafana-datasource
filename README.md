@@ -5,11 +5,11 @@
 
 ## 前提条件
 
-1. 安装 Grafana，具体操作请参见[Grafana官网文档](https://grafana.com/docs/grafana/latest/installation/)
+1. 安装 Grafana 7以上版本，具体操作请参见[Grafana安装文档](https://grafana.com/docs/grafana/latest/installation/) 。对于低版本Grafana，请参考[Grafana升级指南](https://grafana.com/docs/grafana/latest/installation/upgrading) 。
 
    以Centos安装grafana 7.3.6为例
 
-   ```
+   ```sh
    sudo yum install initscripts urw-fonts wget
    wget https://dl.grafana.com/oss/release/grafana-7.3.6-1.x86_64.rpm
    sudo yum install grafana-7.3.6-1.x86_64.rpm
@@ -21,7 +21,7 @@
 
    若需要安装更多可视化图表，如饼图，趋势速览图，需执行命令安装grafana的panel插件，如安装饼图pie panel。
 
-   ```
+   ```sh
    grafana-cli plugins install grafana-piechart-panel
    service grafana-server restart
    ```
@@ -32,32 +32,28 @@
 
    请确认Grafana的插件目录位置。在Centos的插件目录/var/lib/grafana/plugins/安装插件，重启grafana-server。
 
-   ```
+   ```sh
    cd /var/lib/grafana/plugins/
    wget https://github.com/TencentCloud/cls-grafana-datasource/releases/latest/download/cls-grafana-datasource.zip
    unzip cls-grafana-datasource.zip
    ```
 
-   如果安装的是Grafana 7.0及以上版本，需修改Grafana配置文件
+3. 修改Grafana配置文件，配置CLS数据源ID
 
-1. 打开配置文件。
+  - Linux系统配置文件路径：/etc/grafana/grafana.ini
+  - macOS系统配置文件路径：/usr/local/etc/grafana/grafana.ini
 
-- macOS系统中的文件路径：/usr/local/etc/grafana/grafana.ini
-- Linux系统中的文件路径：/etc/grafana/grafana.ini
-
-2. 在**plugins**中设置**allow_loading_unsigned_plugins**参数
-
+   在**plugins**中设置**allow_loading_unsigned_plugins**参数
    ```
    allow_loading_unsigned_plugins = tencent-cls-grafana-datasource
    ```
 
-重启grafana服务
-
-   ```
+   重启grafana服务
+   ```sh
    service grafana-server restart
    ```
 
-3. 配置日志数据源
+## 配置日志数据源
 
 1. 登陆Grafana
 
@@ -68,7 +64,7 @@
    在**Data Sources**页，单击**Add data source**，选中**Tencent Cloud Log Service Datasource**，按照以下说明配置数据源。
 
    | 配置项               | 说明                                                         |
-   | -------------------- | ------------------------------------------------------------ |
+      | -------------------- | ------------------------------------------------------------ |
    | Security Credentials | SecretId、SecretKey：API请求密钥，用于身份鉴权。获取地址前往[API密钥管理](https://console.cloud.tencent.com/cam/capi) |
    | Log Service Info     | region：日志服务区域简称，例如北京区域填写`ap-beijing`，完整区域列表格式参考 [地域列表](https://cloud.tencent.com/document/product/614/18940)。<br />TopicId：日志主题ID |
 
@@ -85,7 +81,7 @@
 3. 用户输入Query语句，根据待展示图表类型，选择Format形式，系统会做数据转换以满足grafana展示需要。
 
    | Format格式            | 描述                                                         | 配置项                                                       |
-   | --------------------- | ------------------------------------------------------------ | ------------------------------------------------------------ |
+      | --------------------- | ------------------------------------------------------------ | ------------------------------------------------------------ |
    | Log panel             | log panel is used to shown log search result. Query syntax supports searching by keyword, fuzzy match. For more information, see [Syntax and Rules](https://intl.cloud.tencent.com/document/product/614/30439). Eg. status:400 | limit:用于指定返回日志检索结果条数                           |
    | Table panle           | Table panel will automatically show the results of whatever columns and rows your query returns | 无                                                           |
    | Graph,Pie,Gauge panel | In this pattern, there is a format transformation where data will be adapted to graph,pie,gauge panel | Metrics：待统计指标<br />Bucket：（选填）聚合列名称 <br />Time : （选填）若query返回结果为连续时间数据，则需指定 time 字段。若无，则不填写 |
@@ -167,3 +163,9 @@ query语句：
 Format：Table
 
 <br/>
+
+### 日志查询与问题排查
+
+- macOS系统日志路径：/usr/local/var/log/grafana/grafana.log
+- Linux系统日志路径：/var/log/grafana/grafana.log
+- 问题排查：https://grafana.com/docs/grafana/latest/troubleshooting/
