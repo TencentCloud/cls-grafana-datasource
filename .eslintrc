@@ -36,6 +36,10 @@
     "@typescript-eslint/no-useless-constructor": "off",
     "@typescript-eslint/no-unused-expressions": "off",
     "max-params": "off",
-    "complexity": "off"
+    "complexity": "off",
+    "default-case-last": "off",
+    "no-promise-executor-return": "off",
+    "no-unreachable-loop": "off",
+    "no-useless-backreference": "off"
   }
 }

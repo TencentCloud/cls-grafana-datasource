@@ -4,17 +4,17 @@ import {
   getBackendSrv,
   getTemplateSrv,
   toDataQueryResponse,
-  frameToMetricFindValue,
 } from '@grafana/runtime'
 import { MyDataSourceOptions, MyQuery } from './types'
+import { frameToMetricFindValue } from './common/grafanaPatch'
 
 export class DataSource extends DataSourceWithBackend<MyQuery, MyDataSourceOptions> {
   constructor(instanceSettings: DataSourceInstanceSettings<MyDataSourceOptions>) {
     super(instanceSettings)
   }
 
-  applyTemplateVariables(query: MyQuery, scopedVars: ScopedVars): Record<string, any> {
-    const targetQuery = getTemplateSrv().replace(query.Query, scopedVars)
+  applyTemplateVariables(query: MyQuery) {
+    const targetQuery = getTemplateSrv().replace(query.Query)
     return {
       ...query,
       Query: targetQuery,

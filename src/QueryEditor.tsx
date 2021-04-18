@@ -1,10 +1,11 @@
 import React, { ChangeEvent, PureComponent } from 'react'
-import { InlineFieldRow, InlineField, Input, Select } from '@grafana/ui'
 import { QueryEditorProps, SelectableValue } from '@grafana/data'
 import * as _ from 'lodash'
 import * as Constants from './common/constants'
 import { DataSource } from './DataSource'
 import { defaultQuery, MyDataSourceOptions, MyQuery } from './types'
+import { Input, Select } from '@grafana/ui'
+import { InlineFieldRow, InlineField } from './component'
 
 type Props = QueryEditorProps<DataSource, MyQuery, MyDataSourceOptions>
 
@@ -35,7 +36,7 @@ export class QueryEditor extends PureComponent<Props> {
     return (
       <div>
         <InlineFieldRow>
-          <InlineField label="Query" labelWidth={12} grow>
+          <InlineField label="Query" labelWidth={12}>
             <Input
               placeholder="log query"
               value={query.Query || ''}
@@ -47,7 +48,7 @@ export class QueryEditor extends PureComponent<Props> {
           </InlineField>
         </InlineFieldRow>
         <InlineFieldRow>
-          <InlineField label="Format" labelWidth={12} grow tooltip="待展示图表类型">
+          <InlineField label="Format" labelWidth={12} tooltip="待展示图表类型">
             <Select
               onChange={this.onFormatChange}
               value={query.format}
@@ -57,7 +58,7 @@ export class QueryEditor extends PureComponent<Props> {
         </InlineFieldRow>
         {query.format === 'Graph' && (
           <InlineFieldRow>
-            <InlineField label="Metrics" labelWidth={12} tooltip="待统计指标" grow>
+            <InlineField label="Metrics" labelWidth={12} tooltip="待统计指标">
               <Input
                 placeholder="metrics"
                 value={query.metrics || ''}
@@ -67,7 +68,7 @@ export class QueryEditor extends PureComponent<Props> {
                 css={false}
               />
             </InlineField>
-            <InlineField label="Bucket" labelWidth={12} tooltip="聚合列名称（选填）" grow>
+            <InlineField label="Bucket" labelWidth={12} tooltip="聚合列名称（选填）">
               <Input
                 placeholder="bucket"
                 value={query.bucket || ''}
@@ -81,7 +82,6 @@ export class QueryEditor extends PureComponent<Props> {
               label="Time"
               labelWidth={12}
               tooltip="若查询结果为连续时间数据，则需指定 time 字段。否则不填写"
-              grow
             >
               <Input
                 placeholder="timeSeries"
@@ -96,7 +96,7 @@ export class QueryEditor extends PureComponent<Props> {
         )}
         {query.format === 'Log' && (
           <InlineFieldRow>
-            <InlineField label="Limit" labelWidth={12} tooltip="用于指定返回日志检索结果条数" grow>
+            <InlineField label="Limit" labelWidth={12} tooltip="用于指定返回日志检索结果条数">
               <Input
                 value={query.Limit}
                 data-key="Limit"

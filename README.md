@@ -7,12 +7,10 @@
 
 1. 安装 Grafana 7以上版本，具体操作请参见[Grafana安装文档](https://grafana.com/docs/grafana/latest/installation/) 。对于低版本Grafana，请参考[Grafana升级指南](https://grafana.com/docs/grafana/latest/installation/upgrading) 。
 
-   以Centos安装grafana 7.3.6为例
+   以 RPM-based Linux 为例，可使用 [源安装](https://grafana.com/docs/grafana/latest/installation/rpm/#install-from-yum-repository) (推荐) 与 [手动安装](https://grafana.com/docs/grafana/latest/installation/rpm/#install-manually-with-yum) 方式 
 
+   [启动 Grafana 服务](https://grafana.com/docs/grafana/latest/installation/rpm/#2-start-the-server)
    ```sh
-   sudo yum install initscripts urw-fonts wget
-   wget https://dl.grafana.com/oss/release/grafana-7.3.6-1.x86_64.rpm
-   sudo yum install grafana-7.3.6-1.x86_64.rpm
    sudo systemctl daemon-reload
    sudo systemctl start grafana-server
    sudo systemctl status grafana-server 
@@ -20,7 +18,6 @@
    ```
 
    若需要安装更多可视化图表，如饼图，趋势速览图，需执行命令安装grafana的panel插件，如安装饼图pie panel。
-
    ```sh
    grafana-cli plugins install grafana-piechart-panel
    service grafana-server restart
