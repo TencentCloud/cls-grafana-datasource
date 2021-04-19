@@ -161,7 +161,55 @@ Format：Table
 
 <br/>
 
-### 日志查询与问题排查
+
+## 模板变量 [Templates and variables](https://grafana.com/docs/grafana/latest/variables/)
+CLS 数据源插件支持使用模板变量功能，可参照 [新增变量](https://grafana.com/docs/grafana/latest/variables/variable-types/) 文档，创建仪表盘中的变量并使用。
+注意：[使用模板变量的图表无法用于告警](https://grafana.com/docs/grafana/latest/alerting/create-alerts/#conditions)
+
+
+这里就 Custom、Query、DataSources 类型变量给出一个使用示例, 其他变量类型使用上基本相同。
+
+### Custom 类型变量
+输入变量名 Interval, 选择类型为 Custom, 在Custom Options中，输入变量的可选项，不同选项间使用逗号分隔。如输入以下内容可得到图中所示选项。
+```text
+1 MINUTE,5 MINUTE,15 MINUTE,30 MINUTE,1 HOUR,1 DAY
+```
+
+![Custom类型变量](https://main.qcloudimg.com/raw/9f9a6ee136ecb01fe5a73f9668f4d4f3.png)
+
+使用时，可参照实例中的 时间折线图Graph，将查询语句中的 1 minute 替换为 ${Interval}, 其他配置不变，查询Query中的变量将会被替换为选中的变量值。
+```sql
+* | select histogram( cast(__TIMESTAMP__ as timestamp),interval ${Interval}) as time, count(*) as pv group by time order by time
+```
+
+
+### Query 类型变量
+输入变量名 HttpStatus, 选择类型为 Query，在Query Options中，选择数据源为CLS数据源，刷新时间可选择 On Time Range Changed 或 On Dashboard Load。
+输入如下的 Query 查询语句(请根据业务Topic进行修改)，且可输入Regex对结果进行过滤，可选择Sort对结果进行排序。
+
+```sql
+* | select status 
+```
+![Query类型变量](https://main.qcloudimg.com/raw/c5e3e9beb4665b05f957e0bb4ccfea43.png)
+
+使用变量时，可通用以下语句进行查询
+```sql
+status:${HttpStatus}
+```
+Format: Log Panel
+
+
+### Datasource 类型变量
+输入变量名 Datasource, 选中变量类型为 Datasource，在Data source options中配置 Type 为 Tencent CLS Datasource。
+使用预览效果如下
+
+注意：Datasource 类型变量仅适用于Grafana中存在多个索引配置相同(或相似)的CLS数据源的情况
+
+![Datasource类型变量](https://main.qcloudimg.com/raw/d2b09b0ac278ac5387d40d0c3c3690d7.png)
+
+
+
+## 日志查询与问题排查
 
 - macOS系统日志路径：/usr/local/var/log/grafana/grafana.log
 - Linux系统日志路径：/var/log/grafana/grafana.log

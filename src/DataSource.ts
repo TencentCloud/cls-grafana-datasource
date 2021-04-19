@@ -1,4 +1,4 @@
-import { DataSourceInstanceSettings, MetricFindValue, ScopedVars } from '@grafana/data'
+import { DataSourceInstanceSettings, MetricFindValue, Field } from '@grafana/data'
 import {
   DataSourceWithBackend,
   getBackendSrv,
@@ -6,7 +6,6 @@ import {
   toDataQueryResponse,
 } from '@grafana/runtime'
 import { MyDataSourceOptions, MyQuery } from './types'
-import { frameToMetricFindValue } from './common/grafanaPatch'
 
 export class DataSource extends DataSourceWithBackend<MyQuery, MyDataSourceOptions> {
   constructor(instanceSettings: DataSourceInstanceSettings<MyDataSourceOptions>) {
@@ -41,6 +40,20 @@ export class DataSource extends DataSourceWithBackend<MyQuery, MyDataSourceOptio
       },
     })
     const resFrame = toDataQueryResponse(backendRes)
-    return resFrame ? resFrame.data.map(frameToMetricFindValue).flat() : []
+    if (!resFrame) {
+      return []
+    }
+
+    const fields: Field[] = resFrame.data.reduce((prev, cur) => {
+      return [...prev, ...cur?.fields]
+    }, [] as Field[])
+
+    const values: MetricFindValue[] = []
+    for (const field of fields) {
+      for (let i = 0; i < field.values.length; i++) {
+        values.push({ text: String(field.values?.get(i)) })
+      }
+    }
+    return values
   }
 }
