@@ -1,7 +1,6 @@
 package main
 
 import (
-	"encoding/json"
 	"github.com/araddon/dateparse"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	cls "github.com/tencentcloud/tencent-cls-grafana-datasource/pkg/cls/v20201016"
@@ -133,14 +132,10 @@ func GetLog(logInfos []*cls.LogInfo, refId string) []*data.Frame {
 	frame := data.NewFrame(refId)
 	var timeValues []time.Time
 	var logValues []string
+
 	for _, v := range logInfos {
 		timeValues = append(timeValues, time.Unix(*v.Time/1e3, *v.Time%1e3))
-		jsonLog, jsonErr := json.Marshal(ArrayToMap(v.Logs))
-		if jsonErr != nil {
-			logValues = append(logValues, string(""))
-		} else {
-			logValues = append(logValues, string(jsonLog))
-		}
+		logValues = append(logValues, *v.LogJson)
 	}
 	frame.Fields = append(frame.Fields, data.NewField("Time", nil, timeValues))
 	frame.Fields = append(frame.Fields, data.NewField("Log", nil, logValues))

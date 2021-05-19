@@ -58,6 +58,10 @@ type LogInfo struct {
 	// 日志内容的高亮描述信息
 	// 注意：此字段可能返回 null，表示取不到有效值。
 	HighLights []*HighLightItem `json:"HighLights,omitempty" name:"HighLights" list`
+
+	// 日志内容的Json序列化字符串
+	// 注意：此字段可能返回 null，表示取不到有效值。
+	LogJson *string `json:"LogJson,omitempty" name:"LogJson"`
 }
 
 type LogItem struct {
