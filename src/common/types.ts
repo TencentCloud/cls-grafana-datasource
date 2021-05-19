@@ -1,4 +1,4 @@
-import { DataQuery, DataSourceJsonData } from '@grafana/data'
+import { DataQuery, DataSourceJsonData, DataSourceSettings } from '@grafana/data'
 
 export interface MyQuery extends DataQuery {
   Query?: string
@@ -9,6 +9,10 @@ export interface MyQuery extends DataQuery {
   timeSeriesKey?: string
   bucket?: string
   metrics?: string
+  /** 前端获取 Grafana 与 Plugin, 传递给 Backend
+   * 理想状态应该放在非数组量中，但是目前仅发现 query 可以传递给 backend
+   * */
+  RequestClient?: string
 }
 
 export const defaultQuery: Partial<MyQuery> = {
@@ -29,8 +33,9 @@ export interface MyDataSourceOptions extends DataSourceJsonData {
 /**
  * Value that is used in the backend, but never sent over HTTP to the frontend
  */
-// eslint-disable-next-line @typescript-eslint/no-empty-interface
 export interface MySecureJsonData {
   secretId: string
   secretKey: string
 }
+
+export type ClsDataSourceSettings = DataSourceSettings<MyDataSourceOptions, MySecureJsonData>

@@ -1,5 +1,7 @@
 /* eslint-disable @typescript-eslint/no-require-imports */
 const path = require('path')
+const { DefinePlugin } = require('webpack')
+const packageInfo = require('./package.json')
 
 const getWebpackConfig = (originalConfig, options) => {
   const moduleRules = originalConfig.module.rules
@@ -13,7 +15,13 @@ const getWebpackConfig = (originalConfig, options) => {
       ...originalConfig.module,
       rules: [...moduleRules],
     },
-    plugins: [...originalConfig.plugins],
+    plugins: [
+      ...originalConfig.plugins,
+      new DefinePlugin({
+        'process.env.TENCENT_CLOUD_CLS_GRAFANA_PLUGIN_VERSION':
+          JSON.stringify(packageInfo.version) || '0.0.0',
+      }),
+    ],
   }
   console.log(`originalConfig`, originalConfig)
   return newConfig

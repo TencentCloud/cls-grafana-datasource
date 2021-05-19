@@ -29,3 +29,10 @@ e2e-results/
 # Editor
 .idea
 .circleci
+
+# 仅对源码有修改的行为，进行git记录。由于gitignore的以下特性，这里直接force add
+# Exceptions in a .gitignore file
+#  https://riptutorial.com/git/example/911/exceptions-in-a--gitignore-file
+#  https://git-scm.com/docs/gitignore
+vendor/
+!vendor/github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/common/http/request.go

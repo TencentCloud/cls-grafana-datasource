@@ -2,7 +2,7 @@ import { DataSourcePlugin } from '@grafana/data'
 import { DataSource } from './DataSource'
 import { ConfigEditor } from './ConfigEditor'
 import { QueryEditor } from './QueryEditor'
-import { MyQuery, MyDataSourceOptions } from './types'
+import { MyQuery, MyDataSourceOptions } from './common/types'
 
 import './component/component.less'
 

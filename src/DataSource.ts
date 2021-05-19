@@ -1,15 +1,39 @@
-import { DataSourceInstanceSettings, MetricFindValue, Field } from '@grafana/data'
+import {
+  DataSourceInstanceSettings,
+  MetricFindValue,
+  Field,
+  DataQueryRequest,
+  DataQueryResponse,
+} from '@grafana/data'
 import {
   DataSourceWithBackend,
   getBackendSrv,
   getTemplateSrv,
   toDataQueryResponse,
 } from '@grafana/runtime'
-import { MyDataSourceOptions, MyQuery } from './types'
+import { MyDataSourceOptions, MyQuery } from './common/types'
+import { getRequestClient } from './common/utils'
+import { Observable } from 'rxjs'
 
 export class DataSource extends DataSourceWithBackend<MyQuery, MyDataSourceOptions> {
+  static requestClient = getRequestClient()
+
   constructor(instanceSettings: DataSourceInstanceSettings<MyDataSourceOptions>) {
     super(instanceSettings)
+  }
+
+  query(request: DataQueryRequest<MyQuery>): Observable<DataQueryResponse> {
+    const { targets } = request
+    const newTargets = targets?.map((item) => {
+      return {
+        ...item,
+        RequestClient: DataSource.requestClient,
+      }
+    })
+    return super.query({
+      ...request,
+      targets: newTargets,
+    })
   }
 
   applyTemplateVariables(query: MyQuery) {
@@ -35,6 +59,7 @@ export class DataSource extends DataSourceWithBackend<MyQuery, MyDataSourceOptio
             format: 'Table',
             refId: 'A',
             datasourceId: this.id,
+            RequestClient: DataSource.requestClient,
           },
         ],
       },

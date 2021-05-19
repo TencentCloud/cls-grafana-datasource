@@ -1,10 +1,11 @@
 import React, { ChangeEvent, PureComponent } from 'react'
 import { LegacyForms, Legend, Icon, Tooltip } from '@grafana/ui'
 import { DataSourcePluginOptionsEditorProps } from '@grafana/data'
-import { MyDataSourceOptions, MySecureJsonData } from './types'
+import { MyDataSourceOptions, MySecureJsonData } from './common/types'
+import { getRequestClient } from './common/utils'
 const { FormField, SecretFormField } = LegacyForms
 
-type Props = DataSourcePluginOptionsEditorProps<MyDataSourceOptions>
+type Props = DataSourcePluginOptionsEditorProps<MyDataSourceOptions, MySecureJsonData>
 
 // eslint-disable-next-line @typescript-eslint/no-empty-interface
 interface State {}
@@ -18,6 +19,7 @@ export class ConfigEditor extends PureComponent<Props, State> {
       const jsonData = {
         ...options.jsonData,
         [targetDataset.key]: targetValue,
+        RequestClient: getRequestClient(),
       }
       onOptionsChange({ ...options, jsonData })
     }

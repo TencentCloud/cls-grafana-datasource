@@ -7,6 +7,7 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
 	cls "github.com/tencentcloud/tencent-cls-grafana-datasource/pkg/cls/v20201016"
 	"github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/common"
+	tchttp "github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/common/http"
 	"github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/common/profile"
 	"golang.org/x/time/rate"
 )
@@ -21,6 +22,8 @@ type ApiOpts struct {
 	SecretKey string `json:"secretKey"`
 	Region    string `json:"region"`
 	TopicId   string `json:"topicId"`
+	// 当前需由前端进行传递，相关问答追踪：https://github.com/grafana/grafana/issues/34356
+	RequestClient string `json:"RequestClient,omitempty"`
 }
 
 type SearchLogParam struct {
@@ -67,12 +70,14 @@ func SearchLog(ctx context.Context, param *SearchLogParam, opts ApiOpts) (respon
 	request.Context = param.Context
 	request.Sort = param.Sort
 	request.HighLight = param.HighLight
+
+	injectRequestClientHeader(request, opts.RequestClient)
 	// 通过 client 对象调用想要访问的接口，需要传入请求对象
 	response, err = client.SearchLog(request)
 	return
 }
 
-func GetInsSetting(instanceSettings backend.DataSourceInstanceSettings) (opts ApiOpts) {
+func GetApiOpts(instanceSettings backend.DataSourceInstanceSettings, RequestClient string) (opts ApiOpts) {
 	var dsData dsJsonData
 	err := json.Unmarshal(instanceSettings.JSONData, &dsData)
 	if err != nil {
@@ -84,5 +89,15 @@ func GetInsSetting(instanceSettings backend.DataSourceInstanceSettings) (opts Ap
 		Region:    dsData.Region,
 		TopicId:   dsData.TopicId,
 	}
+	if len(RequestClient) > 0 {
+		opts.RequestClient = RequestClient
+	} else {
+		opts.RequestClient = "GF_0.0.0_PL_CLS_0.0.0"
+	}
 	return
+}
+
+func injectRequestClientHeader(request tchttp.Request, RequestClient string) {
+	params := request.GetParams()
+	params["RequestClient"] = RequestClient
 }

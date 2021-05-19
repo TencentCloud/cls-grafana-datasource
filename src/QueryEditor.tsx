@@ -3,7 +3,7 @@ import { QueryEditorProps, SelectableValue } from '@grafana/data'
 import * as _ from 'lodash'
 import * as Constants from './common/constants'
 import { DataSource } from './DataSource'
-import { defaultQuery, MyDataSourceOptions, MyQuery } from './types'
+import { defaultQuery, MyDataSourceOptions, MyQuery } from './common/types'
 import { Input, Select } from '@grafana/ui'
 import { InlineFieldRow, InlineField } from './component'
 

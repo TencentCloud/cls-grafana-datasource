@@ -50,7 +50,10 @@ type clsDatasource struct {
 func (td *clsDatasource) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
 	response := backend.NewQueryDataResponse()
 
-	apiOpts := GetInsSetting(*req.PluginContext.DataSourceInstanceSettings)
+	var qm queryModel
+	_ = json.Unmarshal(req.Queries[0].JSON, &qm)
+	apiOpts := GetApiOpts(*req.PluginContext.DataSourceInstanceSettings, qm.RequestClient)
+
 	var wg sync.WaitGroup
 	for _, query := range req.Queries {
 		wg.Add(1)
@@ -72,6 +75,9 @@ type queryModel struct {
 	TimeSeriesKey string `json:"timeSeriesKey,omitempty"`
 	Bucket        string `json:"bucket,omitempty"`
 	Metrics       string `json:"metrics,omitempty"`
+
+	// 当前需由前端进行传递，相关问答追踪：https://github.com/grafana/grafana/issues/34356
+	RequestClient string `json:"RequestClient,omitempty"`
 }
 
 func (td *clsDatasource) query(ctx context.Context, query backend.DataQuery, apiOpts ApiOpts) backend.DataResponse {
@@ -153,7 +159,7 @@ func (td *clsDatasource) query(ctx context.Context, query backend.DataQuery, api
 // datasource configuration page which allows users to verify that
 // a datasource is working as expected.
 func (td *clsDatasource) CheckHealth(ctx context.Context, req *backend.CheckHealthRequest) (*backend.CheckHealthResult, error) {
-	opts := GetInsSetting(*req.PluginContext.DataSourceInstanceSettings)
+	opts := GetApiOpts(*req.PluginContext.DataSourceInstanceSettings, "")
 
 	_, err := SearchLog(ctx, &SearchLogParam{
 		TopicId: common.StringPtr(opts.TopicId),
