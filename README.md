@@ -2,7 +2,9 @@
 
 日志服务CLS与Grafana打通，支持将CLS的原始日志数据与SQL聚合分析结果导出至Grafana展示。用户只需安装CLS日志服务grafana插件，在grafana填写检索分析的语句，即可在Grafana上展示结果。
 
-> 注意：此插件从 1.0.3 版本起，使用全新的日志检索接口，旧版本存在检索异常。请用户及时主动升级到最新版本。
+> 注意： 插件自 1.0.3 版本起，已使用腾讯云日志服务新检索接口，查询日志更稳定更快捷。
+> 
+> 1.0.2 及以下版本查询原始日志(Logs)时, 存在检索异常，请用户尽快主动升级到最新版本。
 
 
 ## 前提条件
@@ -33,8 +35,12 @@
 
    ```sh
    cd /var/lib/grafana/plugins/
-   wget https://github.com/TencentCloud/cls-grafana-datasource/releases/latest/download/cls-grafana-datasource.zip
-   unzip cls-grafana-datasource.zip
+   wget https://github.com/TencentCloud/cls-grafana-datasource/releases/latest/download/tencent-cls-grafana-datasource.zip
+   unzip tencent-cls-grafana-datasource
+   ```
+   或使用一键安装脚本（末尾参数为插件安装目录）
+   ```shell
+   /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/TencentCloud/cls-grafana-datasource/master/toolkit/update.sh)" bash /var/lib/grafana/plugins/ 
    ```
 
 3. 修改Grafana配置文件，配置CLS数据源ID

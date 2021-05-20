@@ -27,6 +27,8 @@ work/
 ci/
 e2e-results/
 
+tencent-cls-grafana-datasource.zip
+
 # Editor
 .idea
 .circleci

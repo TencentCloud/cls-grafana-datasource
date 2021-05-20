@@ -2,7 +2,7 @@
   "name": "tencent-cls-grafana-datasource",
   "version": "1.0.3",
   "description": "Log Service datasource plugin for Grafana",
-  "author": "MeetzhDing",
+  "author": "Tencent Cloud",
   "license": "Apache-2.0",
   "scripts": {
     "build": "grafana-toolkit plugin:build",
@@ -10,7 +10,8 @@
     "dev": "grafana-toolkit plugin:dev",
     "watch": "grafana-toolkit plugin:dev --watch",
     "prettier": "prettier --config .prettierrc.js --write 'src/**/*.{tsx,ts,jsx,js,css,vue}'",
-    "eslint": "eslint -c .eslintrc --fix 'src/**/*.{tsx,ts,jsx,js,css,vue}'"
+    "eslint": "eslint -c .eslintrc --fix 'src/**/*.{tsx,ts,jsx,js,css,vue}'",
+    "buildPkg": "node toolkit/buildPkg.js"
   },
   "engines": {
     "node": ">=14"
@@ -52,6 +53,7 @@
     "prettier": "2.2.1",
     "redux-logger": "^3.0.6",
     "sass-loader": "^11.0.1",
+    "shelljs": "^0.8.4",
     "ts-jest": "^26.5.5",
     "ts-loader": "^9.0.0",
     "tslib": "^2.2.0",
