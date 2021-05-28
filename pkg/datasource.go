@@ -50,9 +50,7 @@ type clsDatasource struct {
 func (td *clsDatasource) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
 	response := backend.NewQueryDataResponse()
 
-	var qm queryModel
-	_ = json.Unmarshal(req.Queries[0].JSON, &qm)
-	apiOpts := GetApiOpts(*req.PluginContext.DataSourceInstanceSettings, qm.RequestClient)
+	apiOpts := GetApiOpts(*req.PluginContext.DataSourceInstanceSettings)
 
 	var wg sync.WaitGroup
 	for _, query := range req.Queries {
@@ -159,7 +157,7 @@ func (td *clsDatasource) query(ctx context.Context, query backend.DataQuery, api
 // datasource configuration page which allows users to verify that
 // a datasource is working as expected.
 func (td *clsDatasource) CheckHealth(ctx context.Context, req *backend.CheckHealthRequest) (*backend.CheckHealthResult, error) {
-	opts := GetApiOpts(*req.PluginContext.DataSourceInstanceSettings, "")
+	opts := GetApiOpts(*req.PluginContext.DataSourceInstanceSettings)
 
 	_, err := SearchLog(ctx, &SearchLogParam{
 		TopicId: common.StringPtr(opts.TopicId),

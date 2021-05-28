@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"fmt"
 )
 
 func Stringify(v interface{}) string {
@@ -19,4 +20,8 @@ func StringifyAll(args ...interface{}) []string {
 		info = append(info, Stringify(arg))
 	}
 	return info
+}
+
+func GetRequestClient() string {
+	return fmt.Sprint("GF_", GrafanaVersion, "_PL_CLS_", PluginVersion)
 }

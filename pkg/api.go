@@ -22,8 +22,6 @@ type ApiOpts struct {
 	SecretKey string `json:"secretKey"`
 	Region    string `json:"region"`
 	TopicId   string `json:"topicId"`
-	// 当前需由前端进行传递，相关问答追踪：https://github.com/grafana/grafana/issues/34356
-	RequestClient string `json:"RequestClient,omitempty"`
 }
 
 type SearchLogParam struct {
@@ -71,13 +69,13 @@ func SearchLog(ctx context.Context, param *SearchLogParam, opts ApiOpts) (respon
 	request.Sort = param.Sort
 	request.HighLight = param.HighLight
 
-	injectRequestClientHeader(request, opts.RequestClient)
+	injectRequestClientHeader(request)
 	// 通过 client 对象调用想要访问的接口，需要传入请求对象
 	response, err = client.SearchLog(request)
 	return
 }
 
-func GetApiOpts(instanceSettings backend.DataSourceInstanceSettings, RequestClient string) (opts ApiOpts) {
+func GetApiOpts(instanceSettings backend.DataSourceInstanceSettings) (opts ApiOpts) {
 	var dsData dsJsonData
 	err := json.Unmarshal(instanceSettings.JSONData, &dsData)
 	if err != nil {
@@ -89,15 +87,10 @@ func GetApiOpts(instanceSettings backend.DataSourceInstanceSettings, RequestClie
 		Region:    dsData.Region,
 		TopicId:   dsData.TopicId,
 	}
-	if len(RequestClient) > 0 {
-		opts.RequestClient = RequestClient
-	} else {
-		opts.RequestClient = "GF_0.0.0_PL_CLS_0.0.0"
-	}
 	return
 }
 
-func injectRequestClientHeader(request tchttp.Request, RequestClient string) {
+func injectRequestClientHeader(request tchttp.Request) {
 	params := request.GetParams()
-	params["RequestClient"] = RequestClient
+	params["RequestClient"] = GetRequestClient()
 }

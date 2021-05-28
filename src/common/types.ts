@@ -9,10 +9,6 @@ export interface MyQuery extends DataQuery {
   timeSeriesKey?: string
   bucket?: string
   metrics?: string
-  /** 前端获取 Grafana 与 Plugin, 传递给 Backend
-   * 理想状态应该放在非数组量中，但是目前仅发现 query 可以传递给 backend
-   * */
-  RequestClient?: string
 }
 
 export const defaultQuery: Partial<MyQuery> = {
