@@ -1,8 +1,9 @@
 import React, { ChangeEvent, PureComponent } from 'react'
-import { LegacyForms, Legend, Icon, Tooltip } from '@grafana/ui'
+import { LegacyForms, Legend, Icon, Tooltip, Switch } from '@grafana/ui'
 import { DataSourcePluginOptionsEditorProps } from '@grafana/data'
 import { MyDataSourceOptions, MySecureJsonData } from './common/types'
 import { getRequestClient } from './common/utils'
+import { InlineField } from './component'
 const { FormField, SecretFormField } = LegacyForms
 
 type Props = DataSourcePluginOptionsEditorProps<MyDataSourceOptions, MySecureJsonData>
@@ -11,6 +12,17 @@ type Props = DataSourcePluginOptionsEditorProps<MyDataSourceOptions, MySecureJso
 interface State {}
 
 export class ConfigEditor extends PureComponent<Props, State> {
+  patchJsonData = (kv: Record<string, any>) => {
+    const { onOptionsChange, options } = this.props
+    if (kv) {
+      const jsonData = {
+        ...options.jsonData,
+        ...kv,
+      }
+      onOptionsChange({ ...options, jsonData })
+    }
+  }
+
   onJsonDataChange = (event: ChangeEvent<HTMLInputElement>) => {
     const { onOptionsChange, options } = this.props
     const targetDataset = event?.target?.dataset
@@ -111,6 +123,20 @@ export class ConfigEditor extends PureComponent<Props, State> {
               onChange={this.onSecureJsonChange}
             />
           </div>
+          <InlineField
+            label="Intranet"
+            tooltip="开启后，接口调用使用腾讯云API内网接入点"
+            labelWidth={12}
+          >
+            <div style={{ padding: 8 }}>
+              <Switch
+                value={jsonData.intranet}
+                onChange={(v) => {
+                  this.patchJsonData({ intranet: Boolean(v?.currentTarget?.checked) })
+                }}
+              />
+            </div>
+          </InlineField>
         </div>
         <div className="gf-form-group">
           <Legend>Log Service Info</Legend>

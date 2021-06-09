@@ -13,13 +13,15 @@ import (
 )
 
 type dsJsonData struct {
-	Region  string `json:"region"`
-	TopicId string `json:"topicId"`
+	Intranet bool   `json:"intranet"`
+	Region   string `json:"region"`
+	TopicId  string `json:"topicId"`
 }
 
 type ApiOpts struct {
 	SecretId  string `json:"secretId"`
 	SecretKey string `json:"secretKey"`
+	Intranet  bool   `json:"intranet"`
 	Region    string `json:"region"`
 	TopicId   string `json:"topicId"`
 }
@@ -50,14 +52,24 @@ type SearchLogParam struct {
 	HighLight *bool `json:"HighLight,omitempty" name:"HighLight"`
 }
 
+var cpf = profile.NewClientProfile()
+var intranetCpf = profile.NewClientProfile()
+
+func init() {
+	intranetCpf.HttpProfile.RootDomain = "internal.tencentcloudapi.com"
+}
+
 var limiter = rate.NewLimiter(10, 10)
 
 func SearchLog(ctx context.Context, param *SearchLogParam, opts ApiOpts) (response *cls.SearchLogResponse, err error) {
 	_ = limiter.Wait(ctx)
 
 	credential := common.NewCredential(opts.SecretId, opts.SecretKey)
-	cpf := profile.NewClientProfile()
-	client, _ := cls.NewClient(credential, opts.Region, cpf)
+	var client, _ = cls.NewClient(credential, opts.Region, cpf)
+	if opts.Intranet {
+		client, _ = cls.NewClient(credential, opts.Region, intranetCpf)
+	}
+
 	// 实例化一个请求对象，根据调用的接口和实际情况，可以进一步设置请求参数
 	request := cls.NewSearchLogRequest()
 	request.TopicId = param.TopicId
@@ -84,6 +96,7 @@ func GetApiOpts(instanceSettings backend.DataSourceInstanceSettings) (opts ApiOp
 	opts = ApiOpts{
 		SecretId:  instanceSettings.DecryptedSecureJSONData["secretId"],
 		SecretKey: instanceSettings.DecryptedSecureJSONData["secretKey"],
+		Intranet:  dsData.Intranet,
 		Region:    dsData.Region,
 		TopicId:   dsData.TopicId,
 	}
