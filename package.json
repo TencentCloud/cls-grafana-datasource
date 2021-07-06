@@ -1,6 +1,6 @@
 {
   "name": "tencent-cls-grafana-datasource",
-  "version": "1.0.4",
+  "version": "1.0.5",
   "description": "Log Service datasource plugin for Grafana",
   "author": "Tencent Cloud",
   "license": "Apache-2.0",

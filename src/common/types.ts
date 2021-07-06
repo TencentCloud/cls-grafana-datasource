@@ -11,6 +11,23 @@ export interface MyQuery extends DataQuery {
   metrics?: string
 }
 
+/** MyQuery的运行时版本，用于将query中的不合法字段进去移除，保证query是个MyQuery类型的数据 */
+export const myQueryRuntime: Required<MyQuery> = {
+  Query: '',
+  Limit: 20,
+  Sort: 'asc',
+  format: 'Graph',
+  timeSeriesKey: '',
+  bucket: '',
+  metrics: '',
+
+  refId: '',
+  hide: false,
+  key: '',
+  queryType: '',
+  datasource: '',
+}
+
 export const defaultQuery: Partial<MyQuery> = {
   Query: '',
   Limit: 20,

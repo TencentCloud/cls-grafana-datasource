@@ -73,9 +73,6 @@ type queryModel struct {
 	TimeSeriesKey string `json:"timeSeriesKey,omitempty"`
 	Bucket        string `json:"bucket,omitempty"`
 	Metrics       string `json:"metrics,omitempty"`
-
-	// 当前需由前端进行传递，相关问答追踪：https://github.com/grafana/grafana/issues/34356
-	RequestClient string `json:"RequestClient,omitempty"`
 }
 
 func (td *clsDatasource) query(ctx context.Context, query backend.DataQuery, apiOpts ApiOpts) backend.DataResponse {

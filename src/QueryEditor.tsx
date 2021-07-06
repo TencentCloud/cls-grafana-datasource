@@ -3,31 +3,35 @@ import { QueryEditorProps, SelectableValue } from '@grafana/data'
 import * as _ from 'lodash'
 import * as Constants from './common/constants'
 import { DataSource } from './DataSource'
-import { defaultQuery, MyDataSourceOptions, MyQuery } from './common/types'
+import { defaultQuery, MyDataSourceOptions, MyQuery, myQueryRuntime } from './common/types'
 import { Input, Select } from '@grafana/ui'
 import { InlineFieldRow, InlineField } from './component'
 
 type Props = QueryEditorProps<DataSource, MyQuery, MyDataSourceOptions>
 
 export class QueryEditor extends PureComponent<Props> {
-  onInputChange = (event: ChangeEvent<HTMLInputElement>) => {
+  partialOnChange = (val: Partial<MyQuery>) => {
     const { onChange, query } = this.props
+    const oldQuery = _.pick(query, Object.keys(myQueryRuntime))
+    onChange(({ ...oldQuery, ...val } as unknown) as MyQuery)
+  }
+
+  onInputChange = (event: ChangeEvent<HTMLInputElement>) => {
     const targetDataset: any = event?.target.dataset
     const targetValue =
       targetDataset?.key === 'Query' ? event.target.value : (event.target.value || '').trim()
-    onChange({ ...query, [targetDataset.key]: targetValue })
+    this.partialOnChange({ [targetDataset.key]: targetValue })
   }
 
   onNumberChange = (event: ChangeEvent<HTMLInputElement>) => {
-    const { onChange, query } = this.props
     const targetDataset: any = event?.target.dataset
     const val = isNaN(Number(event.target.value)) ? 0 : Number(event.target.value)
-    onChange({ ...query, [targetDataset.key]: val })
+    this.partialOnChange({ [targetDataset.key]: val })
   }
 
   onFormatChange = (val: SelectableValue) => {
-    const { onChange, query, onRunQuery } = this.props
-    onChange({ ...query, format: val.value })
+    const { onRunQuery } = this.props
+    this.partialOnChange({ format: val.value })
     onRunQuery()
   }
 
