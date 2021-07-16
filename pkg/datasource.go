@@ -47,17 +47,31 @@ type clsDatasource struct {
 // The QueryDataResponse contains a map of RefID to the response for each query, and each response
 // contains Frames ([]*Frame).
 
+const (
+	MaxQueryDataConcurrentGoroutines = 20 // 每个TopicId拥有一个容量为20的并发池
+)
+
+// TopicId为key, 并发池为value
+var topicIdGoroutinesMap = make(map[string]chan int)
+
 func (td *clsDatasource) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
 	response := backend.NewQueryDataResponse()
 
 	apiOpts := GetApiOpts(*req.PluginContext.DataSourceInstanceSettings)
 
+	if topicIdGoroutinesMap[apiOpts.TopicId] == nil {
+		topicIdGoroutinesMap[apiOpts.TopicId] = make(chan int, MaxQueryDataConcurrentGoroutines)
+	}
+	queryDataGoroutines := topicIdGoroutinesMap[apiOpts.TopicId]
+
 	var wg sync.WaitGroup
 	for _, query := range req.Queries {
 		wg.Add(1)
 		go func(q backend.DataQuery) {
+			defer wg.Done()
+			queryDataGoroutines <- 1
 			response.Responses[q.RefID] = td.query(ctx, q, apiOpts)
-			wg.Done()
+			<-queryDataGoroutines
 		}(query)
 	}
 	wg.Wait()
