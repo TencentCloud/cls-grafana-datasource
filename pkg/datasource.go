@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	cls "github.com/tencentcloud/tencent-cls-grafana-datasource/pkg/cls/v20201016"
 	"net/http"
 	"strings"
 	"sync"
@@ -57,12 +58,15 @@ var topicIdGoroutinesMap = make(map[string]chan int)
 func (td *clsDatasource) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
 	response := backend.NewQueryDataResponse()
 
-	apiOpts := GetApiOpts(*req.PluginContext.DataSourceInstanceSettings)
-
-	if topicIdGoroutinesMap[apiOpts.TopicId] == nil {
-		topicIdGoroutinesMap[apiOpts.TopicId] = make(chan int, MaxQueryDataConcurrentGoroutines)
+	camOpts, jsonData, err := GetApiOpts(*req.PluginContext.DataSourceInstanceSettings)
+	if err != nil {
+		return nil, err
 	}
-	queryDataGoroutines := topicIdGoroutinesMap[apiOpts.TopicId]
+
+	if topicIdGoroutinesMap[jsonData.TopicId] == nil {
+		topicIdGoroutinesMap[jsonData.TopicId] = make(chan int, MaxQueryDataConcurrentGoroutines)
+	}
+	queryDataGoroutines := topicIdGoroutinesMap[jsonData.TopicId]
 
 	var wg sync.WaitGroup
 	for _, query := range req.Queries {
@@ -70,7 +74,7 @@ func (td *clsDatasource) QueryData(ctx context.Context, req *backend.QueryDataRe
 		go func(q backend.DataQuery) {
 			defer wg.Done()
 			queryDataGoroutines <- 1
-			response.Responses[q.RefID] = td.query(ctx, q, apiOpts)
+			response.Responses[q.RefID] = td.query(ctx, q, jsonData, camOpts)
 			<-queryDataGoroutines
 		}(query)
 	}
@@ -89,7 +93,7 @@ type queryModel struct {
 	Metrics       string `json:"metrics,omitempty"`
 }
 
-func (td *clsDatasource) query(ctx context.Context, query backend.DataQuery, apiOpts ApiOpts) backend.DataResponse {
+func (td *clsDatasource) query(ctx context.Context, query backend.DataQuery, jsonData *dsJsonData, camOpts CamOpts) backend.DataResponse {
 	// Unmarshal the json into our queryModel
 	var qm queryModel
 	dataRes := backend.DataResponse{}
@@ -98,8 +102,8 @@ func (td *clsDatasource) query(ctx context.Context, query backend.DataQuery, api
 		return dataRes
 	}
 
-	requestParam := SearchLogParam{
-		TopicId: common.StringPtr(apiOpts.TopicId),
+	requestParam := cls.SearchLogRequest{
+		TopicId: common.StringPtr(jsonData.TopicId),
 		From:    common.Int64Ptr(query.TimeRange.From.UnixNano() / 1e6),
 		To:      common.Int64Ptr(query.TimeRange.To.UnixNano() / 1e6),
 		Query:   common.StringPtr(qm.Query),
@@ -108,7 +112,7 @@ func (td *clsDatasource) query(ctx context.Context, query backend.DataQuery, api
 	if qm.Format == "Log" {
 		requestParam.Limit = common.Int64Ptr(qm.Limit)
 	}
-	searchLogResponse, searchLogErr := SearchLog(ctx, &requestParam, apiOpts)
+	searchLogResponse, searchLogErr := SearchLog(ctx, &requestParam, jsonData.Region, camOpts)
 	log.DefaultLogger.Info("CLS_API_INFO", Stringify(query), Stringify(searchLogResponse))
 	if searchLogErr != nil {
 		log.DefaultLogger.Error("CLS_API_ERROR", Stringify(query), Stringify(searchLogErr))
@@ -168,15 +172,21 @@ func (td *clsDatasource) query(ctx context.Context, query backend.DataQuery, api
 // datasource configuration page which allows users to verify that
 // a datasource is working as expected.
 func (td *clsDatasource) CheckHealth(ctx context.Context, req *backend.CheckHealthRequest) (*backend.CheckHealthResult, error) {
-	opts := GetApiOpts(*req.PluginContext.DataSourceInstanceSettings)
+	camOpts, jsonData, err := GetApiOpts(*req.PluginContext.DataSourceInstanceSettings)
+	if err != nil {
+		return &backend.CheckHealthResult{
+			Status:  backend.HealthStatusError,
+			Message: err.Error(),
+		}, nil
+	}
 
-	_, err := SearchLog(ctx, &SearchLogParam{
-		TopicId: common.StringPtr(opts.TopicId),
+	_, err = SearchLog(ctx, &cls.SearchLogRequest{
+		TopicId: common.StringPtr(jsonData.TopicId),
 		From:    common.Int64Ptr(time.Now().AddDate(0, 0, -1).UnixNano() / 1e6),
 		To:      common.Int64Ptr(time.Now().UnixNano() / 1e6),
 		Query:   common.StringPtr(""),
 		Limit:   common.Int64Ptr(1),
-	}, opts)
+	}, jsonData.Region, camOpts)
 
 	var status = backend.HealthStatusOk
 	var message = "CheckHealth Success"

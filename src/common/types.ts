@@ -39,10 +39,10 @@ export const defaultQuery: Partial<MyQuery> = {
  */
 export interface MyDataSourceOptions extends DataSourceJsonData {
   region: string
-  /** 是否使用腾讯云API内网接入点 */
-  intranet?: boolean
   logsetId?: string
   topicId: string
+  /** 是否使用腾讯云API内网接入点 */
+  intranet?: boolean
 }
 
 /**

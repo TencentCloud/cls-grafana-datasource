@@ -12,46 +12,6 @@ import (
 	"golang.org/x/time/rate"
 )
 
-type dsJsonData struct {
-	Intranet bool   `json:"intranet"`
-	Region   string `json:"region"`
-	TopicId  string `json:"topicId"`
-}
-
-type ApiOpts struct {
-	SecretId  string `json:"secretId"`
-	SecretKey string `json:"secretKey"`
-	Intranet  bool   `json:"intranet"`
-	Region    string `json:"region"`
-	TopicId   string `json:"topicId"`
-}
-
-type SearchLogParam struct {
-	// 要查询的日志主题ID
-	TopicId *string `json:"TopicId,omitempty" name:"TopicId"`
-
-	// 要查询的日志的起始时间，Unix时间戳，单位ms
-	From *int64 `json:"From,omitempty" name:"From"`
-
-	// 要查询的日志的结束时间，Unix时间戳，单位ms
-	To *int64 `json:"To,omitempty" name:"To"`
-
-	// 查询语句，语句长度最大为1024
-	Query *string `json:"Query,omitempty" name:"Query"`
-
-	// 单次查询返回的日志条数，最大值为100
-	Limit *int64 `json:"Limit,omitempty" name:"Limit"`
-
-	// 加载更多日志时使用，透传上次返回的Context值，获取后续的日志内容
-	Context *string `json:"Context,omitempty" name:"Context"`
-
-	// 日志接口是否按时间排序返回；可选值：asc(升序)、desc(降序)，默认为 desc
-	Sort *string `json:"Sort,omitempty" name:"Sort"`
-
-	// 是否返回检索的高亮结果
-	HighLight *bool `json:"HighLight,omitempty" name:"HighLight"`
-}
-
 var cpf = profile.NewClientProfile()
 var intranetCpf = profile.NewClientProfile()
 
@@ -61,17 +21,18 @@ func init() {
 
 var limiter = rate.NewLimiter(10, 10)
 
-func SearchLog(ctx context.Context, param *SearchLogParam, opts ApiOpts) (response *cls.SearchLogResponse, err error) {
+func SearchLog(ctx context.Context, param *cls.SearchLogRequest, region string, opts CamOpts) (response *cls.SearchLogResponse, err error) {
 	_ = limiter.Wait(ctx)
 
-	credential := common.NewCredential(opts.SecretId, opts.SecretKey)
-	var client, _ = cls.NewClient(credential, opts.Region, cpf)
+	credential := common.NewTokenCredential(opts.SecretId, opts.SecretKey, opts.SecretToken)
+	var client, _ = cls.NewClient(credential, region, cpf)
 	if opts.Intranet {
-		client, _ = cls.NewClient(credential, opts.Region, intranetCpf)
+		client, _ = cls.NewClient(credential, region, intranetCpf)
 	}
 
 	// 实例化一个请求对象，根据调用的接口和实际情况，可以进一步设置请求参数
 	request := cls.NewSearchLogRequest()
+
 	request.TopicId = param.TopicId
 	request.From = param.From
 	request.To = param.To
@@ -87,18 +48,45 @@ func SearchLog(ctx context.Context, param *SearchLogParam, opts ApiOpts) (respon
 	return
 }
 
-func GetApiOpts(instanceSettings backend.DataSourceInstanceSettings) (opts ApiOpts) {
-	var dsData dsJsonData
-	err := json.Unmarshal(instanceSettings.JSONData, &dsData)
+// 与 MyDataSourceOptions 对应
+type dsJsonData struct {
+	Region   string `json:"region"`
+	TopicId  string `json:"topicId"`
+	Intranet bool   `json:"intranet"`
+}
+
+// CamOpts 与特定请求无关的通用请求数据，主要用于鉴权
+type CamOpts struct {
+	SecretId    string `json:"secretId"`
+	SecretKey   string `json:"secretKey"`
+	SecretToken string `json:"secretToken"`
+	Intranet    bool   `json:"intranet"`
+}
+
+func GetApiOpts(instanceSettings backend.DataSourceInstanceSettings) (camOpts CamOpts, dsData *dsJsonData, err error) {
+	err = json.Unmarshal(instanceSettings.JSONData, &dsData)
 	if err != nil {
 		log.DefaultLogger.Error(err.Error())
 	}
-	opts = ApiOpts{
-		SecretId:  instanceSettings.DecryptedSecureJSONData["secretId"],
-		SecretKey: instanceSettings.DecryptedSecureJSONData["secretKey"],
-		Intranet:  dsData.Intranet,
-		Region:    dsData.Region,
-		TopicId:   dsData.TopicId,
+
+	secretId := instanceSettings.DecryptedSecureJSONData["secretId"]
+	secretKey := instanceSettings.DecryptedSecureJSONData["secretKey"]
+	var token string
+
+	if RoleInstance && secretId == "" && secretKey == "" {
+		secretId, secretKey, token, err = GetUserSecretByRole()
+		if err != nil {
+			log.DefaultLogger.Error("CLS_CREDENTIAL_ERROR ROLE ", err.Error())
+			return
+		}
+		log.DefaultLogger.Info("CLS_CREDENTIAL_INFO ROLE ", "secretId", secretId, "secretKey", secretKey)
+	}
+
+	camOpts = CamOpts{
+		SecretId:    instanceSettings.DecryptedSecureJSONData["secretId"],
+		SecretKey:   instanceSettings.DecryptedSecureJSONData["secretKey"],
+		SecretToken: token,
+		Intranet:    dsData.Intranet,
 	}
 	return
 }
