@@ -1,9 +1,18 @@
-# Grafana展示CLS数据
+# 日志服务数据源新版本发布！ [新版仓库](https://github.com/TencentCloud/tencentcloud-monitor-grafana-app)
+1. 日志服务数据源合并到 [Tencent Cloud Monitor]((https://grafana.com/grafana/plugins/tencentcloud-monitor-app/)) 插件，支持官方 grafana-cli 安装。
+2. 数据源支持同时查询不同日志主题的数据内容，支持使用下拉框选择日志主题，下拉框支持日志主题名称搜索。
+3. 日志检索和日志分析优化，基于数据类型进行自动绘图推断，输入更便捷。
+
+
+
+<br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/>
+
+# Grafana展示CLS数据 [不再维护]
 
 日志服务CLS与Grafana打通，支持将CLS的原始日志数据与SQL聚合分析结果导出至Grafana展示。用户只需安装CLS日志服务grafana插件，在grafana填写检索分析的语句，即可在Grafana上展示结果。
 
 > 注意： 插件自 1.0.3 版本起，已使用腾讯云日志服务新检索接口，查询日志更稳定更快捷。
-> 
+>
 > 1.0.2 及以下版本查询原始日志(Logs)时, 存在检索异常，请用户尽快主动升级到最新版本。
 
 
@@ -11,14 +20,14 @@
 
 1. 安装 Grafana 7以上版本，具体操作请参见[Grafana安装文档](https://grafana.com/docs/grafana/latest/installation/) 。对于低版本Grafana，请参考[Grafana升级指南](https://grafana.com/docs/grafana/latest/installation/upgrading) 。
 
-   以 RPM-based Linux 为例，可使用 [源安装](https://grafana.com/docs/grafana/latest/installation/rpm/#install-from-yum-repository) (推荐) 与 [手动安装](https://grafana.com/docs/grafana/latest/installation/rpm/#install-manually-with-yum) 方式 
+   以 RPM-based Linux 为例，可使用 [源安装](https://grafana.com/docs/grafana/latest/installation/rpm/#install-from-yum-repository) (推荐) 与 [手动安装](https://grafana.com/docs/grafana/latest/installation/rpm/#install-manually-with-yum) 方式
 
    [启动 Grafana 服务](https://grafana.com/docs/grafana/latest/installation/rpm/#2-start-the-server)
    ```sh
    sudo systemctl daemon-reload
    sudo systemctl start grafana-server
-   sudo systemctl status grafana-server 
-   sudo systemctl enable grafana-server  
+   sudo systemctl status grafana-server
+   sudo systemctl enable grafana-server
    ```
 
    若需要安装更多可视化图表，如饼图，趋势速览图，需执行命令安装grafana的panel插件，如安装饼图pie panel。
@@ -40,7 +49,7 @@
    ```
    或使用一键安装脚本（末尾参数为插件安装目录）
    ```shell
-   /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/TencentCloud/cls-grafana-datasource/master/toolkit/update.sh)" bash /var/lib/grafana/plugins/ 
+   /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/TencentCloud/cls-grafana-datasource/master/toolkit/update.sh)" bash /var/lib/grafana/plugins/
    ```
 
 3. 修改Grafana配置文件，配置CLS数据源ID
@@ -196,7 +205,7 @@ CLS 数据源插件支持使用模板变量功能，可参照 [新增变量](htt
 输入如下的 Query 查询语句(请根据业务Topic进行修改)，且可输入Regex对结果进行过滤，可选择Sort对结果进行排序。
 
 ```sql
-* | select status 
+* | select status
 ```
 ![Query类型变量](https://main.qcloudimg.com/raw/c5e3e9beb4665b05f957e0bb4ccfea43.png)
 
