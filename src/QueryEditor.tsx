@@ -1,121 +1,95 @@
-import React, { ChangeEvent, PureComponent } from 'react'
-import { QueryEditorProps, SelectableValue } from '@grafana/data'
-import * as _ from 'lodash'
-import * as Constants from './common/constants'
-import { DataSource } from './DataSource'
-import { defaultQuery, MyDataSourceOptions, MyQuery, myQueryRuntime } from './common/types'
-import { Input, Select } from '@grafana/ui'
-import { InlineFieldRow, InlineField } from './component'
+import { QueryEditorProps } from '@grafana/data';
+import { Tab, TabContent, TabsBar } from '@grafana/ui';
+import React, { PureComponent } from 'react';
 
-type Props = QueryEditorProps<DataSource, MyQuery, MyDataSourceOptions>
+import { CoreApp } from './common/constants';
+import { DataSource } from './DataSource';
+import { setLanguage, Language } from './locale';
+import { LogServiceQueryEditor } from './log-service/LogServiceQueryEditor';
+import { MyDataSourceOptions, QueryInfo, ServiceType, ServiceTypeOptions } from './types';
+
+type Props = QueryEditorProps<DataSource, QueryInfo, MyDataSourceOptions>;
 
 export class QueryEditor extends PureComponent<Props> {
-  partialOnChange = (val: Partial<MyQuery>) => {
-    const { onChange, query } = this.props
-    const oldQuery = _.pick(query, Object.keys(myQueryRuntime))
-    onChange(({ ...oldQuery, ...val } as unknown) as MyQuery)
+  state = {
+    isAlertVisible: false,
+  };
+
+  constructor(props) {
+    super(props);
+    setLanguage(props.datasource.instanceSettings.jsonData.language || Language.Chinese);
   }
 
-  onInputChange = (event: ChangeEvent<HTMLInputElement>) => {
-    const targetDataset: any = event?.target.dataset
-    const targetValue =
-      targetDataset?.key === 'Query' ? event.target.value : (event.target.value || '').trim()
-    this.partialOnChange({ [targetDataset.key]: targetValue })
+  componentDidMount() {
+    const { query } = this.props;
+    // @ts-ignore
+    const app = this.props.app as CoreApp;
+    if (app === CoreApp.UnifiedAlerting) {
+      //  告警页面
+      this.partialOnChange({ serviceType: ServiceType.logService });
+      return;
+    }
+    const firstEnabledService = this.enabledServices[0];
+    if (!query.serviceType && firstEnabledService) {
+      this.partialOnChange({ serviceType: firstEnabledService });
+    }
   }
 
-  onNumberChange = (event: ChangeEvent<HTMLInputElement>) => {
-    const targetDataset: any = event?.target.dataset
-    const val = isNaN(Number(event.target.value)) ? 0 : Number(event.target.value)
-    this.partialOnChange({ [targetDataset.key]: val })
-  }
+  partialOnChange = (queryInfo: Partial<QueryInfo>) => {
+    const { onChange, query: oldQuery } = this.props;
+    // @ts-ignore
+    const app = this.props.app as CoreApp;
+    const newQuery = { ...oldQuery, ...queryInfo } as unknown as QueryInfo;
+    if (app === CoreApp.UnifiedAlerting) {
+      //  告警页面
+      if (newQuery.serviceType === ServiceType.logService) {
+        onChange(newQuery);
+        this.setState({
+          isAlertVisible: false,
+        });
+      } else {
+        this.setState({
+          isAlertVisible: true,
+        });
+      }
+    } else {
+      onChange(newQuery);
+    }
+  };
 
-  onFormatChange = (val: SelectableValue) => {
-    const { onRunQuery } = this.props
-    this.partialOnChange({ format: val.value })
-    onRunQuery()
+  get enabledServices() {
+    return [ServiceType.logService].filter(Boolean);
   }
 
   render() {
-    const query = _.defaults(this.props.query, defaultQuery)
+    const { datasource, query: queryInfo } = this.props;
+    if (!datasource) {
+      return <div>loading</div>;
+    }
     return (
       <div>
-        <InlineFieldRow>
-          <InlineField label="Query" labelWidth={12}>
-            <Input
-              placeholder="log query"
-              value={query.Query || ''}
-              data-key="Query"
-              onChange={this.onInputChange}
-              onBlur={this.props.onRunQuery}
-              css={false}
-            />
-          </InlineField>
-        </InlineFieldRow>
-        <InlineFieldRow>
-          <InlineField label="Format" labelWidth={12} tooltip="待展示图表类型">
-            <Select
-              onChange={this.onFormatChange}
-              value={query.format}
-              options={Constants.QueryEditorFormatOptions}
-            />
-          </InlineField>
-        </InlineFieldRow>
-        {query.format === 'Graph' && (
-          <InlineFieldRow>
-            <InlineField label="Metrics" labelWidth={12} tooltip="待统计指标">
-              <Input
-                placeholder="metrics"
-                value={query.metrics || ''}
-                data-key="metrics"
-                onChange={this.onInputChange}
-                onBlur={this.props.onRunQuery}
-                css={false}
+        {this.enabledServices.length > 1 && (
+          <TabsBar>
+            {ServiceTypeOptions.filter((item) => this.enabledServices.includes(item.value)).map((item) => (
+              <Tab
+                key={item.value}
+                label={item.label}
+                active={queryInfo.serviceType === item.value}
+                onChangeTab={() => {
+                  this.partialOnChange({ serviceType: item.value });
+                }}
               />
-            </InlineField>
-            <InlineField label="Bucket" labelWidth={12} tooltip="聚合列名称（选填）">
-              <Input
-                placeholder="bucket"
-                value={query.bucket || ''}
-                data-key="bucket"
-                onChange={this.onInputChange}
-                onBlur={this.props.onRunQuery}
-                css={false}
-              />
-            </InlineField>
-            <InlineField
-              label="Time"
-              labelWidth={12}
-              tooltip="若查询结果为连续时间数据，则需指定 time 字段。否则不填写"
-            >
-              <Input
-                placeholder="timeSeries"
-                value={query.timeSeriesKey || ''}
-                data-key="timeSeriesKey"
-                onChange={this.onInputChange}
-                onBlur={this.props.onRunQuery}
-                css={false}
-              />
-            </InlineField>
-          </InlineFieldRow>
+            ))}
+          </TabsBar>
         )}
-        {query.format === 'Log' && (
-          <InlineFieldRow>
-            <InlineField label="Limit" labelWidth={12} tooltip="用于指定返回日志检索结果条数">
-              <Input
-                value={query.Limit}
-                data-key="Limit"
-                onChange={this.onNumberChange}
-                onKeyPress={(event) => /[\d]/.test(String.fromCharCode(event.keyCode))}
-                onBlur={this.props.onRunQuery}
-                css={false}
-                type="number"
-                step={1}
-                min={1}
-              />
-            </InlineField>
-          </InlineFieldRow>
-        )}
+        <TabContent>
+          {queryInfo.serviceType === ServiceType.logService && this.renderLogServiceQueryEditor()}
+        </TabContent>
       </div>
-    )
+    );
+  }
+
+  renderLogServiceQueryEditor() {
+    return <LogServiceQueryEditor {...this.props} />;
   }
 }

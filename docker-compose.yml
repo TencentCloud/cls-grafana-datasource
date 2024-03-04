@@ -1,0 +1,12 @@
+---
+version: '3'
+
+services:
+  grafana-dev:
+    image: grafana/grafana:7.4.0
+    container_name: grafana
+    ports:
+      - '3000:3000'
+    volumes:
+      - ./:/var/lib/grafana/plugins/tencent-cls-grafana-datasource
+      - ./conf/grafana.ini:/etc/grafana/grafana.ini

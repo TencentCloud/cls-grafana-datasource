@@ -1,13 +1,4 @@
-# 日志服务数据源新版本发布！ [新版仓库](https://github.com/TencentCloud/tencentcloud-monitor-grafana-app)
-1. 日志服务数据源合并到 [Tencent Cloud Monitor](https://grafana.com/grafana/plugins/tencentcloud-monitor-app/) 插件，支持官方 grafana-cli 安装。
-2. 数据源支持同时查询不同日志主题的数据内容，支持使用下拉框选择日志主题，下拉框支持日志主题名称搜索。
-3. 日志检索和日志分析优化，基于数据类型进行自动绘图推断，输入更便捷。
-
-
-
-<br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/>
-
-# Grafana展示CLS数据 [不再维护]
+# Grafana展示CLS数据
 
 日志服务CLS与Grafana打通，支持将CLS的原始日志数据与SQL聚合分析结果导出至Grafana展示。用户只需安装CLS日志服务grafana插件，在grafana填写检索分析的语句，即可在Grafana上展示结果。
 

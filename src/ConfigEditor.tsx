@@ -1,60 +1,67 @@
-import React, { ChangeEvent, PureComponent } from 'react'
-import { LegacyForms, Legend, Icon, Tooltip, Switch } from '@grafana/ui'
-import { DataSourcePluginOptionsEditorProps } from '@grafana/data'
-import { MyDataSourceOptions, MySecureJsonData } from './common/types'
-import { getRequestClient } from './common/utils'
-import { InlineField } from './component'
-const { FormField, SecretFormField } = LegacyForms
+import { DataSourcePluginOptionsEditorProps, SelectableValue } from '@grafana/data';
+import { LegacyForms, InlineFieldRow, InlineField, Select, InlineSwitch, Input } from '@grafana/ui';
+import React, { ChangeEvent, PureComponent } from 'react';
 
-type Props = DataSourcePluginOptionsEditorProps<MyDataSourceOptions, MySecureJsonData>
+import { MyDataSourceOptions, MySecureJsonData } from './common/types';
+import { getRequestClient } from './common/utils';
+import { t, setLanguage, Language } from './locale';
+
+type Props = DataSourcePluginOptionsEditorProps<MyDataSourceOptions, MySecureJsonData>;
 
 // eslint-disable-next-line @typescript-eslint/no-empty-interface
 interface State {}
 
+const { SecretFormField } = LegacyForms;
+
 export class ConfigEditor extends PureComponent<Props, State> {
+  constructor(props) {
+    super(props);
+    setLanguage(props.options.jsonData.language || Language.Chinese);
+  }
+
   patchJsonData = (kv: Record<string, any>) => {
-    const { onOptionsChange, options } = this.props
+    const { onOptionsChange, options } = this.props;
     if (kv) {
       const jsonData = {
         ...options.jsonData,
         ...kv,
-      }
-      onOptionsChange({ ...options, jsonData })
+      };
+      onOptionsChange({ ...options, jsonData });
     }
-  }
+  };
 
   onJsonDataChange = (event: ChangeEvent<HTMLInputElement>) => {
-    const { onOptionsChange, options } = this.props
-    const targetDataset = event?.target?.dataset
-    const targetValue = (event?.target?.value || '').trim()
-    if (targetDataset.key) {
+    const { onOptionsChange, options } = this.props;
+    const targetName = event?.target?.name;
+    const targetValue = (event?.target?.value || '').trim();
+    if (targetName) {
       const jsonData = {
         ...options.jsonData,
-        [targetDataset.key]: targetValue,
+        [targetName]: targetValue,
         RequestClient: getRequestClient(),
-      }
-      onOptionsChange({ ...options, jsonData })
+      };
+      onOptionsChange({ ...options, jsonData });
     }
-  }
+  };
 
   // Secure field (only sent to the backend)
   onSecureJsonChange = (event: ChangeEvent<HTMLInputElement>) => {
-    const { onOptionsChange, options } = this.props
-    const targetDataset = event?.target?.dataset
-    const targetValue = (event?.target?.value || '').trim()
-    if (targetDataset.key) {
+    const { onOptionsChange, options } = this.props;
+    const targetName = event?.target?.name;
+    const targetValue = (event?.target?.value || '').trim();
+    if (targetName) {
       onOptionsChange({
         ...options,
         secureJsonData: {
           ...options.secureJsonData,
-          [targetDataset.key]: targetValue,
+          [targetName]: targetValue,
         },
-      })
+      });
     }
-  }
+  };
 
   onResetSecureJson = (key: string) => {
-    const { onOptionsChange, options } = this.props
+    const { onOptionsChange, options } = this.props;
     if (key) {
       onOptionsChange({
         ...options,
@@ -66,127 +73,128 @@ export class ConfigEditor extends PureComponent<Props, State> {
           ...options.secureJsonData,
           [key]: '',
         },
-      })
+      });
     }
-  }
+  };
 
   render() {
-    const { options } = this.props
-    const { jsonData, secureJsonFields } = options
-    const secureJsonData = (options.secureJsonData || {}) as MySecureJsonData
+    const { options } = this.props;
+    const { jsonData, secureJsonFields } = options;
+    const secureJsonData = (options.secureJsonData || {}) as MySecureJsonData;
 
     return (
       <>
-        <div className="gf-form-group">
-          <Legend>
-            Security Credentials
-            <Tooltip
-              content={
-                <span>
-                  SecretId、SecretKey：API请求密钥，用于身份鉴权。获取地址前往
-                  <a
-                    style={{ marginLeft: 5, textDecoration: 'underline' }}
-                    href="https://console.cloud.tencent.com/cam/capi"
-                    target="_blank"
-                  >
-                    API密钥管理
-                  </a>
-                </span>
-              }
-              placement="top"
-            >
-              <Icon name="info-circle" />
-            </Tooltip>
-          </Legend>
-
-          <div className="gf-form">
-            <SecretFormField
-              isConfigured={secureJsonFields?.secretId as boolean}
-              value={secureJsonData.secretId || ''}
-              label="SecretId"
-              labelWidth={6}
-              inputWidth={20}
-              data-key="secretId"
-              onReset={() => this.onResetSecureJson('secretId')}
-              onChange={this.onSecureJsonChange}
-            />
-          </div>
-          <div className="gf-form">
-            <SecretFormField
-              isConfigured={secureJsonFields?.secretKey as boolean}
-              value={secureJsonData.secretKey || ''}
-              label="SecretKey"
-              labelWidth={6}
-              inputWidth={20}
-              data-key="secretKey"
-              onReset={() => this.onResetSecureJson('secretKey')}
-              onChange={this.onSecureJsonChange}
-            />
-          </div>
-          <InlineField
-            label="Intranet"
-            tooltip="开启后，接口调用使用腾讯云API内网接入点"
-            labelWidth={12}
+        <div>
+          <h3 className="page-heading">Security Credentials</h3>
+          <div
+            className="card-item"
+            style={{
+              position: 'relative',
+              marginTop: '16px',
+              padding: '16px',
+              WebkitBoxFlex: 1,
+              flexGrow: 1,
+              borderTop: '3px solid rgb(50, 115, 217)',
+            }}
           >
-            <div style={{ padding: 8 }}>
-              <Switch
-                value={jsonData.intranet}
-                onChange={(v) => {
-                  this.patchJsonData({ intranet: Boolean(v?.currentTarget?.checked) })
+            <div>
+              <h4>Initialize Tencent Cloud CLS Grafana Datasource</h4>
+              <p>
+                To initialize the CLS Datasource and connect it to your Tencent Cloud service you will need a SecretId
+                and a SecretKey for you Tencent Cloud account.
+                <br />
+                <b>SecretId</b> is used to identify the identity of the API caller.
+                <br />
+                <b>SecretKey</b> is used to encrypt the signature and validate the signature of the server-side.
+              </p>
+            </div>
+            <div>
+              <h5>User Permission</h5>
+              <p>
+                If you are using a
+                <a
+                  className="highlight-word"
+                  href="https://intl.cloud.tencent.com/document/product/598/13674"
+                  target="_blank"
+                  style={{ margin: '0 4px' }}
+                  rel="noreferrer"
+                >
+                  sub-user
+                </a>
+                account, you should at least own read permission to your CLS topics.
+              </p>
+              <a
+                className="highlight-word"
+                href="https://console.cloud.tencent.com/cam/capi"
+                target="_blank"
+                rel="noreferrer"
+              >
+                Generate a new Tencent Cloud API key
+              </a>
+            </div>
+          </div>
+        </div>
+
+        <div style={{ marginTop: 20 }}>
+          <InlineFieldRow>
+            <InlineField label="SecretId" labelWidth={20} required={true}>
+              <Input
+                width={50}
+                required={true}
+                value={jsonData.secretId}
+                name="secretId"
+                onChange={this.onJsonDataChange}
+              />
+            </InlineField>
+          </InlineFieldRow>
+          <InlineFieldRow>
+            <SecretFormField
+              label="SecretKey"
+              labelWidth={10}
+              inputWidth={25}
+              type="password"
+              name="secretKey"
+              value={secureJsonData?.secretKey || ''}
+              isConfigured={secureJsonFields?.secretKey}
+              onChange={this.onSecureJsonChange}
+              onReset={() => {
+                this.onResetSecureJson('secretKey');
+              }}
+            />
+          </InlineFieldRow>
+          <InlineFieldRow style={{ marginTop: '10px' }}>
+            <InlineField label={t('language')} labelWidth={20}>
+              <Select
+                value={jsonData.language || Language.Chinese}
+                className="width-10"
+                options={[
+                  { value: Language.English, label: 'English' },
+                  { value: Language.Chinese, label: '简体中文' },
+                ]}
+                onChange={(option: SelectableValue<Language>) => {
+                  setLanguage(option.value);
+                  this.patchJsonData({
+                    language: option.value,
+                  });
                 }}
               />
-            </div>
-          </InlineField>
-        </div>
-        <div className="gf-form-group">
-          <Legend>Log Service Info</Legend>
-          <div className="gf-form">
-            <FormField
-              tooltip={
-                <span>
-                  日志服务区域简称，例如北京区域填写ap-beijing，完整区域列表格式参考
-                  <a
-                    style={{ marginLeft: 5, textDecoration: 'underline' }}
-                    href="https://cloud.tencent.com/document/product/614/18940"
-                    target="_blank"
-                  >
-                    地域列表
-                  </a>
-                </span>
-              }
-              label="Region"
-              labelWidth={6}
-              inputWidth={20}
-              placeholder=""
-              data-key="region"
-              value={jsonData.region || ''}
-              onChange={this.onJsonDataChange}
-            />
-          </div>
-          <div className="gf-form">
-            <FormField
-              tooltip={
-                <span>
-                  <a
-                    href="https://cloud.tencent.com/document/product/614/35677"
-                    target="_blank"
-                    style={{ textDecoration: 'underline' }}
-                  >
-                    日志主题ID
-                  </a>
-                </span>
-              }
-              label="TopicId"
-              labelWidth={6}
-              inputWidth={20}
-              placeholder=""
-              data-key="topicId"
-              value={jsonData.topicId || ''}
-              onChange={this.onJsonDataChange}
-            />
-          </div>
+            </InlineField>
+          </InlineFieldRow>
+          <InlineFieldRow style={{ marginTop: '10px' }}>
+            <InlineField label={t('enable_intranet_API_mode')} labelWidth={20}>
+              <InlineSwitch
+                value={jsonData.intranet}
+                onChange={(e) => {
+                  // onIntranetChange
+                  this.patchJsonData({
+                    intranet: e.currentTarget.checked,
+                  });
+                }}
+              />
+            </InlineField>
+          </InlineFieldRow>
         </div>
       </>
-    )
+    );
   }
 }

@@ -3,17 +3,9 @@ package main
 import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend/datasource"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
+	"github.com/tencentcloud/tencent-cls-grafana-datasource/pkg/common"
 	"os"
 )
-
-// PluginVersion https://www.digitalocean.com/community/tutorials/using-ldflags-to-set-version-information-for-go-applications
-var PluginVersion = "0.0.0"
-
-// GrafanaVersion https://github.com/grafana/grafana/issues/34356
-var GrafanaVersion = "0.0.0"
-
-// RoleInstance 机器是否支持使用 Role鉴权 获取临时
-var RoleInstance = false
 
 func main() {
 	// Start listening to requests send from Grafana. This call is blocking so
@@ -21,8 +13,7 @@ func main() {
 	// to exit close down by itself
 	err := datasource.Serve(newDatasource())
 
-	GrafanaVersion = os.Getenv("GF_VERSION")
-	RoleInstance = os.Getenv("INSTANCE_BY") == "tps"
+	common.GrafanaVersion = os.Getenv("GF_VERSION")
 
 	// Log any error if we could start the plugin.
 	if err != nil {

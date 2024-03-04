@@ -1,1 +1,1 @@
-export { getRequestClient } from './getRequestClient'
+export { getRequestClient } from './getRequestClient';

@@ -1,1 +1,1 @@
-export { getRequestClient } from './meta'
+export { getRequestClient } from './meta';
