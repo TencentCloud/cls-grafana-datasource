@@ -9,7 +9,7 @@
 
 ## 前提条件
 
-1. 安装 Grafana 7以上版本，具体操作请参见[Grafana安装文档](https://grafana.com/docs/grafana/latest/installation/) 。对于低版本Grafana，请参考[Grafana升级指南](https://grafana.com/docs/grafana/latest/installation/upgrading) 。
+安装 Grafana 7以上版本，具体操作请参见[Grafana安装文档](https://grafana.com/docs/grafana/latest/installation/) 。对于低版本Grafana，请参考[Grafana升级指南](https://grafana.com/docs/grafana/latest/installation/upgrading) 。
 
    以 RPM-based Linux 为例，可使用 [源安装](https://grafana.com/docs/grafana/latest/installation/rpm/#install-from-yum-repository) (推荐) 与 [手动安装](https://grafana.com/docs/grafana/latest/installation/rpm/#install-manually-with-yum) 方式
 
@@ -29,7 +29,11 @@
 
    更多插件安装请参考[Grafana plugins](https://grafana.com/grafana/plugins?type=panel)
 
-2. 安装CLS对接Grafana插件
+## 安装CLS对接Grafana插件
+
+对于不同的 Grafana 安装方式，需要通过以下不同方式安装 CLS 数据源插件。
+
+### 服务器安装部署
 
    请确认Grafana的插件目录位置。在Centos的插件目录/var/lib/grafana/plugins/安装插件，重启grafana-server。
 
@@ -57,6 +61,39 @@
    ```sh
    service grafana-server restart
    ```
+
+### Docker部署
+
+参考[Docker中安装Grafana插件指引](https://grafana.com/docs/grafana/latest/setup-grafana/installation/docker/#install-plugins-in-the-docker-container)，通过以下环境变量安装CLS插件。
+
+docker run命令：
+```
+docker run -d -p 3000:3000 --name=grafana \
+  -e "GF_INSTALL_PLUGINS=https://github.com/TencentCloud/cls-grafana-datasource/releases/latest/download/tencent-cls-grafana-datasource.zip;tencent-cls-grafana-datasource" \
+  -e "GF_PLUGINS_ALLOW_LOADING_UNSIGNED_PLUGINS=tencent-cls-grafana-datasource" \
+  grafana/grafana
+```
+
+docker compose:
+```
+version: '3'
+
+services:
+  grafana:
+    image: grafana/grafana:latest
+    container_name: grafana
+    ports:
+      - '3000:3000'
+    environment:
+      - GF_INSTALL_PLUGINS=https://github.com/TencentCloud/cls-grafana-datasource/releases/latest/download/tencent-cls-grafana-datasource.zip;tencent-cls-grafana-datasource
+      - GF_PLUGINS_ALLOW_LOADING_UNSIGNED_PLUGINS=tencent-cls-grafana-datasource
+```
+
+### 腾讯云Grafana服务
+
+参考[安装插件指引](https://cloud.tencent.com/document/product/1437/61612)，选择安装 tencent-cls-grafana-datasource。
+
+
 
 ## 配置日志数据源
 
