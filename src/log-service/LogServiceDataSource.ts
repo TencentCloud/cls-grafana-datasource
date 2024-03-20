@@ -183,16 +183,16 @@ export class LogServiceDataSource extends DataSourceApi<QueryInfo, MyDataSourceO
         message: 'DatSource Connection OK',
       };
     } catch (e) {
-      if (e?.code && e.code !== 'AuthFailure.SignatureFailure') {
+      if (e?.code?.startsWith('AuthFailure')) {
         return {
-          status: 'success',
-          message: 'DatSource Connection OK',
+          status: 'error',
+          title: e.code,
+          message: e.message,
         };
       }
       return {
-        status: 'error',
-        title: e.code,
-        message: e.message,
+        status: 'success',
+        message: 'DatSource Connection OK',
       };
     }
   }
