@@ -6,13 +6,20 @@ import { SearchSyntaxRule } from './log-service/common/constants';
 
 export const enum ServiceType {
   logService = 'logService',
+  cloudApi = 'cloudApi',
 }
 
-export const ServiceTypeOptions = [
+export const SERVICE_TYPE_OPTIONS = [
   {
     value: ServiceType.logService,
     get label() {
       return t('cloud_log_service');
+    },
+  },
+  {
+    value: ServiceType.cloudApi,
+    get label() {
+      return t('cloud_api');
     },
   },
 ];

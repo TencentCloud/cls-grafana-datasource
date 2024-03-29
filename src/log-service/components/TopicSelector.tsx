@@ -3,9 +3,9 @@ import { InlineField, Select, AsyncSelect } from '@grafana/ui';
 import React, { FC, useCallback, useEffect, useRef, useState } from 'react';
 import { useEffectOnce } from 'react-use';
 
+import { DescribeRegions, DescribeTopics, Filter, IRegionItem, ITopicIdentifier } from '../../common/model';
 import { t } from '../../locale';
 import { uuidRegex } from '../common/constants';
-import { DescribeRegions, DescribeTopics, Filter, IRegionItem, ITopicIdentifier } from '../common/model';
 import { getStringVariableNameOptions } from '../common/utils';
 
 interface Props {

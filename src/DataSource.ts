@@ -11,6 +11,7 @@ import * as _ from 'lodash';
 import { combineLatest, Observable, of } from 'rxjs';
 import { map } from 'rxjs/operators';
 
+import { CloudApiDataSourcce } from './cloud-api/CloudApiDataSourcce';
 import { IS_DEVELOPMENT_ENVIRONMENT } from './common/constants';
 import { LogServiceDataSource } from './log-service/LogServiceDataSource';
 import { MyDataSourceOptions, QueryInfo, ServiceType, VariableQuery } from './types';
@@ -19,6 +20,7 @@ import { MyDataSourceOptions, QueryInfo, ServiceType, VariableQuery } from './ty
 export class DataSource extends DataSourceWithBackend<QueryInfo, MyDataSourceOptions> {
   readonly instanceSettings: DataSourceInstanceSettings<MyDataSourceOptions>;
   readonly logServiceDataSource: LogServiceDataSource;
+  readonly cloudApiDataSource: CloudApiDataSourcce;
 
   constructor(instanceSettings: DataSourceInstanceSettings<MyDataSourceOptions>) {
     super(instanceSettings);
@@ -29,6 +31,8 @@ export class DataSource extends DataSourceWithBackend<QueryInfo, MyDataSourceOpt
 
     this.logServiceDataSource = new LogServiceDataSource(this.instanceSettings);
     (this.logServiceDataSource as any).meta = this.meta;
+    this.cloudApiDataSource = new CloudApiDataSourcce(this.instanceSettings);
+    (this.cloudApiDataSource as any).meta = this.meta;
   }
 
   query(request: DataQueryRequest<QueryInfo>): Observable<DataQueryResponse> {
@@ -83,8 +87,8 @@ export class DataSource extends DataSourceWithBackend<QueryInfo, MyDataSourceOpt
   }
 
   async metricFindQuery(query: string | VariableQuery, options): Promise<MetricFindValue[]> {
-    if (_.isString(query)) {
-      return [];
+    if (_.isString(query) || query.serviceType === ServiceType.cloudApi) {
+      return this.cloudApiDataSource.metricFindQuery(_.isString(query) ? query : query.queryString);
     }
     if (query.serviceType === ServiceType.logService) {
       return this.logServiceDataSource.metricFindQuery(query.logServiceParams, options);

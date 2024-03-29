@@ -2,7 +2,7 @@ import { DataFrame, DataFrameDTO, FieldDTO, FieldType, toDataFrame } from '@graf
 import _ from 'lodash';
 
 import { parseLogJsonStr } from './formatSearchLog';
-import { ISearchLogResult, ITopicInfo } from '../model';
+import { ISearchLogResult, ITopicInfo } from '../../../common/model';
 
 /** 将SearchResults结果，处理为DataFrame */
 export function ConvertSearchResultsToDataFrame(

@@ -69,7 +69,9 @@ const zh_CN = {
   // others
   multi_scene: '多场景版',
   lite: '精简版',
+  service_type: '服务类型',
   cloud_monitor: '云监控',
+  cloud_api: '云API',
   cloud_log_service: '日志服务',
   real_user_monitoring: '前端性能监控',
   apm_monitoring: '应用性能监控',

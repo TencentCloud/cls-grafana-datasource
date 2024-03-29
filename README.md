@@ -35,7 +35,7 @@
 
 ### 服务器安装部署
 
-   请确认Grafana的插件目录位置。在Centos的插件目录/var/lib/grafana/plugins/安装插件，重启grafana-server。
+1. 请确认Grafana的插件目录位置。在Centos的插件目录/var/lib/grafana/plugins/安装插件，重启grafana-server。
 
    ```sh
    cd /var/lib/grafana/plugins/
@@ -47,20 +47,24 @@
    /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/TencentCloud/cls-grafana-datasource/master/toolkit/update.sh)" bash /var/lib/grafana/plugins/
    ```
 
-3. 修改Grafana配置文件，配置CLS数据源ID
+2. 修改Grafana配置文件，配置CLS数据源ID。配置文件路径参考[配置文档](https://grafana.com/docs/grafana/latest/setup-grafana/configure-grafana/)
+  * 1. 在**plugins**中设置**allow_loading_unsigned_plugins**参数
+```
+[plugins]
+allow_loading_unsigned_plugins = tencent-cls-grafana-datasource
+```
+  * 2. 在**dataproxy**中设置**timeout**, **dialTimeout**, **keep_alive_seconds**参数
+```
+[dataproxy]
+timeout = 60
+dialTimeout = 60
+keep_alive_seconds = 60
+```
 
-  - Linux系统配置文件路径：/etc/grafana/grafana.ini
-  - macOS系统配置文件路径：/usr/local/etc/grafana/grafana.ini
-
-   在**plugins**中设置**allow_loading_unsigned_plugins**参数
-   ```
-   allow_loading_unsigned_plugins = tencent-cls-grafana-datasource
-   ```
-
-   重启grafana服务
-   ```sh
-   service grafana-server restart
-   ```
+3. 重启grafana服务
+```sh
+service grafana-server restart
+```
 
 ### Docker部署
 
@@ -71,6 +75,9 @@ docker run命令：
 docker run -d -p 3000:3000 --name=grafana \
   -e "GF_INSTALL_PLUGINS=https://github.com/TencentCloud/cls-grafana-datasource/releases/latest/download/tencent-cls-grafana-datasource.zip;tencent-cls-grafana-datasource" \
   -e "GF_PLUGINS_ALLOW_LOADING_UNSIGNED_PLUGINS=tencent-cls-grafana-datasource" \
+  -e "GF_DATAPROXY_TIMEOUT=60" \
+  -e "GF_DATAPROXY_DIALTIMEOUT=60" \
+  -e "GF_DATAPROXY_KEEP_ALIVE_SECONDS=60" \
   grafana/grafana
 ```
 
@@ -87,13 +94,30 @@ services:
     environment:
       - GF_INSTALL_PLUGINS=https://github.com/TencentCloud/cls-grafana-datasource/releases/latest/download/tencent-cls-grafana-datasource.zip;tencent-cls-grafana-datasource
       - GF_PLUGINS_ALLOW_LOADING_UNSIGNED_PLUGINS=tencent-cls-grafana-datasource
+      - GF_DATAPROXY_TIMEOUT=60
+      - GF_DATAPROXY_DIALTIMEOUT=60
+      - GF_DATAPROXY_KEEP_ALIVE_SECONDS=60
 ```
 
 ### 腾讯云Grafana服务
 
-参考[安装插件指引](https://cloud.tencent.com/document/product/1437/61612)，选择安装 tencent-cls-grafana-datasource。
+1. 参考[配置管理](https://cloud.tencent.com/document/product/1437/65673)，配置在Grafana配置中增加以下配置
 
+```
+[plugins]
+allow_loading_unsigned_plugins = tencent-cls-grafana-datasource
 
+[dataproxy]
+timeout = 60
+dialTimeout = 60
+keep_alive_seconds = 60
+```
+
+![配置管理](https://qcloudimg.tencent-cloud.cn/raw/8f8b426137dea9b41c3fd584056a1822.png)
+
+2. 参考[安装插件](https://cloud.tencent.com/document/product/1437/61612)，选择安装 tencent-cls-grafana-datasource。
+
+![安装插件](https://qcloudimg.tencent-cloud.cn/raw/218f2fe5b35a4356b5b156d5d575c681.png)
 
 ## 配置日志数据源
 
@@ -243,6 +267,43 @@ status:${HttpStatus}
 ```
 Format: Log Panel
 
+### 云API列表类型变量
+
+变量服务类型选择“云API”，支持变量下拉选项通过[云API](https://cloud.tencent.com/document/api)接口请求查询。只支持查询列表类接口。
+
+例如，配置 CLS地域变量(region) + 日志主题变量(topic)。
+
+region：
+```
+ServiceType=region&Action=DescribeRegions&payload={"Product":"cls"}
+```
+topic(全部)：
+```
+Region=${region}&ServiceType=cls&Action=DescribeTopics&field=Topics&id=TopicId&name=TopicName
+```
+topic(通过TopicName过滤)：
+```
+Region=${region}&ServiceType=cls&Action=DescribeTopics&field=Topics&id=TopicId&name=TopicName&payload={"Filters":[{"Key":"topicName","Values":["your topic name"]}]}
+```
+
+![云API列表类型变量](https://qcloudimg.tencent-cloud.cn/raw/a261d0c4cdebe36aafa5cc0b73da0aaf.png)
+![云API列表类型变量效果](https://qcloudimg.tencent-cloud.cn/raw/095189d680b57386b50408c004ab1bfd.png)
+
+语句参数说明：
+
+Region(选填): 腾讯云地域，默认 `ap-guangzhou`
+
+ServiceType(必填): 云API服务名/产品名，例如 `cls`
+
+Action(必填)：云API接口名称，例如 `DescribeTopics`
+
+field(DescribeRegions接口无需填写，其他必填)：列表返回数组字段名，例如 `Topics` 
+
+id(DescribeRegions接口无需填写，其他必填): 列表返回实例中ID字段名，例如 `TopicId` 
+
+name(DescribeRegions接口无需填写，其他必填)：列表返回实例中实例名称字段名，例如 `TopicName` 
+
+payload(选填)：其他需要传入云API接口中的参数，JSON字符串格式。例如 `{"Filters":[{"Key":"topicName","Values":["your topic name"]}]}`
 
 ### Datasource 类型变量
 输入变量名 Datasource, 选中变量类型为 Datasource，在Data source options中配置 Type 为 Tencent CLS Datasource。
@@ -259,3 +320,4 @@ Format: Log Panel
 - macOS系统日志路径：/usr/local/var/log/grafana/grafana.log
 - Linux系统日志路径：/var/log/grafana/grafana.log
 - 问题排查：https://grafana.com/docs/grafana/latest/troubleshooting/
+- 腾讯云日志服务官网文档：https://cloud.tencent.com/document/product/614/52102

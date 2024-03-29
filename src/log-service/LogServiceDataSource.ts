@@ -22,8 +22,8 @@ import {
   LogFieldReservedName,
 } from './common/format';
 import { toTimeSeriesMany } from './common/format/prepareTimeSeries';
-import { DescribeLogContext, LogInfo, SearchLog } from './common/model';
 import { addQueryResultLimit, replaceClsQueryWithTemplateSrv } from './common/utils/query';
+import { DescribeLogContext, LogInfo, SearchLog } from '../common/model';
 import { MyDataSourceOptions, QueryInfo } from '../types';
 
 export class LogServiceDataSource extends DataSourceApi<QueryInfo, MyDataSourceOptions> {

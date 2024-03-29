@@ -1,7 +1,7 @@
 import { DataFrameDTO, FieldType, toDataFrame, DataFrame, FieldDTO } from '@grafana/data';
 
 import { parseLogJsonStr } from './formatSearchLog';
-import { DescribeLogContextResult } from '../model';
+import { DescribeLogContextResult } from '../../../common/model';
 
 export function ConvertLogContextToDataFrame(logContext: DescribeLogContextResult): DataFrame {
   const { LogContextInfos = [] } = logContext;

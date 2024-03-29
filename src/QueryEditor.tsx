@@ -6,7 +6,7 @@ import { CoreApp } from './common/constants';
 import { DataSource } from './DataSource';
 import { setLanguage, Language } from './locale';
 import { LogServiceQueryEditor } from './log-service/LogServiceQueryEditor';
-import { MyDataSourceOptions, QueryInfo, ServiceType, ServiceTypeOptions } from './types';
+import { MyDataSourceOptions, QueryInfo, ServiceType, SERVICE_TYPE_OPTIONS } from './types';
 
 type Props = QueryEditorProps<DataSource, QueryInfo, MyDataSourceOptions>;
 
@@ -70,7 +70,7 @@ export class QueryEditor extends PureComponent<Props> {
       <div>
         {this.enabledServices.length > 1 && (
           <TabsBar>
-            {ServiceTypeOptions.filter((item) => this.enabledServices.includes(item.value)).map((item) => (
+            {SERVICE_TYPE_OPTIONS.filter((item) => this.enabledServices.includes(item.value)).map((item) => (
               <Tab
                 key={item.value}
                 label={item.label}

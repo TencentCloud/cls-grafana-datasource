@@ -1,5 +1,5 @@
 import { getFieldTypeByPrestoType } from './prestoType';
-import { IAnalysisColumn, ISearchLogResult, TYPES } from '../model';
+import { IAnalysisColumn, ISearchLogResult, TYPES } from '../../../common/model';
 
 export function formatSearchLog(param: TYPES.SearchLogResult): ISearchLogResult {
   const { Analysis, AnalysisRecords = [], Columns = [] } = param;

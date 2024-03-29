@@ -68,7 +68,9 @@ const en_US = {
   // others
   multi_scene: 'Multi-Scene',
   lite: 'Lite',
+  service_type: 'Service Type',
   cloud_monitor: 'Cloud Monitor',
+  cloud_api: 'TencentCloud API',
   cloud_log_service: 'Cloud Log Service',
   real_user_monitoring: 'Real User Monitoring',
   apm_monitoring: 'Application Monitoring',

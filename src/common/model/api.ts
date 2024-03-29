@@ -4,7 +4,7 @@ import _ from 'lodash';
 
 import { IApiError, IRegionItem, IResourceRegionInfo } from './interface';
 import * as TYPES from './types';
-import { GetRequestParams, GetServiceAPIInfo } from '../../../common/constants';
+import { GetRequestParams, GetServiceAPIInfo } from '../constants';
 
 /**
  * 云API请求

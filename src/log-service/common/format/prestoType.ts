@@ -1,7 +1,7 @@
 import { FieldType } from '@grafana/data';
 import moment from 'moment';
 
-import { IAnalysisColumn } from '../model/interface';
+import { IAnalysisColumn } from '../../../common/model/interface';
 
 const ProcessorUtils = {
   timestampWithTimeZoneRegex: /(\w+)\[[\w/]+]/g,

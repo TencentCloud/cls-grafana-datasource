@@ -20,3 +20,12 @@ export const setLanguage = (language: Language) => {
 };
 
 export const getLanguage = () => locale_language;
+
+try {
+  const language = localStorage.getItem('cls_datasource_language');
+  if (language) {
+    setLanguage(language as Language);
+  }
+} catch (e) {
+  console.error(e);
+}
