@@ -44,4 +44,6 @@ jobs:
           yarn
           go mod vendor
           npm run buildPkg
-      
+      - 
+        name: Release
+        uses: softprops/action-gh-release@v2
