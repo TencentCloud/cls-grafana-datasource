@@ -1,5 +1,6 @@
 /** 此文件放置通用业务的配置项，用于区分业务类型 */
 import { DataQuery, DataSourceJsonData } from '@grafana/data';
+import { PreferredVisualisationType } from '@grafana/data/types/data';
 
 import { t, Language } from './locale';
 import { SearchSyntaxRule } from './log-service/common/constants';
@@ -33,6 +34,7 @@ export interface QueryInfo extends DataQuery {
     Query: string;
     SyntaxRule: number;
     MaxResultNum?: number;
+    preferredVisualisationTypes?: PreferredVisualisationType[];
   };
 }
 
@@ -43,6 +45,7 @@ export const defaultQueryInfo: Omit<QueryInfo, 'refId'> = {
     TopicId: '',
     Query: '',
     SyntaxRule: SearchSyntaxRule.CQL,
+    preferredVisualisationTypes: ['logs', 'trace', 'nodeGraph'],
   },
 };
 
@@ -52,8 +55,8 @@ export const queryInfoRuntime: Required<QueryInfo> = {
   hide: false,
   key: '',
   queryType: '',
-  datasource: '',
-  dataTopic: null as any,
+  datasource: null,
+  dataTopic: null,
 
   serviceType: defaultQueryInfo.serviceType,
   logServiceParams: defaultQueryInfo.logServiceParams,
@@ -71,8 +74,10 @@ export interface VariableQuery {
  */
 export interface MyDataSourceOptions extends DataSourceJsonData {
   secretId?: string;
+  /** 是否使用腾讯云API内网接入点 */
   intranet?: boolean;
   language?: Language;
+  enableExploreVisualizationTypes?: boolean;
 }
 
 /**

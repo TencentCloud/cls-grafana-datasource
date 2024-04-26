@@ -1,23 +1,33 @@
 import { DataSourceApi, QueryEditorProps } from '@grafana/data';
-import { InlineField, InlineLabel, QueryField, Select, InlineFieldRow, Input } from '@grafana/ui';
+import { PreferredVisualisationType } from '@grafana/data/types/data';
+import { InlineField, QueryField, Select, InlineFieldRow, Input, Checkbox } from '@grafana/ui';
 import _ from 'lodash';
 import React, { FC, useCallback } from 'react';
 import { useLatest } from 'react-use';
 
 import { SearchSyntaxRule } from './common/constants';
 import { TopicSelector } from './components/TopicSelector';
-import { TcDataSourceId } from '../common/constants';
+import { LogServiceDataSource } from './LogServiceDataSource';
+import { CoreApp, TcDataSourceId } from '../common/constants';
 import { t } from '../locale';
 import { defaultQueryInfo, MyDataSourceOptions, QueryInfo, queryInfoRuntime } from '../types';
 
 import './index.less';
 
-type Props = QueryEditorProps<DataSourceApi<any>, QueryInfo, MyDataSourceOptions>;
+type Props = QueryEditorProps<DataSourceApi<any>, QueryInfo, MyDataSourceOptions> & {
+  // grafana 8 才有，这里自己定义上
+  app: CoreApp;
+};
 
 export const LogServiceQueryEditor: FC<Props> = React.memo((props: Props) => {
   const propsRef = useLatest(props);
-  const { query, datasource } = props;
+  const { query, datasource, app } = props;
+  const enableExploreVisualizationTypes =
+    (datasource as LogServiceDataSource).instanceSettings.jsonData.enableExploreVisualizationTypes || false;
   const logServiceParams = query.logServiceParams || _.clone(defaultQueryInfo.logServiceParams)!;
+  const preferredVisualisationTypes = logServiceParams?.preferredVisualisationTypes || [
+    ...defaultQueryInfo.logServiceParams.preferredVisualisationTypes,
+  ];
 
   const partialOnChange = useCallback(
     (queryInfo: Partial<QueryInfo>) => {
@@ -27,6 +37,28 @@ export const LogServiceQueryEditor: FC<Props> = React.memo((props: Props) => {
       onChange({ ...oldQuery, ...queryInfo } as unknown as QueryInfo);
     },
     [propsRef],
+  );
+
+  const onPreferredVisualisationTypesChange = useCallback(
+    (ev: React.FocusEvent<HTMLInputElement>) => {
+      const target = ev.currentTarget;
+      const { name, checked } = target;
+      let preferredVisualisationTypes = propsRef.current?.query?.logServiceParams?.preferredVisualisationTypes || [
+        ...defaultQueryInfo.logServiceParams.preferredVisualisationTypes,
+      ];
+      if (checked) {
+        preferredVisualisationTypes = [...preferredVisualisationTypes, name as PreferredVisualisationType];
+      } else {
+        preferredVisualisationTypes = preferredVisualisationTypes.filter((type) => type !== name);
+      }
+      partialOnChange({
+        logServiceParams: {
+          ...(propsRef.current?.query?.logServiceParams || ({} as any)),
+          preferredVisualisationTypes,
+        },
+      });
+    },
+    [partialOnChange, propsRef],
   );
 
   return (
@@ -84,27 +116,58 @@ export const LogServiceQueryEditor: FC<Props> = React.memo((props: Props) => {
         }}
       />
 
-      <div style={{ display: 'flex' }}>
-        <InlineLabel width={20}>{t('search_statement')}</InlineLabel>
-        <div style={{ flexGrow: 1 }}>
-          <QueryField
-            portalOrigin={TcDataSourceId}
-            placeholder={`e.g. _SOURCE__: 127.0.0.1 AND "http/1.0"`}
-            query={logServiceParams.Query}
-            onChange={(v) => {
-              partialOnChange({
-                logServiceParams: {
-                  ...(propsRef.current?.query?.logServiceParams || ({} as any)),
-                  Query: v,
-                },
-              });
-            }}
-            // By default QueryField calls onChange if onBlur is not defined, this will trigger a rerender
-            // And slate will claim the focus, making it impossible to leave the field.
-            onBlur={() => {}}
-          />
-        </div>
-      </div>
+      <InlineField label={t('search_statement')} labelWidth={20} grow={true}>
+        <QueryField
+          portalOrigin={TcDataSourceId}
+          placeholder={`e.g. _SOURCE__: 127.0.0.1 AND "http/1.0"`}
+          query={logServiceParams.Query}
+          onChange={(v) => {
+            partialOnChange({
+              logServiceParams: {
+                ...(propsRef.current?.query?.logServiceParams || ({} as any)),
+                Query: v,
+              },
+            });
+          }}
+          // By default QueryField calls onChange if onBlur is not defined, this will trigger a rerender
+          // And slate will claim the focus, making it impossible to leave the field.
+          onBlur={() => {}}
+        />
+      </InlineField>
+
+      {enableExploreVisualizationTypes && app === CoreApp.Explore ? (
+        <InlineField
+          label={t('explore_visualization_types')}
+          labelWidth={20}
+          style={{
+            alignItems: 'center',
+            alignSelf: 'center',
+          }}
+        >
+          <>
+            <Checkbox
+              name={'logs'}
+              label={t('logs')}
+              value={preferredVisualisationTypes?.includes('logs')}
+              onChange={onPreferredVisualisationTypesChange}
+            />
+            <span> </span>
+            <Checkbox
+              name={'nodeGraph'}
+              label={t('node_graph')}
+              value={preferredVisualisationTypes?.includes('nodeGraph')}
+              onChange={onPreferredVisualisationTypesChange}
+            />
+            <span> </span>
+            <Checkbox
+              name={'trace'}
+              label={t('trace')}
+              value={preferredVisualisationTypes?.includes('trace')}
+              onChange={onPreferredVisualisationTypesChange}
+            />
+          </>
+        </InlineField>
+      ) : null}
     </div>
   );
 });

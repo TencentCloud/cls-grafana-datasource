@@ -125,7 +125,7 @@ type instanceSettings struct {
 	httpClient *http.Client
 }
 
-func newDataSourceInstance(setting backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
+func newDataSourceInstance(ctx context.Context, settings backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
 	return &instanceSettings{
 		httpClient: &http.Client{},
 	}, nil

@@ -8,7 +8,10 @@ import { setLanguage, Language } from './locale';
 import { LogServiceQueryEditor } from './log-service/LogServiceQueryEditor';
 import { MyDataSourceOptions, QueryInfo, ServiceType, SERVICE_TYPE_OPTIONS } from './types';
 
-type Props = QueryEditorProps<DataSource, QueryInfo, MyDataSourceOptions>;
+type Props = QueryEditorProps<DataSource, QueryInfo, MyDataSourceOptions> & {
+  // grafana 8 才有，这里自己定义上
+  app: CoreApp;
+};
 
 export class QueryEditor extends PureComponent<Props> {
   state = {

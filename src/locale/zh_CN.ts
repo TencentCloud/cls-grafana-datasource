@@ -83,6 +83,11 @@ const zh_CN = {
   time_unit: 'Time unit',
   seconds: 'seconds',
   search_description: '按照具体的查询条件搜索实例，默认拉取前 20 条实例',
+  explore_visualization_types: '展示类型',
+  logs: '日志(Logs)',
+  trace: '追踪(Traces)',
+  node_graph: '节点图(Node graph)',
+  enable_explore_visualization_types: '在探索页开启展示类型选项',
   // region
   'ap-guangzhou': '华南地区(广州)',
   'ap-shenzhen-fsi': '华南地区(深圳金融)',

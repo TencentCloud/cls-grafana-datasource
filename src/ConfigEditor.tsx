@@ -2,9 +2,9 @@ import { DataSourcePluginOptionsEditorProps, SelectableValue } from '@grafana/da
 import { LegacyForms, InlineFieldRow, InlineField, Select, InlineSwitch, Input } from '@grafana/ui';
 import React, { ChangeEvent, PureComponent } from 'react';
 
-import { MyDataSourceOptions, MySecureJsonData } from './common/types';
 import { getRequestClient } from './common/utils';
 import { t, setLanguage, Language } from './locale';
+import { MyDataSourceOptions, MySecureJsonData } from './types';
 
 type Props = DataSourcePluginOptionsEditorProps<MyDataSourceOptions, MySecureJsonData>;
 
@@ -137,7 +137,7 @@ export class ConfigEditor extends PureComponent<Props, State> {
 
         <div style={{ marginTop: 20 }}>
           <InlineFieldRow>
-            <InlineField label="SecretId" labelWidth={20} required={true}>
+            <InlineField label="SecretId" labelWidth={30} required={true}>
               <Input
                 width={50}
                 required={true}
@@ -147,10 +147,10 @@ export class ConfigEditor extends PureComponent<Props, State> {
               />
             </InlineField>
           </InlineFieldRow>
-          <InlineFieldRow>
+          <InlineFieldRow style={{ marginBottom: 4 }}>
             <SecretFormField
               label="SecretKey"
-              labelWidth={10}
+              labelWidth={15}
               inputWidth={25}
               type="password"
               name="secretKey"
@@ -160,10 +160,11 @@ export class ConfigEditor extends PureComponent<Props, State> {
               onReset={() => {
                 this.onResetSecureJson('secretKey');
               }}
+              required={true}
             />
           </InlineFieldRow>
-          <InlineFieldRow style={{ marginTop: '10px' }}>
-            <InlineField label={t('language')} labelWidth={20}>
+          <InlineFieldRow>
+            <InlineField label={t('language')} labelWidth={30}>
               <Select
                 value={jsonData.language || Language.Chinese}
                 className="width-10"
@@ -180,14 +181,27 @@ export class ConfigEditor extends PureComponent<Props, State> {
               />
             </InlineField>
           </InlineFieldRow>
-          <InlineFieldRow style={{ marginTop: '10px' }}>
-            <InlineField label={t('enable_intranet_API_mode')} labelWidth={20}>
+          <InlineFieldRow>
+            <InlineField label={t('enable_intranet_API_mode')} labelWidth={30}>
               <InlineSwitch
                 value={jsonData.intranet}
                 onChange={(e) => {
                   // onIntranetChange
                   this.patchJsonData({
                     intranet: e.currentTarget.checked,
+                  });
+                }}
+              />
+            </InlineField>
+          </InlineFieldRow>
+          <InlineFieldRow>
+            <InlineField label={t('enable_explore_visualization_types')} labelWidth={30}>
+              <InlineSwitch
+                value={jsonData.enableExploreVisualizationTypes}
+                onChange={(e) => {
+                  // onIntranetChange
+                  this.patchJsonData({
+                    enableExploreVisualizationTypes: e.currentTarget.checked,
                   });
                 }}
               />

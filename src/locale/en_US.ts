@@ -83,6 +83,11 @@ const en_US = {
   seconds: 'seconds',
   search_description:
     'Search for instances according to specific query conditions, and pull the first 20 instances by default',
+  explore_visualization_types: 'Visualization types',
+  logs: 'Logs',
+  trace: 'Traces',
+  node_graph: 'Node graph',
+  enable_explore_visualization_types: 'Enable Visualization types in Explore',
   // region
   'ap-guangzhou': 'South China(Guangzhou)',
   'ap-shenzhen-fsi': 'South China(Shenzhen Finance)',

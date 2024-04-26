@@ -3,6 +3,7 @@ import { clone, isString } from 'lodash';
 import React, { useCallback, useLayoutEffect } from 'react';
 import { useLatest } from 'react-use';
 
+import { CoreApp } from './common/constants';
 import { DataSource } from './DataSource';
 import { Language, setLanguage, t } from './locale';
 import { LogServiceQueryEditor } from './log-service/LogServiceQueryEditor';
@@ -80,6 +81,7 @@ export const VariableQueryEditor: React.FC<VariableQueryProps> = (props) => {
                 logServiceParams: v.logServiceParams,
               });
             }}
+            app={CoreApp.Unknown}
           />
         </>
       )}

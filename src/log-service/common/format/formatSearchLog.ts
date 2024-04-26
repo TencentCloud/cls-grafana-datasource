@@ -1,5 +1,9 @@
+import JSONBigInt from 'json-bigint';
+
 import { getFieldTypeByPrestoType } from './prestoType';
 import { IAnalysisColumn, ISearchLogResult, TYPES } from '../../../common/model';
+
+const JSONBigString = JSONBigInt({ storeAsString: true });
 
 export function formatSearchLog(param: TYPES.SearchLogResult): ISearchLogResult {
   const { Analysis, AnalysisRecords = [], Columns = [] } = param;
@@ -54,3 +58,39 @@ export function parseLogJsonStr(logJsonStr: string): Record<string, any> {
     return {};
   }
 }
+/**
+ *
+ * @description json平铺
+ * @param jsonData likes { a: { a1: 123}
+ * @param parent
+ * @param result
+ * @returns Array likes {'a.a1': 123}
+ */
+export const parseJsonRec = (jsonData, parent = '', result: Record<string, any> = {}): Record<string, any> => {
+  const keys = Object.keys(jsonData ?? {});
+
+  if (keys.length > 0) {
+    keys.forEach((subKey) => {
+      const key = parent ? `${parent}.${subKey}` : subKey;
+      if (typeof jsonData[subKey] === 'object') {
+        parseJsonRec(jsonData[subKey], key, result);
+      } else {
+        result[key] = jsonData[subKey];
+      }
+    });
+  }
+
+  return result;
+};
+export const safeParseJson = (str: string) => {
+  if (typeof str === 'string') {
+    try {
+      const obj = JSONBigString.parse(str);
+      return obj;
+    } catch (e) {
+      return {};
+    }
+  }
+
+  return {};
+};

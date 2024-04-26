@@ -2277,6 +2277,73 @@
     "@nodelib/fs.scandir" "2.1.5"
     fastq "^1.6.0"
 
+"@opentelemetry/api-metrics@0.25.0":
+  version "0.25.0"
+  resolved "https://mirrors.tencent.com/npm/@opentelemetry/api-metrics/-/api-metrics-0.25.0.tgz#3b996842c8043068da4d11a6e96960e757ad6be9"
+  integrity sha512-9T0c9NQAEGRujUC7HzPa2/qZ5px/UvB2sfSU5CAKFRrAlDl2gn25B0oUbDqSRHW/IG1X2rnQ3z2bBQkJyJvE4g==
+
+"@opentelemetry/api@1.7.0":
+  version "1.7.0"
+  resolved "https://mirrors.tencent.com/npm/@opentelemetry/api/-/api-1.7.0.tgz#b139c81999c23e3c8d3c0a7234480e945920fc40"
+  integrity sha512-AdY5wvN0P2vXBi3b29hxZgSFvdhdxPB9+f0B6s//P9Q8nibRWeA3cHm8UmLpio9ABigkVHJ5NMPk+Mz8VCCyrw==
+
+"@opentelemetry/core@0.25.0":
+  version "0.25.0"
+  resolved "https://mirrors.tencent.com/npm/@opentelemetry/core/-/core-0.25.0.tgz#44fae79865483be5dacdf72f99db9f1a603c4bae"
+  integrity sha512-8OTWF4vfCENU112XB5ElLqf0eq/FhsY0SBvvY65vB3+fbZ2Oi+CPsRASrUZWGtC9MJ5rK2lBlY+/jI4a/NPPBg==
+  dependencies:
+    "@opentelemetry/semantic-conventions" "0.25.0"
+    semver "^7.3.5"
+
+"@opentelemetry/exporter-collector@0.25.0":
+  version "0.25.0"
+  resolved "https://mirrors.tencent.com/npm/@opentelemetry/exporter-collector/-/exporter-collector-0.25.0.tgz#5c6a6a95cb2220aba6085f79b561166e150737df"
+  integrity sha512-xZYstLt4hz1aTloJaepWdjMMf9305MqwqbUWjcU/X9pOxvgFWRlchO6x/HQTw7ow0i/S+ShzC+greKnb+1WvLA==
+  dependencies:
+    "@opentelemetry/api-metrics" "0.25.0"
+    "@opentelemetry/core" "0.25.0"
+    "@opentelemetry/resources" "0.25.0"
+    "@opentelemetry/sdk-metrics-base" "0.25.0"
+    "@opentelemetry/sdk-trace-base" "0.25.0"
+
+"@opentelemetry/resources@0.25.0":
+  version "0.25.0"
+  resolved "https://mirrors.tencent.com/npm/@opentelemetry/resources/-/resources-0.25.0.tgz#a780ab536577359ca9ebe93ccc5d02ba8c3fb2ce"
+  integrity sha512-O46u53vDBlxCML8O9dIjsRcCC2VT5ri1upwhp02ITobgJ16aVD/iScCo1lPl/x2E7yq9uwzMINENiiYZRFb6XA==
+  dependencies:
+    "@opentelemetry/core" "0.25.0"
+    "@opentelemetry/semantic-conventions" "0.25.0"
+
+"@opentelemetry/sdk-metrics-base@0.25.0":
+  version "0.25.0"
+  resolved "https://mirrors.tencent.com/npm/@opentelemetry/sdk-metrics-base/-/sdk-metrics-base-0.25.0.tgz#3ac340ef9f1ff7c649339bb031f6c390a2c8ed70"
+  integrity sha512-7fwPlAFB5Xw8mnVQfq0wqKNw3RXiAMad9T1bk5Sza9LK/L6hz8RTuHWCsFMsj+1OOSAaiPFuUMYrK1J75+2IAg==
+  dependencies:
+    "@opentelemetry/api-metrics" "0.25.0"
+    "@opentelemetry/core" "0.25.0"
+    "@opentelemetry/resources" "0.25.0"
+    lodash.merge "^4.6.2"
+
+"@opentelemetry/sdk-trace-base@0.25.0":
+  version "0.25.0"
+  resolved "https://mirrors.tencent.com/npm/@opentelemetry/sdk-trace-base/-/sdk-trace-base-0.25.0.tgz#4393903a7db8a5ae81a99c4a34121df67e4fdfbe"
+  integrity sha512-TInkLSF/ThM3GNVM+9tgnCVjyNLnRxvAkG585Fhu0HNwaEtCTUwI0r7AvMRIREOreeRWttBG6kvT0LOKdo8yjw==
+  dependencies:
+    "@opentelemetry/core" "0.25.0"
+    "@opentelemetry/resources" "0.25.0"
+    "@opentelemetry/semantic-conventions" "0.25.0"
+    lodash.merge "^4.6.2"
+
+"@opentelemetry/semantic-conventions@0.25.0":
+  version "0.25.0"
+  resolved "https://mirrors.tencent.com/npm/@opentelemetry/semantic-conventions/-/semantic-conventions-0.25.0.tgz#c100d146957949608c6b9614267ae044cdcb5315"
+  integrity sha512-V3N+MDBiv0TUlorbgiSqk6CvcP876CYUk/41Tg6s8OIyvniTwprE6vPvFQayuABiVkGlHOxv1Mlvp0w4qNdnVg==
+
+"@opentelemetry/semantic-conventions@1.21.0":
+  version "1.21.0"
+  resolved "https://mirrors.tencent.com/npm/@opentelemetry/semantic-conventions/-/semantic-conventions-1.21.0.tgz#83f7479c524ab523ac2df702ade30b9724476c72"
+  integrity sha512-lkC8kZYntxVKr7b8xmjCVUgE0a8xgDakPyDo9uSWavXPyYqLgYYGdEd2j8NxihRyb6UwpX3G/hFUF4/9q2V+/g==
+
 "@petamoriken/float16@^3.4.7":
   version "3.8.4"
   resolved "https://mirrors.tencent.com/npm/@petamoriken/float16/-/float16-3.8.4.tgz#cd3c02a7fe39f10ae3dd24ed33bd082053aadd66"
@@ -3100,6 +3167,11 @@
   version "2.2.7"
   resolved "https://mirrors.tencent.com/npm/@types/js-cookie/-/js-cookie-2.2.7.tgz#226a9e31680835a6188e887f3988e60c04d3f6a3"
   integrity sha512-aLkWa0C0vO5b4Sr798E26QgOkss68Un0bLjs7u9qxzPT5CG+8DuNTffWES58YzJs3hrVAOs1wonycqEBqNJubA==
+
+"@types/json-bigint@^1.0.4":
+  version "1.0.4"
+  resolved "https://mirrors.tencent.com/npm/@types/json-bigint/-/json-bigint-1.0.4.tgz#250d29e593375499d8ba6efaab22d094c3199ef3"
+  integrity sha512-ydHooXLbOmxBbubnA7Eh+RpBzuaIiQjh8WGJYQB50JFGFrdxW7JzVlyEV7fAXw0T2sqJ1ysTneJbiyNLqZRAag==
 
 "@types/json-schema@*", "@types/json-schema@^7.0.5", "@types/json-schema@^7.0.6":
   version "7.0.7"
@@ -4724,6 +4796,11 @@ big.js@^5.2.2:
   resolved "http://mirrors.tencent.com/npm/big.js/-/big.js-5.2.2.tgz#65f0af382f578bcdc742bd9c281e9cb2d7768328"
   integrity sha512-vyL2OymJxmarO8gxMr0mhChsO9QGwhynfuu4+MHTAW6czfq9humCB7rKpUjDd9YUiDPU4mzpyupFSvOClAwbmQ==
 
+bignumber.js@^9.0.0:
+  version "9.1.2"
+  resolved "https://mirrors.tencent.com/npm/bignumber.js/-/bignumber.js-9.1.2.tgz#b7c4242259c008903b13707983b5f4bbd31eda0c"
+  integrity sha512-2/mKyZH9K85bzOEfhXDBFZTGd1CTs+5IHpeFQo9luiBG7hghdC851Pj2WAhb6E3R6b9tZj/XKhbg4fum+Kepug==
+
 binary-extensions@^1.0.0:
   version "1.13.1"
   resolved "http://mirrors.tencent.com/npm/binary-extensions/-/binary-extensions-1.13.1.tgz#598afe54755b2868a5330d2aff9d4ebb53209b65"
@@ -5715,10 +5792,10 @@ crypto-browserify@^3.11.0:
     randombytes "^2.0.0"
     randomfill "^1.0.3"
 
-crypto-js@^4.0.0:
-  version "4.0.0"
-  resolved "http://mirrors.tencent.com/npm/crypto-js/-/crypto-js-4.0.0.tgz#2904ab2677a9d042856a2ea2ef80de92e4a36dcc"
-  integrity sha512-bzHZN8Pn+gS7DQA6n+iUmBfl0hO5DJq++QP3U6uTucDtk/0iGpXd/Gg7CGR0p8tJhofJyaKoWBuJI4eAO00BBg==
+crypto-js@^4.2.0:
+  version "4.2.0"
+  resolved "https://mirrors.tencent.com/npm/crypto-js/-/crypto-js-4.2.0.tgz#4d931639ecdfd12ff80e8186dba6af2c2e856631"
+  integrity sha512-KALDyEYgpY+Rlob/iriUtjV6d5Eq+Y191A5g4UqLAi8CyGP9N1+FdVbkc1SxKc2r4YAYqG8JzO2KGL+AizD70Q==
 
 css-animation@^1.3.2:
   version "1.6.1"
@@ -9940,6 +10017,13 @@ jsesc@~0.5.0:
   resolved "http://mirrors.tencent.com/npm/jsesc/-/jsesc-0.5.0.tgz#e7dee66e35d6fc16f710fe91d5cf69f70f08911d"
   integrity sha1-597mbjXW/Bb3EP6R1c9p9w8IkR0=
 
+json-bigint@^1.0.0:
+  version "1.0.0"
+  resolved "https://mirrors.tencent.com/npm/json-bigint/-/json-bigint-1.0.0.tgz#ae547823ac0cad8398667f8cd9ef4730f5b01ff1"
+  integrity sha512-SiPv/8VpZuWbvLSMtTDU8hEfrZWg/mH/nV/b4o0CYbSxu1UIQPLdwKOCIyLQX+VIPO5vrLX3i8qtqFyhdPSUSQ==
+  dependencies:
+    bignumber.js "^9.0.0"
+
 json-bignum@^0.0.3:
   version "0.0.3"
   resolved "https://mirrors.tencent.com/npm/json-bignum/-/json-bignum-0.0.3.tgz#41163b50436c773d82424dbc20ed70db7604b8d7"
@@ -10727,12 +10811,12 @@ moment@2.29.2:
   resolved "https://mirrors.tencent.com/npm/moment/-/moment-2.29.2.tgz#00910c60b20843bcba52d37d58c628b47b1f20e4"
   integrity sha512-UgzG4rvxYpN15jgCmVJwac49h9ly9NurikMWGPdVxm8GZD6XjkKPxDTjQQ43gtGgnV3X0cAyWDdP2Wexoquifg==
 
-moment@2.x, moment@^2.29.1:
+moment@2.x:
   version "2.29.1"
   resolved "http://mirrors.tencent.com/npm/moment/-/moment-2.29.1.tgz#b2be769fa31940be9eeea6469c075e35006fa3d3"
   integrity sha512-kHmoybcPV8Sqy59DwNDY3Jefr64lK/by/da0ViFcuA4DH0vQg5Q6Ze5VimxkfQNSC+Mls/Kx53s7TjP1RhFEDQ==
 
-"moment@>= 2.9.0":
+"moment@>= 2.9.0", moment@^2.30.1:
   version "2.30.1"
   resolved "https://mirrors.tencent.com/npm/moment/-/moment-2.30.1.tgz#f8c91c07b7a786e30c59926df530b4eac96974ae"
   integrity sha512-uEmtNhbDOrWPFS+hdjFCBfy9f2YoyzRpwcl+DqpC6taX21FzsTLQVbMV/W7PzNSX6x/bhC1zA3c2UQ5NzH6how==

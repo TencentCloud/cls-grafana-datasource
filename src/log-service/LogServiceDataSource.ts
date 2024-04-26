@@ -27,7 +27,7 @@ import { DescribeLogContext, LogInfo, SearchLog } from '../common/model';
 import { MyDataSourceOptions, QueryInfo } from '../types';
 
 export class LogServiceDataSource extends DataSourceApi<QueryInfo, MyDataSourceOptions> {
-  private readonly instanceSettings: DataSourceInstanceSettings<MyDataSourceOptions>;
+  public readonly instanceSettings: DataSourceInstanceSettings<MyDataSourceOptions>;
   constructor(instanceSettings: DataSourceInstanceSettings<MyDataSourceOptions>) {
     super(instanceSettings);
     this.instanceSettings = instanceSettings;
@@ -55,7 +55,7 @@ export class LogServiceDataSource extends DataSourceApi<QueryInfo, MyDataSourceO
       };
     });
 
-    const dataFramePromise: Promise<DataFrame>[] = requestTargets
+    const dataFramePromise: Promise<DataFrame[]>[] = requestTargets
       .filter((target) => !target.hide && target.logServiceParams.region && target.logServiceParams.TopicId)
       .map((target) =>
         SearchLog(
@@ -70,10 +70,7 @@ export class LogServiceDataSource extends DataSourceApi<QueryInfo, MyDataSourceO
           target.logServiceParams.region,
           { instanceSettings: this.instanceSettings },
         ).then((result) =>
-          ConvertSearchResultsToDataFrame(formatSearchLog(result), {
-            region: target.logServiceParams.region,
-            TopicId: target.logServiceParams.TopicId,
-          }),
+          ConvertSearchResultsToDataFrame(formatSearchLog(result), target.logServiceParams, this.instanceSettings),
         ),
       );
 
@@ -81,33 +78,35 @@ export class LogServiceDataSource extends DataSourceApi<QueryInfo, MyDataSourceO
       subscriber.next({ data: [], state: LoadingState.Loading });
 
       Promise.all(dataFramePromise)
-        .then((frames) => {
+        .then((framesArray) => {
           const processedFrames = [];
-          for (const frame of frames) {
-            // 如果是 Analysis 场景，且返回内容可转化为 TimeSeriesMany, 则进行处理以绘制时序图
-            if (!frame?.meta?.preferredVisualisationType) {
-              const fieldTypeSet = new Set();
-              frame.fields.forEach((field) => fieldTypeSet.add(field.type));
-              if (
-                fieldTypeSet.has(FieldType.time) &&
-                fieldTypeSet.has(FieldType.string) &&
-                fieldTypeSet.has(FieldType.number)
-              ) {
-                const timeSeriesMany = toTimeSeriesMany([frame]);
-                if (frame.fields.filter((item) => item.type === 'number')?.length === 1) {
-                  timeSeriesMany.forEach((item) => {
-                    item.fields.forEach((field) => {
-                      if (field.type === FieldType.number) {
-                        field.name = '';
-                      }
+          for (const frames of framesArray) {
+            for (const frame of frames) {
+              // 如果是 Analysis 场景，且返回内容可转化为 TimeSeriesMany, 则进行处理以绘制时序图
+              if (!frame?.meta?.preferredVisualisationType) {
+                const fieldTypeSet = new Set();
+                frame.fields.forEach((field) => fieldTypeSet.add(field.type));
+                if (
+                  fieldTypeSet.has(FieldType.time) &&
+                  fieldTypeSet.has(FieldType.string) &&
+                  fieldTypeSet.has(FieldType.number)
+                ) {
+                  const timeSeriesMany = toTimeSeriesMany([frame]);
+                  if (frame.fields.filter((item) => item.type === 'number')?.length === 1) {
+                    timeSeriesMany.forEach((item) => {
+                      item.fields.forEach((field) => {
+                        if (field.type === FieldType.number) {
+                          field.name = '';
+                        }
+                      });
                     });
-                  });
+                  }
+                  processedFrames.splice(frame.fields.length, 0, ...timeSeriesMany);
+                  continue;
                 }
-                processedFrames.splice(frame.fields.length, 0, ...timeSeriesMany);
-                continue;
               }
+              processedFrames.push(frame);
             }
-            processedFrames.push(frame);
           }
           subscriber.next({ data: processedFrames, state: LoadingState.Done });
           subscriber.complete();
