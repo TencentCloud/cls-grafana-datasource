@@ -3,7 +3,7 @@ name: release
 on:
   push:
     # Pattern matched against refs/tags
-    tags:        
+    tags:
       - '*'           # Push events to every tag not containing /
 
 jobs:
@@ -38,13 +38,13 @@ jobs:
       -
         name: Show Mage version
         run: mage --version
-      - 
+      -
         name: Build
         run: |
-          yarn
+          yarn install --registry https://registry.npmjs.org
           go mod vendor
           npm run buildPkg
-      - 
+      -
         name: Release
         uses: softprops/action-gh-release@v2
         with:
