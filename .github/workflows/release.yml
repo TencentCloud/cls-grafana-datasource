@@ -41,7 +41,7 @@ jobs:
       -
         name: Build
         run: |
-          yarn install --registry https://registry.npmjs.org
+          yarn install
           go mod vendor
           npm run buildPkg
       -
