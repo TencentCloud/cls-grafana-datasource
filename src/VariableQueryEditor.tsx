@@ -1,5 +1,5 @@
 import { InlineField, InlineFieldRow, Input, RadioButtonGroup } from '@grafana/ui';
-import { clone, isString } from 'lodash';
+import { clone, isString } from 'lodash-es';
 import React, { useCallback, useLayoutEffect } from 'react';
 import { useLatest } from 'react-use';
 
@@ -10,6 +10,7 @@ import { LogServiceQueryEditor } from './log-service/LogServiceQueryEditor';
 import { defaultQueryInfo, ServiceType, VariableQuery, SERVICE_TYPE_OPTIONS } from './types';
 
 interface VariableQueryProps {
+  app: CoreApp;
   query: VariableQuery;
   onChange: (v: VariableQuery, definition: string) => void;
   datasource: DataSource;
@@ -22,7 +23,7 @@ const InfoPopver: React.FC<any> = () => (
 );
 export const VariableQueryEditor: React.FC<VariableQueryProps> = (props) => {
   const propsRef = useLatest(props);
-  const { query, datasource } = props;
+  const { query, datasource, app } = props;
 
   useLayoutEffect(() => {
     setLanguage(props.datasource.instanceSettings.jsonData.language || Language.Chinese);
@@ -52,12 +53,14 @@ export const VariableQueryEditor: React.FC<VariableQueryProps> = (props) => {
             onChange={(type) => {
               if (type === ServiceType.cloudApi) {
                 onQueryChange({
+                  app,
                   serviceType: type,
                   queryString: '',
                 });
               }
               if (type === ServiceType.logService) {
                 onQueryChange({
+                  app,
                   serviceType: type,
                   queryString: '',
                   logServiceParams: clone(defaultQueryInfo.logServiceParams),
@@ -76,6 +79,7 @@ export const VariableQueryEditor: React.FC<VariableQueryProps> = (props) => {
             onRunQuery={() => {}}
             onChange={(v) => {
               onQueryChange({
+                app,
                 serviceType: ServiceType.logService,
                 queryString: '',
                 logServiceParams: v.logServiceParams,
@@ -93,6 +97,7 @@ export const VariableQueryEditor: React.FC<VariableQueryProps> = (props) => {
               required
               onChange={(e) =>
                 onQueryChange({
+                  app,
                   serviceType: ServiceType.cloudApi,
                   queryString: e.currentTarget.value,
                 })

@@ -7,7 +7,7 @@ import {
   MetricFindValue,
 } from '@grafana/data';
 import { DataSourceWithBackend } from '@grafana/runtime';
-import * as _ from 'lodash';
+import * as _ from 'lodash-es';
 import { combineLatest, Observable, of } from 'rxjs';
 import { map } from 'rxjs/operators';
 

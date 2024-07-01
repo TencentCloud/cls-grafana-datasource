@@ -2,7 +2,8 @@
 import { DataQuery, DataSourceJsonData } from '@grafana/data';
 import { PreferredVisualisationType } from '@grafana/data/types/data';
 
-import { t, Language } from './locale';
+import { CoreApp } from './common/constants';
+import { Language, t } from './locale';
 import { SearchSyntaxRule } from './log-service/common/constants';
 
 export const enum ServiceType {
@@ -26,6 +27,7 @@ export const SERVICE_TYPE_OPTIONS = [
 ];
 
 export interface QueryInfo extends DataQuery {
+  app: CoreApp;
   /** 数据源Query针对的查询服务，监控 or 日志 */
   serviceType?: ServiceType;
   logServiceParams?: {
@@ -39,6 +41,7 @@ export interface QueryInfo extends DataQuery {
 }
 
 export const defaultQueryInfo: Omit<QueryInfo, 'refId'> = {
+  app: CoreApp.Dashboard,
   serviceType: ServiceType.logService,
   logServiceParams: {
     region: '',
@@ -51,6 +54,7 @@ export const defaultQueryInfo: Omit<QueryInfo, 'refId'> = {
 
 /** QueryInfo的运行时版本，用于将query中的不合法字段进去移除，保证query是个QueryInfo类型的数据 */
 export const queryInfoRuntime: Required<QueryInfo> = {
+  app: CoreApp.Dashboard,
   refId: '',
   hide: false,
   key: '',
@@ -64,6 +68,7 @@ export const queryInfoRuntime: Required<QueryInfo> = {
 
 /** 变量数据类型。字符场景为云监控配置，对象场景由内部字段决定 */
 export interface VariableQuery {
+  app: CoreApp;
   serviceType: ServiceType;
   queryString: string;
   logServiceParams?: QueryInfo['logServiceParams'];

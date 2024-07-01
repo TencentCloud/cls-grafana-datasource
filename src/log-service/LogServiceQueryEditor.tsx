@@ -1,9 +1,9 @@
 import { DataSourceApi, QueryEditorProps } from '@grafana/data';
 import { PreferredVisualisationType } from '@grafana/data/types/data';
 import { InlineField, QueryField, Select, InlineFieldRow, Input, Checkbox } from '@grafana/ui';
-import _ from 'lodash';
-import React, { FC, useCallback } from 'react';
-import { useLatest } from 'react-use';
+import { clone, isNil, pick } from 'lodash-es';
+import React, { FC, useCallback, useRef } from 'react';
+import { useEffectOnce, useLatest } from 'react-use';
 
 import { SearchSyntaxRule } from './common/constants';
 import { TopicSelector } from './components/TopicSelector';
@@ -24,8 +24,8 @@ export const LogServiceQueryEditor: FC<Props> = React.memo((props: Props) => {
   const { query, datasource, app } = props;
   const enableExploreVisualizationTypes =
     (datasource as LogServiceDataSource).instanceSettings.jsonData.enableExploreVisualizationTypes || false;
-  const logServiceParams = query.logServiceParams || _.clone(defaultQueryInfo.logServiceParams)!;
-  const preferredVisualisationTypes = logServiceParams?.preferredVisualisationTypes || [
+  const logServiceParamsRef = useRef(query.logServiceParams || clone(defaultQueryInfo.logServiceParams)!);
+  const preferredVisualisationTypes = logServiceParamsRef.current?.preferredVisualisationTypes || [
     ...defaultQueryInfo.logServiceParams.preferredVisualisationTypes,
   ];
 
@@ -33,11 +33,20 @@ export const LogServiceQueryEditor: FC<Props> = React.memo((props: Props) => {
     (queryInfo: Partial<QueryInfo>) => {
       const { onChange, query } = propsRef.current;
       // 使用queryInfoRuntime作为配置模板，清除其他不存在的配置字段。
-      const oldQuery = _.pick(query, Object.keys(queryInfoRuntime));
+      const oldQuery = pick(query, Object.keys(queryInfoRuntime));
       onChange({ ...oldQuery, ...queryInfo } as unknown as QueryInfo);
     },
     [propsRef],
   );
+  useEffectOnce(() => {
+    if (isNil(logServiceParamsRef.current.SyntaxRule)) {
+      logServiceParamsRef.current.SyntaxRule = SearchSyntaxRule.CQL;
+    }
+    partialOnChange({
+      app,
+      logServiceParams: logServiceParamsRef.current,
+    });
+  });
 
   const onPreferredVisualisationTypesChange = useCallback(
     (ev: React.FocusEvent<HTMLInputElement>) => {
@@ -51,11 +60,9 @@ export const LogServiceQueryEditor: FC<Props> = React.memo((props: Props) => {
       } else {
         preferredVisualisationTypes = preferredVisualisationTypes.filter((type) => type !== name);
       }
+      logServiceParamsRef.current.preferredVisualisationTypes = preferredVisualisationTypes;
       partialOnChange({
-        logServiceParams: {
-          ...(propsRef.current?.query?.logServiceParams || ({} as any)),
-          preferredVisualisationTypes,
-        },
+        logServiceParams: logServiceParamsRef.current,
       });
     },
     [partialOnChange, propsRef],
@@ -65,26 +72,28 @@ export const LogServiceQueryEditor: FC<Props> = React.memo((props: Props) => {
     <div>
       <InlineFieldRow>
         <TopicSelector
-          value={{ region: logServiceParams.region, TopicId: logServiceParams.TopicId }}
+          value={{ region: logServiceParamsRef.current.region, TopicId: logServiceParamsRef.current.TopicId }}
           onChange={(v) => {
+            logServiceParamsRef.current = {
+              ...(propsRef.current?.query?.logServiceParams || ({} as any)),
+              ...v,
+            };
             partialOnChange({
-              logServiceParams: {
-                ...(propsRef.current?.query?.logServiceParams || ({} as any)),
-                ...v,
-              },
+              logServiceParams: logServiceParamsRef.current,
             });
           }}
           datasource={datasource}
         />
         <InlineField label={t('syntax_rule')} labelWidth={20}>
           <Select
-            value={logServiceParams.SyntaxRule}
+            value={logServiceParamsRef.current.SyntaxRule}
             onChange={(v) => {
+              logServiceParamsRef.current = {
+                ...(propsRef.current?.query?.logServiceParams || ({} as any)),
+                SyntaxRule: v.value,
+              };
               partialOnChange({
-                logServiceParams: {
-                  ...(propsRef.current?.query?.logServiceParams || ({} as any)),
-                  SyntaxRule: v.value,
-                },
+                logServiceParams: logServiceParamsRef.current,
               });
             }}
             menuPlacement="bottom"
@@ -105,13 +114,14 @@ export const LogServiceQueryEditor: FC<Props> = React.memo((props: Props) => {
       </InlineFieldRow>
 
       <MaxResultNumInput
-        value={logServiceParams.MaxResultNum}
+        value={logServiceParamsRef.current.MaxResultNum}
         onChange={(val) => {
+          logServiceParamsRef.current = {
+            ...(propsRef.current?.query?.logServiceParams || ({} as any)),
+            MaxResultNum: val,
+          };
           partialOnChange({
-            logServiceParams: {
-              ...(propsRef.current?.query?.logServiceParams || ({} as any)),
-              MaxResultNum: val,
-            },
+            logServiceParams: logServiceParamsRef.current,
           });
         }}
       />
@@ -120,13 +130,14 @@ export const LogServiceQueryEditor: FC<Props> = React.memo((props: Props) => {
         <QueryField
           portalOrigin={TcDataSourceId}
           placeholder={`e.g. _SOURCE__: 127.0.0.1 AND "http/1.0"`}
-          query={logServiceParams.Query}
+          query={logServiceParamsRef.current.Query}
           onChange={(v) => {
+            logServiceParamsRef.current = {
+              ...(propsRef.current?.query?.logServiceParams || ({} as any)),
+              Query: v,
+            };
             partialOnChange({
-              logServiceParams: {
-                ...(propsRef.current?.query?.logServiceParams || ({} as any)),
-                Query: v,
-              },
+              logServiceParams: logServiceParamsRef.current,
             });
           }}
           // By default QueryField calls onChange if onBlur is not defined, this will trigger a rerender
@@ -212,3 +223,4 @@ const MaxResultNumInput: FC<MaxResultNumInputProps> = React.memo((props) => {
     </InlineField>
   );
 });
+MaxResultNumInput.displayName = 'MaxResultNumInput';

@@ -69,9 +69,7 @@ export class LogServiceDataSource extends DataSourceApi<QueryInfo, MyDataSourceO
           },
           target.logServiceParams.region,
           { instanceSettings: this.instanceSettings },
-        ).then((result) =>
-          ConvertSearchResultsToDataFrame(formatSearchLog(result), target.logServiceParams, this.instanceSettings),
-        ),
+        ).then((result) => ConvertSearchResultsToDataFrame(formatSearchLog(result), target, this.instanceSettings)),
       );
 
     const output$ = new Observable<DataQueryResponse>((subscriber) => {
@@ -143,6 +141,7 @@ export class LogServiceDataSource extends DataSourceApi<QueryInfo, MyDataSourceO
             Query,
             From: options.range!.from.valueOf(),
             To: options.range!.to.valueOf(),
+            SyntaxRule: logServiceParams.SyntaxRule,
             Limit: logServiceParams?.MaxResultNum,
           },
           region,
@@ -171,6 +170,8 @@ export class LogServiceDataSource extends DataSourceApi<QueryInfo, MyDataSourceO
           Query: '',
           From: moment().subtract(1, 'h').valueOf(),
           To: moment().valueOf(),
+          SyntaxRule: 1,
+          Limit: 100,
         },
         'ap-shanghai',
         {

@@ -12,9 +12,10 @@ import {
 import { SpanStatusCode } from '@opentelemetry/api';
 import { collectorTypes } from '@opentelemetry/exporter-collector';
 import { SemanticResourceAttributes } from '@opentelemetry/semantic-conventions';
-import _, { isNil } from 'lodash';
+import _, { isNil } from 'lodash-es';
 
 import { parseLogJsonStr, safeParseJson } from './formatSearchLog';
+import { CoreApp } from '../../../common/constants';
 import { ISearchLogResult } from '../../../common/model';
 import { MyDataSourceOptions, QueryInfo } from '../../../types';
 import { createGraphFrames } from '../grafana/graphTransform';
@@ -29,12 +30,12 @@ export type TraceSpanReference = {
 /** 将SearchResults结果，处理为DataFrame */
 export function ConvertSearchResultsToDataFrame(
   searchLogResult: ISearchLogResult,
-  logServiceParams: QueryInfo['logServiceParams'],
+  queryInfo: QueryInfo,
   instanceSettings: DataSourceInstanceSettings<MyDataSourceOptions>,
 ): DataFrame[] {
   return searchLogResult.Analysis
     ? [toDataFrame(ConvertAnalysisJsonToDataFrameDTO(searchLogResult))]
-    : ConvertLogJsonToDataFrameDTO(searchLogResult, logServiceParams, instanceSettings).map(toDataFrame);
+    : ConvertLogJsonToDataFrameDTO(searchLogResult, queryInfo, instanceSettings).map(toDataFrame);
 }
 
 function ConvertAnalysisJsonToDataFrameDTO(searchLogResult: ISearchLogResult): DataFrameDTO {
@@ -67,9 +68,10 @@ const oltpKeys = ['traceId', 'spanId', 'traceState'];
 
 function ConvertLogJsonToDataFrameDTO(
   searchLogResult: ISearchLogResult,
-  logServiceParams: QueryInfo['logServiceParams'],
+  queryInfo: QueryInfo,
   instanceSettings: DataSourceInstanceSettings<MyDataSourceOptions>,
 ): DataFrameDTO[] {
+  const { app, logServiceParams } = queryInfo;
   const {
     jsonData: { enableExploreVisualizationTypes = false },
   } = instanceSettings;
@@ -291,11 +293,22 @@ function ConvertLogJsonToDataFrameDTO(
       result.push(...(createGraphFrames(oltpFrame) as MutableDataFrame[]));
     }
   }
-  if (
-    !enableExploreVisualizationTypes ||
-    isNil(logServiceParams.preferredVisualisationTypes) ||
-    logServiceParams.preferredVisualisationTypes?.includes('logs')
-  ) {
+
+  // Explore页
+  if (app === CoreApp.Explore) {
+    // 如果开启展示类型选项，则按照展示类型设置来判断是否展示logs数据
+    if (enableExploreVisualizationTypes) {
+      if (logServiceParams.preferredVisualisationTypes?.includes('logs')) {
+        result.push(logsFrameDTO);
+      }
+    } else {
+      // 如果没有开启展示类型选项，则看是否已存在tracing数据，存在就不展示logs了
+      if (!result.length) {
+        result.push(logsFrameDTO);
+      }
+    }
+  } else {
+    // 其他场景都加上logs数据
     result.push(logsFrameDTO);
   }
 

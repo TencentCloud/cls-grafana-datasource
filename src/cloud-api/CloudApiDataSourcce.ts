@@ -1,6 +1,6 @@
 import { DataSourceApi, DataSourceInstanceSettings } from '@grafana/data';
 import { getTemplateSrv } from '@grafana/runtime';
-import _ from 'lodash';
+import _ from 'lodash-es';
 
 import { sliceLength } from '../common/constants';
 import { capiRequest } from '../common/model';
@@ -23,17 +23,17 @@ export function ParseMetricQuery(query = '') {
     return {};
   }
   const result = {};
-  const queries = _.split(query, '&');
+  const queries: string[] = _.split(query, '&');
   _.forEach(queries, (item) => {
     const str = _.split(item, '=');
-    if (_.trim(_.get(str, '0', ''))) {
-      let val = _.trim(_.get(str, '1', ''));
+    if (_.trim(_.get(str, '0', '') as string)) {
+      let val = _.trim(_.get(str, '1', '') as string);
       try {
         val = JSON.parse(val);
       } catch (e) {
         // console.log({ val });
       }
-      result[_.toLower(_.trim(_.get(str, '0', '')))] = val;
+      result[_.toLower(_.trim(_.get(str, '0', '') as string))] = val;
     }
   });
   return result;

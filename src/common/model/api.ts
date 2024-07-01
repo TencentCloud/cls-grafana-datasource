@@ -1,6 +1,6 @@
 import { DataSourceInstanceSettings } from '@grafana/data';
 import { getBackendSrv, getTemplateSrv } from '@grafana/runtime';
-import _ from 'lodash';
+import _ from 'lodash-es';
 
 import { IApiError, IRegionItem, IResourceRegionInfo } from './interface';
 import * as TYPES from './types';
