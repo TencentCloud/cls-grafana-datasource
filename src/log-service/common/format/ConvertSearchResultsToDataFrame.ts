@@ -33,6 +33,9 @@ export function ConvertSearchResultsToDataFrame(
   queryInfo: QueryInfo,
   instanceSettings: DataSourceInstanceSettings<MyDataSourceOptions>,
 ): DataFrame[] {
+  if (queryInfo.logServiceParams.format === 'Log') {
+    return ConvertLogJsonToDataFrameDTO(searchLogResult, queryInfo, instanceSettings).map(toDataFrame);
+  }
   return searchLogResult.Analysis
     ? [toDataFrame(ConvertAnalysisJsonToDataFrameDTO(searchLogResult))]
     : ConvertLogJsonToDataFrameDTO(searchLogResult, queryInfo, instanceSettings).map(toDataFrame);

@@ -19,23 +19,24 @@ export function isQueryContainSql(queryString: string): boolean {
 /**
  * 解析query，获取前面原始数据部分
  */
-export function getQueryLucene(queryString = ''): string {
+export function getRawQuery(queryString = ''): string {
   const querySplit = queryString.split(CQL_SPLIT_PATTERN);
-  let luceneQuery = '';
+  let rawQuery = '';
   if (querySplit.length === 1) {
-    // 未得到有效切分项，说明是纯 lucene 查询
-    luceneQuery = queryString;
+    // lucene语法 => 只能用管道符
+    // 这里只是照抄了后台逻辑，实际上此时接口返回sql_flag会是false，不用管
+    rawQuery = queryString;
   } else if (querySplit.length >= 2) {
-    luceneQuery = querySplit[0];
+    rawQuery = querySplit[0];
   } else {
-    // 逻辑死区，不可能出现
+    // sql_flag为true时，后台有逻辑校验，代码不会走到这一步
     return '';
   }
-  return luceneQuery;
+  return rawQuery;
 }
 
 export function replaceClsQueryWithTemplateSrv(queryString: string, scopedVars: any = {}): string {
-  const luceneQuery = getQueryLucene(queryString ?? '');
+  const luceneQuery = getRawQuery(queryString ?? '');
   const sqlQuery = (queryString ?? '').slice(luceneQuery.length);
   const Query =
     getTemplateSrv().replace(luceneQuery, scopedVars, 'lucene') + getTemplateSrv().replace(sqlQuery, scopedVars, 'raw');
@@ -43,7 +44,7 @@ export function replaceClsQueryWithTemplateSrv(queryString: string, scopedVars: 
 }
 
 export function addQueryResultLimit(queryString: string, logServiceParams: QueryInfo['logServiceParams']) {
-  const luceneQuery = getQueryLucene(queryString ?? '');
+  const luceneQuery = getRawQuery(queryString ?? '');
   const sqlQuery = (queryString ?? '').slice(luceneQuery.length);
   const resultLimit = logServiceParams.MaxResultNum;
 

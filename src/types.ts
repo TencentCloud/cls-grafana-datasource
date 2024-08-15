@@ -37,6 +37,8 @@ export interface QueryInfo extends DataQuery {
     SyntaxRule: number;
     MaxResultNum?: number;
     preferredVisualisationTypes?: PreferredVisualisationType[];
+    // 解析使用字段
+    format?: 'Graph' | 'Table' | 'Log';
   };
 }
 
@@ -49,6 +51,7 @@ export const defaultQueryInfo: Omit<QueryInfo, 'refId'> = {
     Query: '',
     SyntaxRule: SearchSyntaxRule.CQL,
     preferredVisualisationTypes: ['logs', 'trace', 'nodeGraph'],
+    format: 'Graph',
   },
 };
 

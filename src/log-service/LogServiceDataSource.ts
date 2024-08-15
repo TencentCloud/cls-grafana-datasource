@@ -22,7 +22,7 @@ import {
   LogFieldReservedName,
 } from './common/format';
 import { toTimeSeriesMany } from './common/format/prepareTimeSeries';
-import { addQueryResultLimit, replaceClsQueryWithTemplateSrv } from './common/utils/query';
+import { addQueryResultLimit, getRawQuery, replaceClsQueryWithTemplateSrv } from './common/utils/query';
 import { DescribeLogContext, LogInfo, SearchLog } from '../common/model';
 import { MyDataSourceOptions, QueryInfo } from '../types';
 
@@ -61,7 +61,10 @@ export class LogServiceDataSource extends DataSourceApi<QueryInfo, MyDataSourceO
         SearchLog(
           {
             TopicId: target.logServiceParams.TopicId,
-            Query: target.logServiceParams.Query,
+            Query:
+              target.logServiceParams.format === 'Log'
+                ? getRawQuery(target.logServiceParams.Query)
+                : target.logServiceParams.Query,
             From: from,
             To: to,
             SyntaxRule: target.logServiceParams.SyntaxRule,
@@ -78,10 +81,15 @@ export class LogServiceDataSource extends DataSourceApi<QueryInfo, MyDataSourceO
       Promise.all(dataFramePromise)
         .then((framesArray) => {
           const processedFrames = [];
-          for (const frames of framesArray) {
+          for (let framesIndex = 0; framesIndex < framesArray.length; framesIndex += 1) {
+            const frames = framesArray[framesIndex];
             for (const frame of frames) {
               // 如果是 Analysis 场景，且返回内容可转化为 TimeSeriesMany, 则进行处理以绘制时序图
-              if (!frame?.meta?.preferredVisualisationType) {
+              if (
+                !frame?.meta?.preferredVisualisationType &&
+                (!requestTargets[framesIndex].logServiceParams.format ||
+                  requestTargets[framesIndex].logServiceParams.format === 'Graph')
+              ) {
                 const fieldTypeSet = new Set();
                 frame.fields.forEach((field) => fieldTypeSet.add(field.type));
                 if (

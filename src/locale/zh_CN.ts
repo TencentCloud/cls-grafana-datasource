@@ -88,6 +88,7 @@ const zh_CN = {
   trace: '追踪(Traces)',
   node_graph: '节点图(Node graph)',
   enable_explore_visualization_types: '在探索页开启展示类型选项',
+  panel_type: '待展示图表类型',
   // region
   'ap-guangzhou': '华南地区(广州)',
   'ap-shenzhen-fsi': '华南地区(深圳金融)',

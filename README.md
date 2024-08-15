@@ -146,11 +146,11 @@ keep_alive_seconds = 60
 
 3. 用户输入Query语句，根据待展示图表类型，选择Format形式，系统会做数据转换以满足grafana展示需要。
 
-   | Format格式            | 描述                                                         | 配置项                                                       |
-      | --------------------- | ------------------------------------------------------------ | ------------------------------------------------------------ |
-   | Log panel             | log panel is used to shown log search result. Query syntax supports searching by keyword, fuzzy match. For more information, see [Syntax and Rules](https://intl.cloud.tencent.com/document/product/614/30439). Eg. status:400 | limit:用于指定返回日志检索结果条数                           |
-   | Table panle           | Table panel will automatically show the results of whatever columns and rows your query returns | 无                                                           |
-   | Graph,Pie,Gauge panel | In this pattern, there is a format transformation where data will be adapted to graph,pie,gauge panel | Metrics：待统计指标<br />Bucket：（选填）聚合列名称 <br />Time : （选填）若query返回结果为连续时间数据，则需指定 time 字段。若无，则不填写 |
+   | Format格式                            | 描述                                                         | 配置项                  |
+      |-------------------------------------| ------------------------------------------------------------ |----------------------|
+   | Log Panel                           | log panel is used to shown log search result. Query syntax supports searching by keyword, fuzzy match. For more information, see [Syntax and Rules](https://intl.cloud.tencent.com/document/product/614/30439). Eg. status:400 | limit:用于指定返回日志检索结果条数 |
+   | Table Panel                         | Table panel will automatically show the results of whatever columns and rows your query returns | 无                    |
+   | Graph, Pie, Gauge，Time Series Panel | In this pattern, there is a format transformation where data will be adapted to Graph, Pie, Gauge, Time Series Panel | 无                    |
 
 ## 示例
 
@@ -166,13 +166,7 @@ query语句：
 * | select histogram( cast(__TIMESTAMP__ as timestamp),interval 1 minute) as time, count(*) as pv,count( distinct remote_addr) as uv group by time order by time limit 1000
 ```
 
-Format：选择 **Graph,Pie,Gauge panel**
-
-Metrics：**pv，uv**
-
-Bucket：无聚合列，**不填写**
-
-Time : **time**
+Format：选择 **Graph, Pie, Gauge, Time Series Panel**
 
 ### 饼图Pie
 
@@ -186,13 +180,7 @@ query语句：
 * | select count(*) as count, status group by status
 ```
 
-Format：选择 **Graph,Pie,Gauge panel**
-
-Metrics：**count**
-
-Bucket：**status**
-
-Time：不是连续时间数据，**不填**
+Format：选择 **Graph, Pie, Gauge, Time Series Panel**
 
 ### 柱状图，压力图bar gauge
 
@@ -206,13 +194,7 @@ query语句：
 * | select http_referer,avg(request_time) as lagency group by http_referer order by lagency desc limit 10
 ```
 
-Format：选择 **Graph,Pie,Gauge panel**
-
-Metrics：lagency
-
-Bucket：http_referer
-
-Time：不是连续时间数据，**不填**
+Format：选择 **Graph, Pie, Gauge, Time Series Panel**
 
 ### 表格Table
 
@@ -265,7 +247,6 @@ CLS 数据源插件支持使用模板变量功能，可参照 [新增变量](htt
 ```sql
 status:${HttpStatus}
 ```
-Format: Log Panel
 
 ### 云API列表类型变量
 

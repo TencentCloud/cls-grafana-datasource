@@ -88,6 +88,7 @@ const en_US = {
   trace: 'Traces',
   node_graph: 'Node graph',
   enable_explore_visualization_types: 'Enable Visualization types in Explore',
+  panel_type: 'Panel type to display',
   // region
   'ap-guangzhou': 'South China(Guangzhou)',
   'ap-shenzhen-fsi': 'South China(Shenzhen Finance)',

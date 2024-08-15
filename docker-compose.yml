@@ -11,7 +11,7 @@ services:
   #    - ./conf/grafana.ini:/etc/grafana/grafana.ini
 
   grafana-dev:
-    image: grafana/grafana:latest
+    image: grafana/grafana:9.4.0
     container_name: grafana
     ports:
       - '3001:3000'
