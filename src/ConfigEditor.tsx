@@ -8,13 +8,10 @@ import { MyDataSourceOptions, MySecureJsonData } from './types';
 
 type Props = DataSourcePluginOptionsEditorProps<MyDataSourceOptions, MySecureJsonData>;
 
-// eslint-disable-next-line @typescript-eslint/no-empty-interface
-interface State {}
-
 const { SecretFormField } = LegacyForms;
 
-export class ConfigEditor extends PureComponent<Props, State> {
-  constructor(props) {
+export class ConfigEditor extends PureComponent<Props> {
+  constructor(props: Props) {
     super(props);
     setLanguage(props.options.jsonData.language || Language.Chinese);
   }
@@ -52,6 +49,7 @@ export class ConfigEditor extends PureComponent<Props, State> {
     if (targetName) {
       onOptionsChange({
         ...options,
+        // @ts-ignore
         secureJsonData: {
           ...options.secureJsonData,
           [targetName]: targetValue,
@@ -69,6 +67,7 @@ export class ConfigEditor extends PureComponent<Props, State> {
           ...options.secureJsonFields,
           [key]: false,
         },
+        // @ts-ignore
         secureJsonData: {
           ...options.secureJsonData,
           [key]: '',
@@ -173,7 +172,7 @@ export class ConfigEditor extends PureComponent<Props, State> {
                   { value: Language.Chinese, label: '简体中文' },
                 ]}
                 onChange={(option: SelectableValue<Language>) => {
-                  setLanguage(option.value);
+                  setLanguage(option.value as Language);
                   this.patchJsonData({
                     language: option.value,
                   });

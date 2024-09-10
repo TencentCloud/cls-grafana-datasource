@@ -1,29 +1,7 @@
 {
-  "include": ["src", "types", "./.eslintrc.js"],
-  "compileOnSave": false,
+  "extends": "./.config/tsconfig.json",
   "compilerOptions": {
-    "jsx": "react",
-    "types": ["jest", "node"],
-    "typeRoots": ["./node_modules/@types"],
-    "target": "es5",
-    "module": "esnext",
-    "rootDir": "./src",
-    "lib": ["dom", "es2015", "es2016", "esnext"],
-    "declaration": false,
-    "allowSyntheticDefaultImports": true,
-    "inlineSourceMap": false,
-    "sourceMap": true,
-    "noEmitOnError": false,
-    "emitDecoratorMetadata": false,
-    "experimentalDecorators": true,
-    "noImplicitReturns": true,
-    "noImplicitThis": false,
-    "noImplicitUseStrict": false,
-    "noImplicitAny": false,
-    "noUnusedLocals": true,
-    "strictNullChecks": false,
-    "moduleResolution": "node",
-    "preserveConstEnums": true,
-    "resolveJsonModule": true
-  }
+    "alwaysStrict": false
+  },
+  "include": ["../src", "./types", "./.eslintrc.js", "./webpack.config.ts"]
 }

@@ -10,7 +10,7 @@ import { MyDataSourceOptions, QueryInfo, ServiceType, SERVICE_TYPE_OPTIONS } fro
 
 type Props = QueryEditorProps<DataSource, QueryInfo, MyDataSourceOptions> & {
   // grafana 8 才有，这里自己定义上
-  app: CoreApp;
+  app?: CoreApp;
 };
 
 export class QueryEditor extends PureComponent<Props> {
@@ -18,7 +18,7 @@ export class QueryEditor extends PureComponent<Props> {
     isAlertVisible: false,
   };
 
-  constructor(props) {
+  constructor(props: Props) {
     super(props);
     setLanguage(props.datasource.instanceSettings.jsonData.language || Language.Chinese);
   }

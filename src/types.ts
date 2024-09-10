@@ -1,5 +1,5 @@
 /** 此文件放置通用业务的配置项，用于区分业务类型 */
-import { DataQuery, DataSourceJsonData } from '@grafana/data';
+import { DataQuery, DataSourceJsonData, DataTopic } from '@grafana/data';
 import { PreferredVisualisationType } from '@grafana/data/types/data';
 
 import { CoreApp } from './common/constants';
@@ -34,7 +34,7 @@ export interface QueryInfo extends DataQuery {
     region: string;
     TopicId: string;
     Query: string;
-    SyntaxRule: number;
+    SyntaxRule?: number;
     MaxResultNum?: number;
     preferredVisualisationTypes?: PreferredVisualisationType[];
     // 解析使用字段
@@ -63,10 +63,10 @@ export const queryInfoRuntime: Required<QueryInfo> = {
   key: '',
   queryType: '',
   datasource: null,
-  dataTopic: null,
+  dataTopic: null as unknown as DataTopic,
 
-  serviceType: defaultQueryInfo.serviceType,
-  logServiceParams: defaultQueryInfo.logServiceParams,
+  serviceType: defaultQueryInfo.serviceType as ServiceType,
+  logServiceParams: defaultQueryInfo.logServiceParams as Required<QueryInfo>['logServiceParams'],
 };
 
 /** 变量数据类型。字符场景为云监控配置，对象场景由内部字段决定 */

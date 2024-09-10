@@ -46,7 +46,7 @@ export function replaceClsQueryWithTemplateSrv(queryString: string, scopedVars: 
 export function addQueryResultLimit(queryString: string, logServiceParams: QueryInfo['logServiceParams']) {
   const luceneQuery = getRawQuery(queryString ?? '');
   const sqlQuery = (queryString ?? '').slice(luceneQuery.length);
-  const resultLimit = logServiceParams.MaxResultNum;
+  const resultLimit = logServiceParams?.MaxResultNum;
 
   if (!resultLimit || !sqlQuery) {
     //  不包含 sql 或resultLimit取值有误 直接返回

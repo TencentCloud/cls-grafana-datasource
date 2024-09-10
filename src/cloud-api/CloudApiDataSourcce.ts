@@ -1,4 +1,4 @@
-import { DataSourceApi, DataSourceInstanceSettings } from '@grafana/data';
+import { DataQueryResponse, DataSourceApi, DataSourceInstanceSettings } from '@grafana/data';
 import { getTemplateSrv } from '@grafana/runtime';
 import _ from 'lodash-es';
 
@@ -22,7 +22,7 @@ export function ParseMetricQuery(query = '') {
   if (!query) {
     return {};
   }
-  const result = {};
+  const result: any = {};
   const queries: string[] = _.split(query, '&');
   _.forEach(queries, (item) => {
     const str = _.split(item, '=');
@@ -49,8 +49,8 @@ export class CloudApiDataSourcce extends DataSourceApi<QueryInfo, MyDataSourceOp
     this.templateSrv = getTemplateSrv();
   }
 
-  query() {
-    return undefined;
+  async query() {
+    return undefined as unknown as DataQueryResponse;
   }
 
   testDatasource(): Promise<any> {
@@ -73,7 +73,7 @@ export class CloudApiDataSourcce extends DataSourceApi<QueryInfo, MyDataSourceOp
     // 支持payload里传入模板变量
     if (_.isObject(payload)) {
       _.forEach(payload, (value, key) => {
-        payload[key] = _.isString(value) ? this.getVariable(value) : value;
+        (payload as any)[key] = _.isString(value) ? this.getVariable(value) : value;
       });
     }
 

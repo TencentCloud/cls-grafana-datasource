@@ -8,10 +8,10 @@ const JSONBigString = JSONBigInt({ storeAsString: true });
 export function formatSearchLog(param: TYPES.SearchLogResult): ISearchLogResult {
   const { Analysis, AnalysisRecords = [], Columns = [] } = param;
   const analysisColumns: IAnalysisColumn[] = [];
-  const analysisRecords: Object[] = [];
+  const analysisRecords: { Name?: string; [key: string]: any }[] = [];
   if (Analysis) {
     Columns.forEach((column) => {
-      const analysisColumn = getFieldTypeByPrestoType(column.Type);
+      const analysisColumn = getFieldTypeByPrestoType(column.Type as string);
       analysisColumns.push({
         ...column,
         ...analysisColumn,
@@ -29,7 +29,7 @@ export function formatSearchLog(param: TYPES.SearchLogResult): ISearchLogResult 
       if (column.processor) {
         analysisRecords.forEach((record) => {
           // eslint-disable-next-line no-param-reassign
-          record[column.Name] = column.processor(record[column.Name]);
+          record[column.Name as string] = column.processor?.(record[column.Name as string]);
         });
       }
     }
@@ -66,7 +66,7 @@ export function parseLogJsonStr(logJsonStr: string): Record<string, any> {
  * @param result
  * @returns Array likes {'a.a1': 123}
  */
-export const parseJsonRec = (jsonData, parent = '', result: Record<string, any> = {}): Record<string, any> => {
+export const parseJsonRec = (jsonData: any, parent = '', result: Record<string, any> = {}): Record<string, any> => {
   const keys = Object.keys(jsonData ?? {});
 
   if (keys.length > 0) {

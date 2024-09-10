@@ -1,4 +1,4 @@
-const en_US = {
+const en_US: any = {
   language: 'Language',
   enable_intranet_API_mode: 'Enable Intranet API Mode',
   cloud_database: 'Cloud Database',

@@ -158,14 +158,14 @@ export async function DescribeTopics(
 /**
  * @description 请求当前用户支持cls所有地域，已做白名单过滤
  */
-async function DescribeRegionsAndZonesRequest(product: string, opts?: IRequestOpts): Promise<IResourceRegionInfo[]> {
+async function DescribeRegionsAndZonesRequest(product: string, opts: IRequestOpts): Promise<IResourceRegionInfo[]> {
   return regionCapiRequest(
     { action: 'DescribeRegionsAndZones', data: { Product: product }, region: 'ap-guangzhou' },
     opts,
   ).then((data) => data.ResourceRegionSet);
 }
 
-export async function DescribeRegions(opts?: IRequestOpts): Promise<{ regionList: IRegionItem[] }> {
+export async function DescribeRegions(opts: IRequestOpts): Promise<{ regionList: IRegionItem[] }> {
   return DescribeRegionsAndZonesRequest('cls', opts).then((clsRegions) => ({
     regionList: (clsRegions || []).map(
       ({ Region, RegionId, RegionName, RegionShortName, RegionTypeMC, RegionType, Location }) => {

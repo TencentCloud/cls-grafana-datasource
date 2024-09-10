@@ -21,7 +21,7 @@ $ go mod vendor
 
 3. 启动前端开发环境：
 ```bash
-$ npm run watch
+$ npm run dev
 ```
 
 4. 启动后端开发环境：
@@ -32,7 +32,7 @@ $ mage -v
 5. 在命令行中运行：
 
 ```bash
-$ docker-compose up
+$ npm run server
 ```
 然后访问 (http://localhost:3001)。
 

@@ -33,7 +33,7 @@ export function ConvertSearchResultsToDataFrame(
   queryInfo: QueryInfo,
   instanceSettings: DataSourceInstanceSettings<MyDataSourceOptions>,
 ): DataFrame[] {
-  if (queryInfo.logServiceParams.format === 'Log') {
+  if (queryInfo.logServiceParams?.format === 'Log') {
     return ConvertLogJsonToDataFrameDTO(searchLogResult, queryInfo, instanceSettings).map(toDataFrame);
   }
   return searchLogResult.Analysis
@@ -47,7 +47,7 @@ function ConvertAnalysisJsonToDataFrameDTO(searchLogResult: ISearchLogResult): D
   const fields: FieldDTO[] = analysisColumns.map((column) => {
     const values = analysisRecords.map((r) => r?.[column.Name!]);
     return {
-      name: column.Name,
+      name: column.Name as string,
       type: column.fieldType as any,
       values,
     };
@@ -121,7 +121,7 @@ function ConvertLogJsonToDataFrameDTO(
         hidden: true,
       },
     },
-    labels: { region: logServiceParams.region, TopicId: logServiceParams.TopicId },
+    labels: { region: logServiceParams?.region as string, TopicId: logServiceParams?.TopicId as string },
     values: [],
   };
   const oltpFrame = new MutableDataFrame({
@@ -198,7 +198,7 @@ function ConvertLogJsonToDataFrameDTO(
         // event attributes (logs)
         const logs: TraceLog[] = [];
         const clsLogs = safeParseJson(logJson.logs || '[]');
-        clsLogs.forEach((log) => {
+        clsLogs.forEach((log: any) => {
           const fields: TraceKeyValuePair[] = [];
           if (log.name) {
             fields.push({
@@ -209,7 +209,7 @@ function ConvertLogJsonToDataFrameDTO(
           if (log.attribute?.length) {
             Array.prototype.push.apply(
               fields,
-              log.attribute.map((attr) => ({
+              log.attribute.map((attr: any) => ({
                 key: attr?.key,
                 value: getAttributeValue(attr?.value?.Value || attr?.value),
               })),
@@ -224,11 +224,11 @@ function ConvertLogJsonToDataFrameDTO(
         // references (links)
         const references: TraceSpanReference[] = [];
         const clsLinks = safeParseJson(logJson.links || '[]');
-        clsLinks.forEach((link) => {
+        clsLinks.forEach((link: any) => {
           references.push({
             traceID: link.traceId,
             spanID: link.spanId,
-            tags: (link.attribute || []).map((attr) => ({
+            tags: (link.attribute || []).map((attr: any) => ({
               key: attr?.key,
               value: getAttributeValue(attr?.value?.Value || attr?.value),
             })),
@@ -282,7 +282,7 @@ function ConvertLogJsonToDataFrameDTO(
   if (oltpFrame.length > 0) {
     if (
       !enableExploreVisualizationTypes ||
-      isNil(logServiceParams.preferredVisualisationTypes) ||
+      isNil(logServiceParams?.preferredVisualisationTypes) ||
       logServiceParams.preferredVisualisationTypes?.includes('trace')
     ) {
       // 第一个要是 trace 数据，因为 TracesPanel 只取第一个
@@ -290,7 +290,7 @@ function ConvertLogJsonToDataFrameDTO(
     }
     if (
       !enableExploreVisualizationTypes ||
-      isNil(logServiceParams.preferredVisualisationTypes) ||
+      isNil(logServiceParams?.preferredVisualisationTypes) ||
       logServiceParams.preferredVisualisationTypes?.includes('nodeGraph')
     ) {
       result.push(...(createGraphFrames(oltpFrame) as MutableDataFrame[]));
@@ -301,7 +301,7 @@ function ConvertLogJsonToDataFrameDTO(
   if (app === CoreApp.Explore) {
     // 如果开启展示类型选项，则按照展示类型设置来判断是否展示logs数据
     if (enableExploreVisualizationTypes) {
-      if (logServiceParams.preferredVisualisationTypes?.includes('logs')) {
+      if (logServiceParams?.preferredVisualisationTypes?.includes('logs')) {
         result.push(logsFrameDTO);
       }
     } else {

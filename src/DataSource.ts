@@ -86,7 +86,7 @@ export class DataSource extends DataSourceWithBackend<QueryInfo, MyDataSourceOpt
     return serviceTestResults[0];
   }
 
-  async metricFindQuery(query: string | VariableQuery, options): Promise<MetricFindValue[]> {
+  async metricFindQuery(query: string | VariableQuery, options: any): Promise<MetricFindValue[]> {
     if (_.isString(query) || query.serviceType === ServiceType.cloudApi) {
       return this.cloudApiDataSource.metricFindQuery(_.isString(query) ? query : query.queryString);
     }
@@ -95,8 +95,8 @@ export class DataSource extends DataSourceWithBackend<QueryInfo, MyDataSourceOpt
     }
     return [];
   }
-
-  getLogRowContext = (row: LogRowModel, options) => this.logServiceDataSource.getLogRowContext(row, options);
+  getLogRowContext = async <TContextQueryOptions extends {}>(row: LogRowModel, options?: TContextQueryOptions) =>
+    this.logServiceDataSource.getLogRowContext(row, options);
 
   showContextToggle = (/* row: LogRowModel */) => false;
   // return this.logServiceDataSource.showContextToggle(row);

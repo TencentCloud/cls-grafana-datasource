@@ -32,7 +32,9 @@ export const TopicSelector: FC<Props> = React.memo((props) => {
   useEffectOnce(() => {
     if (preferLastValue && !value.region && !value.TopicId) {
       try {
-        const lastValue: ITopicIdentifier = JSON.parse(localStorage.getItem('LogServiceTopicSelectorDefaultValue'));
+        const lastValue: ITopicIdentifier = JSON.parse(
+          localStorage.getItem('LogServiceTopicSelectorDefaultValue') as string,
+        );
         if (lastValue?.region && lastValue.TopicId) {
           onChange(lastValue);
         }
@@ -59,9 +61,9 @@ export const TopicSelector: FC<Props> = React.memo((props) => {
           value={value.region}
           onChange={(option) => {
             const region = option.value;
-            DescribeTopics({ Limit: 1 }, region, { instanceSettings: (datasource as any).instanceSettings })
+            DescribeTopics({ Limit: 1 }, region as string, { instanceSettings: (datasource as any).instanceSettings })
               .then((result) => {
-                topicSelectOptionsRef.current = result.Topics?.map((item) => ({
+                topicSelectOptionsRef.current = (result.Topics || []).map((item) => ({
                   value: item.TopicId,
                   label: `${item.TopicName} (${item.TopicId})`,
                 }));
@@ -105,23 +107,23 @@ export const TopicSelector: FC<Props> = React.memo((props) => {
                 filters.push({ Key: 'topicName', Values: [filterStr] });
               }
             }
-            const options = await DescribeTopics({ Filters: filters, Limit: 100 }, value.region, {
+            const options = await DescribeTopics({ Filters: filters, Limit: 100 }, value.region as string, {
               instanceSettings: (datasource as any).instanceSettings,
             }).then((result) =>
-              result.Topics.map((item) => ({
+              result.Topics?.map((item) => ({
                 value: item.TopicId,
                 label: `${item.TopicName} (${item.TopicId})`,
               })),
             );
             const optionsWithVariables = [
-              ...options,
+              ...(options as any),
               ...getStringVariableNameOptions().filter((item) => item.value?.includes(filterStr)),
             ];
             topicSelectOptionsRef.current = optionsWithVariables;
             return optionsWithVariables;
           }}
           value={
-            topicSelectOptionsRef?.current?.find((item) => item.value === value.TopicId) || {
+            topicSelectOptionsRef?.current?.find((item: SelectableValue<string>) => item.value === value.TopicId) || {
               value: value.TopicId,
               label: value.TopicId,
             }
@@ -129,7 +131,7 @@ export const TopicSelector: FC<Props> = React.memo((props) => {
           onChange={(e) => {
             onChange({
               region: value.region,
-              TopicId: e.value,
+              TopicId: e.value as string,
             });
           }}
           className="log-service-monospaced-font-family"

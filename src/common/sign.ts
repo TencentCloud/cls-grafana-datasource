@@ -1,3 +1,4 @@
+import { BackendSrv } from '@grafana/runtime';
 import moment from 'moment';
 
 import { getRequestClient } from './utils';
@@ -32,7 +33,17 @@ export default class Sign {
   date: string;
   backendSrv: any;
   datasourceId: Number;
-  constructor(options) {
+  constructor(options: {
+    secretId: string;
+    service: string;
+    action: string;
+    host: string;
+    version: string;
+    payload?: Record<string, any> | string;
+    region: string;
+    backendSrv: BackendSrv;
+    datasourceId: Number;
+  }) {
     const { secretId, service, action, host, version, payload = '', region, backendSrv, datasourceId } = options;
     this.secretId = secretId;
     // this.secretKey = secretKey;

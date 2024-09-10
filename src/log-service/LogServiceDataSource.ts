@@ -1,5 +1,6 @@
 import {
   DataFrame,
+  DataQueryError,
   DataQueryRequest,
   DataQueryResponse,
   DataSourceApi,
@@ -36,7 +37,7 @@ export class LogServiceDataSource extends DataSourceApi<QueryInfo, MyDataSourceO
   query(request: DataQueryRequest<QueryInfo>) {
     const { range, targets, scopedVars } = request;
     const [from, to] = [range.from, range.to].map((item) => item.valueOf()) as number[];
-    const requestTargets = targets.map<QueryInfo>((target) => {
+    const requestTargets = targets.map((target) => {
       const region = target.logServiceParams?.region ? getTemplateSrv().replace(target.logServiceParams.region) : '';
       const TopicId = target.logServiceParams?.TopicId ? getTemplateSrv().replace(target.logServiceParams.TopicId) : '';
       const Query = addQueryResultLimit(
@@ -56,21 +57,21 @@ export class LogServiceDataSource extends DataSourceApi<QueryInfo, MyDataSourceO
     });
 
     const dataFramePromise: Promise<DataFrame[]>[] = requestTargets
-      .filter((target) => !target.hide && target.logServiceParams.region && target.logServiceParams.TopicId)
+      .filter((target) => !target.hide && target.logServiceParams?.region && target.logServiceParams?.TopicId)
       .map((target) =>
         SearchLog(
           {
-            TopicId: target.logServiceParams.TopicId,
+            TopicId: target.logServiceParams?.TopicId as string,
             Query:
-              target.logServiceParams.format === 'Log'
-                ? getRawQuery(target.logServiceParams.Query)
-                : target.logServiceParams.Query,
+              target.logServiceParams?.format === 'Log'
+                ? getRawQuery(target.logServiceParams?.Query)
+                : (target.logServiceParams?.Query as string),
             From: from,
             To: to,
-            SyntaxRule: target.logServiceParams.SyntaxRule,
-            Limit: target.logServiceParams.MaxResultNum,
+            SyntaxRule: target.logServiceParams?.SyntaxRule,
+            Limit: target.logServiceParams?.MaxResultNum,
           },
-          target.logServiceParams.region,
+          target.logServiceParams?.region as string,
           { instanceSettings: this.instanceSettings },
         ).then((result) => ConvertSearchResultsToDataFrame(formatSearchLog(result), target, this.instanceSettings)),
       );
@@ -85,10 +86,10 @@ export class LogServiceDataSource extends DataSourceApi<QueryInfo, MyDataSourceO
             const frames = framesArray[framesIndex];
             for (const frame of frames) {
               // 如果是 Analysis 场景，且返回内容可转化为 TimeSeriesMany, 则进行处理以绘制时序图
+              const frameIndexTarget = requestTargets[framesIndex];
               if (
                 !frame?.meta?.preferredVisualisationType &&
-                (!requestTargets[framesIndex].logServiceParams.format ||
-                  requestTargets[framesIndex].logServiceParams.format === 'Graph')
+                (!frameIndexTarget?.logServiceParams?.format || frameIndexTarget?.logServiceParams?.format === 'Graph')
               ) {
                 const fieldTypeSet = new Set();
                 frame.fields.forEach((field) => fieldTypeSet.add(field.type));
@@ -132,11 +133,14 @@ export class LogServiceDataSource extends DataSourceApi<QueryInfo, MyDataSourceO
     return output$;
   }
 
-  async metricFindQuery(query: QueryInfo['logServiceParams'], options): Promise<MetricFindValue[]> {
+  async metricFindQuery(query: QueryInfo['logServiceParams'], options: any): Promise<MetricFindValue[]> {
     const logServiceParams = query;
     const region = logServiceParams?.region ? getTemplateSrv().replace(logServiceParams.region) : '';
     const TopicId = logServiceParams?.TopicId ? getTemplateSrv().replace(logServiceParams.TopicId) : '';
-    const Query = addQueryResultLimit(replaceClsQueryWithTemplateSrv(logServiceParams.Query), logServiceParams);
+    const Query = addQueryResultLimit(
+      replaceClsQueryWithTemplateSrv(logServiceParams?.Query as string),
+      logServiceParams,
+    );
 
     if (!options.range) {
       return [];
@@ -149,7 +153,7 @@ export class LogServiceDataSource extends DataSourceApi<QueryInfo, MyDataSourceO
             Query,
             From: options.range!.from.valueOf(),
             To: options.range!.to.valueOf(),
-            SyntaxRule: logServiceParams.SyntaxRule,
+            SyntaxRule: logServiceParams?.SyntaxRule,
             Limit: logServiceParams?.MaxResultNum,
           },
           region,
@@ -161,8 +165,8 @@ export class LogServiceDataSource extends DataSourceApi<QueryInfo, MyDataSourceO
       if (analysisColumns.length > 0 && analysisRecords.length > 0) {
         const firstColumn = analysisColumns[0];
         return analysisRecords.map((record) => ({
-          text: record[firstColumn.Name],
-          value: record[firstColumn.Name],
+          text: record[firstColumn.Name as string],
+          value: record[firstColumn.Name as string],
         }));
       }
     }
@@ -190,7 +194,7 @@ export class LogServiceDataSource extends DataSourceApi<QueryInfo, MyDataSourceO
         status: 'success',
         message: 'DatSource Connection OK',
       };
-    } catch (e) {
+    } catch (e: any) {
       if (e?.code?.startsWith('AuthFailure')) {
         return {
           status: 'error',
@@ -229,8 +233,8 @@ export class LogServiceDataSource extends DataSourceApi<QueryInfo, MyDataSourceO
     }
   };
 
-  getLogRowContext = async (row: LogRowModel, options: RowContextOptions) => {
-    const { limit = 10, direction = 'BACKWARD' } = options;
+  getLogRowContext = async (row: LogRowModel, options?: RowContextOptions) => {
+    const { limit = 10, direction = 'BACKWARD' } = options || {};
     const timeField = row.dataFrame.fields.find((item) => item.name === LogFieldReservedName.TIMESTAMP);
     const metaField = row.dataFrame.fields.find((item) => item.name === LogFieldReservedName.META);
     if (!timeField || !metaField?.labels || !limit) {
@@ -256,12 +260,13 @@ export class LogServiceDataSource extends DataSourceApi<QueryInfo, MyDataSourceO
       return {
         data: [frame],
         state: LoadingState.Done,
+        error: undefined,
       };
     } catch (e) {
       return {
         data: [],
         state: LoadingState.Error,
-        error: e,
+        error: e as DataQueryError,
       };
     }
   };

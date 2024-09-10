@@ -12,11 +12,11 @@ import { CoreApp, QueryEditorFormatOptions, TcDataSourceId } from '../common/con
 import { t } from '../locale';
 import { defaultQueryInfo, MyDataSourceOptions, QueryInfo, queryInfoRuntime } from '../types';
 
-import './index.less';
+import './index.scss';
 
 type Props = QueryEditorProps<DataSourceApi<any>, QueryInfo, MyDataSourceOptions> & {
   // grafana 8 才有，这里自己定义上
-  app: CoreApp;
+  app?: CoreApp;
 };
 
 export const LogServiceQueryEditor: FC<Props> = React.memo((props: Props) => {
@@ -43,7 +43,7 @@ export const LogServiceQueryEditor: FC<Props> = React.memo((props: Props) => {
     (datasource as LogServiceDataSource).instanceSettings.jsonData.enableExploreVisualizationTypes || false;
   const logServiceParamsRef = useRef(query.logServiceParams || clone(defaultQueryInfo.logServiceParams)!);
   const preferredVisualisationTypes = logServiceParamsRef.current?.preferredVisualisationTypes || [
-    ...defaultQueryInfo.logServiceParams.preferredVisualisationTypes,
+    ...(defaultQueryInfo.logServiceParams?.preferredVisualisationTypes as PreferredVisualisationType[]),
   ];
 
   const partialOnChange = useCallback(
@@ -73,7 +73,7 @@ export const LogServiceQueryEditor: FC<Props> = React.memo((props: Props) => {
       const target = ev.currentTarget;
       const { name, checked } = target;
       let preferredVisualisationTypes = propsRef.current?.query?.logServiceParams?.preferredVisualisationTypes || [
-        ...defaultQueryInfo.logServiceParams.preferredVisualisationTypes,
+        ...(defaultQueryInfo.logServiceParams?.preferredVisualisationTypes as PreferredVisualisationType[]),
       ];
       if (checked) {
         preferredVisualisationTypes = [...preferredVisualisationTypes, name as PreferredVisualisationType];
@@ -177,7 +177,7 @@ export const LogServiceQueryEditor: FC<Props> = React.memo((props: Props) => {
           {logServiceParamsRef.current.format === 'Log' && (
             <InlineFieldRow>
               <MaxResultNumInput
-                value={logServiceParamsRef.current.MaxResultNum}
+                value={logServiceParamsRef.current.MaxResultNum as number}
                 onChange={(val) => {
                   logServiceParamsRef.current = {
                     ...(propsRef.current?.query?.logServiceParams || ({} as any)),
@@ -256,7 +256,7 @@ const MaxResultNumInput: FC<MaxResultNumInputProps> = React.memo((props) => {
     <InlineField
       label={t('max_result_num')}
       labelWidth={20}
-      invalid={value < min || value > max}
+      invalid={Number(value) < min || Number(value) > max}
       // @ts-ignore  这里报error属性不存在，但应该是存在的。
       error="仅支持返回1～1000条日志"
     >

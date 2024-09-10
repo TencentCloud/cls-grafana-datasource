@@ -1,3 +1,4 @@
+import { BackendSrv } from '@grafana/runtime';
 import * as _ from 'lodash-es';
 
 import Sign from './sign';
@@ -24,7 +25,14 @@ export enum SearchSyntaxRule {
 
 // the services of tencentcloud monitor api
 const FINANCE_REGIONS = ['ap-shanghai-fsi', 'ap-shenzhen-fsi'];
-const SERVICES_API_INFO = {
+const SERVICES_API_INFO: {
+  [service: string]: {
+    service: string;
+    version: string;
+    path: string;
+    host: string;
+  };
+} = {
   api: {
     service: 'api',
     version: '2020-11-06',
@@ -454,11 +462,11 @@ const FINANCE_HOST = {
 };
 
 // 获取对应业务的 API 接口信息
-export function GetServiceAPIInfo(region, service) {
+export function GetServiceAPIInfo(region: string, service: string) {
   return { ...(SERVICES_API_INFO[service] || {}), ...getHostAndPath(region, service) };
 }
 // get host and path for finance regions
-function getHostAndPath(region, service) {
+function getHostAndPath(region: string, service: string) {
   if (_.indexOf(FINANCE_REGIONS, region) === -1) {
     return {};
   }
@@ -476,9 +484,17 @@ function getHostAndPath(region, service) {
  * @param service 产品名字 'cvm'
  * @param signObj 接口请求相关信息 { region?: string, action: string }
  * @param secretId
- * @param secretKey
+ * @param datasourceId
+ * @param backendSrv
  */
-export async function GetRequestParams(options, service, signObj: any = {}, secretId, datasourceId, backendSrv) {
+export async function GetRequestParams(
+  options: { url: string; data?: object; headers?: object; method?: string },
+  service: string,
+  signObj: any = {},
+  secretId: string,
+  datasourceId: number,
+  backendSrv: BackendSrv,
+) {
   const signParams = {
     secretId,
     payload: options.data || '',

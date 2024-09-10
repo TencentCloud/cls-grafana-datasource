@@ -1,4 +1,4 @@
-const zh_CN = {
+const zh_CN: any = {
   language: '语言',
   enable_intranet_API_mode: '开启内网API模式',
   cloud_database: '云数据库',

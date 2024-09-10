@@ -16,11 +16,6 @@ interface VariableQueryProps {
   datasource: DataSource;
 }
 
-const InfoPopver: React.FC<any> = () => (
-  <a target="_blank" href="https://cloud.tencent.com/document/product/248/54510" rel="noreferrer">
-    Click here for more information of query
-  </a>
-);
 export const VariableQueryEditor: React.FC<VariableQueryProps> = (props) => {
   const propsRef = useLatest(props);
   const { query, datasource, app } = props;
@@ -91,7 +86,7 @@ export const VariableQueryEditor: React.FC<VariableQueryProps> = (props) => {
       )}
       {(isString(query) || query.serviceType === ServiceType.cloudApi) && (
         <InlineFieldRow>
-          <InlineField label={t('search_statement')} labelWidth={20} grow tooltip={InfoPopver}>
+          <InlineField label={t('search_statement')} labelWidth={20} grow>
             <Input
               name="query"
               required

@@ -23,13 +23,13 @@ export interface IAnalysisColumn extends TYPES.Column {
   prestoTypeRegex: RegExp;
   fieldType: FieldType;
   /** 用于解析该字段的函数方法，用于类型保证，后端字段格式转化 */
-  processor?: (any) => any;
+  processor?: (...args: any) => any;
 }
 
 /** formatSearchLog函数结果 */
 export interface ISearchLogResult extends Omit<TYPES.SearchLogResult, 'ColNames' | 'AnalysisResults'> {
   /** 将分析结果转化为二维表形式，转化过程中自动进行数字类型转化 */
-  analysisRecords: Object[];
+  analysisRecords: { Name?: string; [key: string]: any }[];
   analysisColumns: IAnalysisColumn[];
 }
 
