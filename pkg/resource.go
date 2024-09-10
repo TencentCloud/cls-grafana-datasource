@@ -12,6 +12,7 @@ import (
 	"net/http"
 	"net/url"
 	"strings"
+	"text/template"
 )
 
 type SignResultV3 struct {
@@ -45,7 +46,7 @@ func (ds *clsDatasource) SignApi(isV3 bool) func(rw http.ResponseWriter, req *ht
 	return func(rw http.ResponseWriter, req *http.Request) {
 		if res, err := ds.getSigned(isV3, req); err != nil {
 			rw.WriteHeader(http.StatusBadRequest)
-			_, _ = rw.Write([]byte(err.Error()))
+			_, _ = rw.Write([]byte(template.HTMLEscapeString(err.Error())))
 			return
 		} else {
 			data, err := json.Marshal(res)
