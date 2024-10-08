@@ -8,7 +8,7 @@ require (
 	github.com/grafana/grafana-plugin-sdk-go v0.225.0
 	github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/cls v1.0.909
 	github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/common v1.0.909
-	github.com/tencentyun/cos-go-sdk-v5 v0.7.47
+	github.com/tencentyun/cos-go-sdk-v5 v0.7.50
 	golang.org/x/time v0.5.0
 )
 
