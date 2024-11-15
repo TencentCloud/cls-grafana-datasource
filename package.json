@@ -28,7 +28,7 @@
     "@grafana/data": "^7.5.17",
     "@grafana/runtime": "^7.4.5",
     "@grafana/schema": "^10.4.0",
-    "@grafana/ui": "^7.5.3",
+    "@grafana/ui": "^7.5.17",
     "@opentelemetry/api": "1.7.0",
     "@opentelemetry/exporter-collector": "0.25.0",
     "@opentelemetry/semantic-conventions": "1.21.0",

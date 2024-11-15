@@ -135,7 +135,8 @@ export const LogServiceQueryEditor: FC<Props> = React.memo((props: Props) => {
         </InlineField>
       </InlineFieldRow>
 
-      <InlineField label={t('search_statement')} labelWidth={20} grow={true} style={{ flex: '1 1 auto' }}>
+      {/* @ts-ignore*/}
+      <InlineField label={t('search_statement')} labelWidth={20} grow={true} shrink={true}>
         <QueryField
           portalOrigin={TcDataSourceId}
           placeholder={`e.g. _SOURCE__: 127.0.0.1 AND "http/1.0"`}
