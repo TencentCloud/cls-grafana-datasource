@@ -113,11 +113,11 @@ dialTimeout = 60
 keep_alive_seconds = 60
 ```
 
-![配置管理](https://qcloudimg.tencent-cloud.cn/raw/8f8b426137dea9b41c3fd584056a1822.png)
+![配置管理](https://main.qcloudimg.com/raw/8f8b426137dea9b41c3fd584056a1822.png)
 
 2. 参考[安装插件](https://cloud.tencent.com/document/product/1437/61612)，选择安装 tencent-cls-grafana-datasource。
 
-![安装插件](https://qcloudimg.tencent-cloud.cn/raw/218f2fe5b35a4356b5b156d5d575c681.png)
+![安装插件](https://main.qcloudimg.com/raw/218f2fe5b35a4356b5b156d5d575c681.png)
 
 ## 配置日志数据源
 
@@ -136,7 +136,7 @@ keep_alive_seconds = 60
    | 开启内网API模式           | 是否通过内网访问云API                                                               |
    | 在探索页开启展示类型选项        | 在探索页开启展示类型选项，控制探索页展示的图表类型                                   |
 
-   ![配置数据源](https://qcloudimg.tencent-cloud.cn/raw/86f9e4c2735d64e3f9b0e08acb0a7aa9.png)
+   ![配置数据源](https://main.qcloudimg.com/raw/86f9e4c2735d64e3f9b0e08acb0a7aa9.png)
 
 ## dashboard配置
 
@@ -144,7 +144,7 @@ keep_alive_seconds = 60
 
 2. 数据源选择用户刚刚新建的CLS datasource
 
-   ![选择数据源](https://qcloudimg.tencent-cloud.cn/raw/a8cb26d3afbfd1213a3ddee1888692a9.png)
+   ![选择数据源](https://main.qcloudimg.com/raw/a8cb26d3afbfd1213a3ddee1888692a9.png)
 
 3. 用户输入Query语句，根据待展示图表类型，选择Format形式，系统会做数据转换以满足grafana展示需要。
 
@@ -160,7 +160,7 @@ keep_alive_seconds = 60
 
 展示pv，uv数据曲线
 
-![Time Series](https://qcloudimg.tencent-cloud.cn/raw/6f3a420e4a36085a57c23d23297143a1.png)
+![Time Series](https://main.qcloudimg.com/raw/6f3a420e4a36085a57c23d23297143a1.png)
 
 query语句：
 
@@ -174,7 +174,7 @@ Format：选择 **Graph, Pie, Gauge, Time Series Panel**
 
 展示请求状态码分布
 
-![Pie](https://qcloudimg.tencent-cloud.cn/raw/14c3adbafe7e753ee762e0fce312ee87.png)
+![Pie](https://main.qcloudimg.com/raw/14c3adbafe7e753ee762e0fce312ee87.png)
 
 query语句：
 
@@ -188,7 +188,7 @@ Format：选择 **Graph, Pie, Gauge, Time Series Panel**
 
 统计访问延时前10页面
 
-![Bar](https://qcloudimg.tencent-cloud.cn/raw/830bb0cfa6ea07ab468987a766ecb39a.png)
+![Bar](https://main.qcloudimg.com/raw/830bb0cfa6ea07ab468987a766ecb39a.png)
 
 query语句：
 
@@ -202,7 +202,7 @@ Format：选择 **Graph, Pie, Gauge, Time Series Panel**
 
 展示访问量前10用户
 
-![Table](https://qcloudimg.tencent-cloud.cn/raw/6aebc70dfa66a07ed422be32ab0628dc.png)
+![Table](https://main.qcloudimg.com/raw/6aebc70dfa66a07ed422be32ab0628dc.png)
 
 query语句：
 
@@ -216,7 +216,7 @@ Format：Table Panel
 
 展示原始日志
 
-![Logs](https://qcloudimg.tencent-cloud.cn/raw/412a26c93a36e36e871c4cd4e96530bf.png)
+![Logs](https://main.qcloudimg.com/raw/412a26c93a36e36e871c4cd4e96530bf.png)
 
 query语句：
 
@@ -283,8 +283,8 @@ topic(通过TopicName过滤)：
 Region=${region}&ServiceType=cls&Action=DescribeTopics&field=Topics&id=TopicId&name=TopicName&payload={"Filters":[{"Key":"topicName","Values":["your topic name"]}]}
 ```
 
-![云API列表类型变量](https://qcloudimg.tencent-cloud.cn/raw/a261d0c4cdebe36aafa5cc0b73da0aaf.png)
-![云API列表类型变量效果](https://qcloudimg.tencent-cloud.cn/raw/095189d680b57386b50408c004ab1bfd.png)
+![云API列表类型变量](https://main.qcloudimg.com/raw/a261d0c4cdebe36aafa5cc0b73da0aaf.png)
+![云API列表类型变量效果](https://main.qcloudimg.com/raw/095189d680b57386b50408c004ab1bfd.png)
 
 语句参数说明：
 
@@ -308,7 +308,7 @@ payload(选填)：其他需要传入云API接口中的参数，JSON字符串格�
 
 注意：Datasource 类型变量仅适用于Grafana中存在多个索引配置相同(或相似)的CLS数据源的情况
 
-![Datasource类型变量](https://qcloudimg.tencent-cloud.cn/raw/f59b65ef166f440fafab0886d95ba5bf.png)
+![Datasource类型变量](https://main.qcloudimg.com/raw/f59b65ef166f440fafab0886d95ba5bf.png)
 
 
 
