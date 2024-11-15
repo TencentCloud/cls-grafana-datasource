@@ -129,12 +129,14 @@ keep_alive_seconds = 60
 
    在**Data Sources**页，单击**Add data source**，选中**Tencent Cloud Log Service Datasource**，按照以下说明配置数据源。
 
-   | 配置项               | 说明                                                         |
-      | -------------------- | ------------------------------------------------------------ |
-   | Security Credentials | SecretId、SecretKey：API请求密钥，用于身份鉴权。获取地址前往[API密钥管理](https://console.cloud.tencent.com/cam/capi) |
-   | Log Service Info     | region：日志服务区域简称，例如北京区域填写`ap-beijing`，完整区域列表格式参考 [地域列表](https://cloud.tencent.com/document/product/614/18940)。<br />TopicId：日志主题ID |
+   | 配置项                 | 说明                                                                         |
+   |---------------------|----------------------------------------------------------------------------|
+   | SecretId、SecretKey  | API请求密钥，用于身份鉴权。获取地址前往[API密钥管理](https://console.cloud.tencent.com/cam/capi) |
+   | 语言                  | 插件展示语言                                                                     |
+   | 开启内网API模式           | 是否通过内网访问云API                                                               |
+   | 在探索页开启展示类型选项        | 在探索页开启展示类型选项，控制探索页展示的图表类型                                   |
 
-   ![image-20201229200229285](https://main.qcloudimg.com/raw/275835ded7a0826d6027984ab9aa0b84.png)
+   ![配置数据源](https://qcloudimg.tencent-cloud.cn/raw/86f9e4c2735d64e3f9b0e08acb0a7aa9.png)
 
 ## dashboard配置
 
@@ -142,23 +144,23 @@ keep_alive_seconds = 60
 
 2. 数据源选择用户刚刚新建的CLS datasource
 
-   ![image-20201229200254913](https://main.qcloudimg.com/raw/b0981c7c5e43d803d0eb694f3b737060.png)
+   ![选择数据源](https://qcloudimg.tencent-cloud.cn/raw/a8cb26d3afbfd1213a3ddee1888692a9.png)
 
 3. 用户输入Query语句，根据待展示图表类型，选择Format形式，系统会做数据转换以满足grafana展示需要。
 
    | Format格式                            | 描述                                                         | 配置项                  |
-      |-------------------------------------| ------------------------------------------------------------ |----------------------|
+   |-------------------------------------| ------------------------------------------------------------ |----------------------|
    | Log Panel                           | log panel is used to shown log search result. Query syntax supports searching by keyword, fuzzy match. For more information, see [Syntax and Rules](https://intl.cloud.tencent.com/document/product/614/30439). Eg. status:400 | limit:用于指定返回日志检索结果条数 |
    | Table Panel                         | Table panel will automatically show the results of whatever columns and rows your query returns | 无                    |
    | Graph, Pie, Gauge，Time Series Panel | In this pattern, there is a format transformation where data will be adapted to Graph, Pie, Gauge, Time Series Panel | 无                    |
 
 ## 示例
 
-### 时间折线图Graph
+### 时间折线图 Time Series
 
 展示pv，uv数据曲线
 
-![image-20201230174944290](https://main.qcloudimg.com/raw/a2251243a6e592bed01ad372a8ebbc55.png)
+![Time Series](https://qcloudimg.tencent-cloud.cn/raw/6f3a420e4a36085a57c23d23297143a1.png)
 
 query语句：
 
@@ -172,7 +174,7 @@ Format：选择 **Graph, Pie, Gauge, Time Series Panel**
 
 展示请求状态码分布
 
-![image-20201229205154667](https://main.qcloudimg.com/raw/95bee33d6332e70ee01c49c5f69d13ac.png)
+![Pie](https://qcloudimg.tencent-cloud.cn/raw/14c3adbafe7e753ee762e0fce312ee87.png)
 
 query语句：
 
@@ -182,16 +184,16 @@ query语句：
 
 Format：选择 **Graph, Pie, Gauge, Time Series Panel**
 
-### 柱状图，压力图bar gauge
+### 柱状图，压力图 Bar gauge
 
 统计访问延时前10页面
 
-![image-20201230175052388](https://main.qcloudimg.com/raw/c8c9cade19d03458a99747b851a2df4e.png)
+![Bar](https://qcloudimg.tencent-cloud.cn/raw/830bb0cfa6ea07ab468987a766ecb39a.png)
 
 query语句：
 
 ```
-* | select http_referer,avg(request_time) as lagency group by http_referer order by lagency desc limit 10
+* | select url, avg(request_time) as lagency group by url order by lagency desc limit 10
 ```
 
 Format：选择 **Graph, Pie, Gauge, Time Series Panel**
@@ -200,7 +202,7 @@ Format：选择 **Graph, Pie, Gauge, Time Series Panel**
 
 展示访问量前10用户
 
-![image-20201229211653406](https://main.qcloudimg.com/raw/afbde7667f22458e5ae6e34ede848a56.png)
+![Table](https://qcloudimg.tencent-cloud.cn/raw/6aebc70dfa66a07ed422be32ab0628dc.png)
 
 query语句：
 
@@ -208,7 +210,21 @@ query语句：
 * | select remote_addr,count(*) as count group by remote_addr order by count desc limit 10
 ```
 
-Format：Table
+Format：Table Panel
+
+### 日志 Logs
+
+展示原始日志
+
+![Logs](https://qcloudimg.tencent-cloud.cn/raw/412a26c93a36e36e871c4cd4e96530bf.png)
+
+query语句：
+
+```
+*
+```
+
+Format：Log Panel
 
 <br/>
 
@@ -292,7 +308,7 @@ payload(选填)：其他需要传入云API接口中的参数，JSON字符串格�
 
 注意：Datasource 类型变量仅适用于Grafana中存在多个索引配置相同(或相似)的CLS数据源的情况
 
-![Datasource类型变量](https://main.qcloudimg.com/raw/d2b09b0ac278ac5387d40d0c3c3690d7.png)
+![Datasource类型变量](https://qcloudimg.tencent-cloud.cn/raw/f59b65ef166f440fafab0886d95ba5bf.png)
 
 
 
