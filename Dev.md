@@ -17,6 +17,7 @@ $ git clone https://github.com/${your-git-username}/cls-grafana-datasource.git
 ```bash
 $ yarn
 $ go mod vendor
+$ go mod tidy
 ```
 
 3. 启动前端开发环境：

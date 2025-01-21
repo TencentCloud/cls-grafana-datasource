@@ -1,4 +1,4 @@
-package cam
+package cvmRole
 
 import (
 	"encoding/json"
@@ -37,7 +37,8 @@ func (c *Credential) GetSecret() (string, string, string, error) {
 	c.Lock()
 	defer c.Unlock()
 
-	if time.Now().Unix() > c.expiredTime {
+	// invalidate credentials one minute before actual expired time, to avoid errors in following requests
+	if time.Now().Unix() > c.expiredTime-60 {
 		if err := c.refresh(); err != nil {
 			return "", "", "", err
 		}

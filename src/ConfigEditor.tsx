@@ -1,10 +1,10 @@
 import { DataSourcePluginOptionsEditorProps, SelectableValue } from '@grafana/data';
-import { LegacyForms, InlineFieldRow, InlineField, Select, InlineSwitch, Input } from '@grafana/ui';
+import { InlineField, InlineFieldRow, InlineSwitch, Input, LegacyForms, Select } from '@grafana/ui';
 import React, { ChangeEvent, PureComponent } from 'react';
 
 import { getRequestClient } from './common/utils';
-import { t, setLanguage, Language } from './locale';
-import { MyDataSourceOptions, MySecureJsonData } from './types';
+import { Language, setLanguage, t } from './locale';
+import { CredentialType, MyDataSourceOptions, MySecureJsonData } from './types';
 
 type Props = DataSourcePluginOptionsEditorProps<MyDataSourceOptions, MySecureJsonData>;
 
@@ -14,6 +14,15 @@ export class ConfigEditor extends PureComponent<Props> {
   constructor(props: Props) {
     super(props);
     setLanguage(props.options.jsonData.language || Language.Chinese);
+  }
+
+  componentDidMount() {
+    const { options } = this.props;
+    if (!options.jsonData.credentialType) {
+      this.patchJsonData({
+        credentialType: CredentialType.secretIdKey,
+      });
+    }
   }
 
   patchJsonData = (kv: Record<string, any>) => {
@@ -113,7 +122,7 @@ export class ConfigEditor extends PureComponent<Props> {
                 If you are using a
                 <a
                   className="highlight-word"
-                  href="https://intl.cloud.tencent.com/document/product/598/13674"
+                  href={`https://www.tencentcloud.com/document/product/598/13674`}
                   target="_blank"
                   style={{ margin: '0 4px' }}
                   rel="noreferrer"
@@ -122,51 +131,132 @@ export class ConfigEditor extends PureComponent<Props> {
                 </a>
                 account, you should at least own read permission to your CLS topics.
               </p>
-              <a
-                className="highlight-word"
-                href="https://console.cloud.tencent.com/cam/capi"
-                target="_blank"
-                rel="noreferrer"
-              >
-                Generate a new Tencent Cloud API key
-              </a>
+              <p>
+                <a
+                  className="highlight-word"
+                  href="https://console.cloud.tencent.com/cam/capi"
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  Generate a new Tencent Cloud API key
+                </a>
+              </p>
+              <p>
+                If you are using a{' '}
+                <a
+                  className="highlight-word"
+                  href={`https://www.tencentcloud.com/document/product/598/19420`}
+                  target="_blank"
+                  style={{ margin: '0 4px' }}
+                  rel="noreferrer"
+                >
+                  role
+                </a>
+                , you can select{' '}
+                <a
+                  className="highlight-word"
+                  href={`https://www.tencentcloud.com/document/product/598/19419`}
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  Assume Role
+                </a>
+                , or{' '}
+                <a
+                  className="highlight-word"
+                  href={`https://www.tencentcloud.com/document/product/213/45917`}
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  CVM Role
+                </a>{' '}
+                if your grafana instance is hosted on CVM.
+              </p>
             </div>
           </div>
         </div>
 
         <div style={{ marginTop: 20 }}>
           <InlineFieldRow>
-            <InlineField label="SecretId" labelWidth={30} required={true}>
-              <Input
-                width={50}
-                required={true}
-                value={jsonData.secretId}
-                name="secretId"
-                onChange={this.onJsonDataChange}
+            <InlineField label={t('credential_type')} labelWidth={30}>
+              <Select
+                value={jsonData.credentialType || CredentialType.secretIdKey}
+                className="width-25"
+                options={[
+                  { value: CredentialType.secretIdKey, label: t('permanent_credential') },
+                  { value: CredentialType.assumeRole, label: 'Assume Role' },
+                  { value: CredentialType.cvmRole, label: 'CVM Role' },
+                ]}
+                onChange={(option: SelectableValue<CredentialType>) => {
+                  this.patchJsonData({
+                    credentialType: option.value,
+                  });
+                }}
               />
             </InlineField>
           </InlineFieldRow>
-          <InlineFieldRow style={{ marginBottom: 4 }}>
-            <SecretFormField
-              label="SecretKey"
-              labelWidth={15}
-              inputWidth={25}
-              type="password"
-              name="secretKey"
-              value={secureJsonData?.secretKey || ''}
-              isConfigured={secureJsonFields?.secretKey}
-              onChange={this.onSecureJsonChange}
-              onReset={() => {
-                this.onResetSecureJson('secretKey');
-              }}
-              required={true}
-            />
-          </InlineFieldRow>
+          {jsonData.credentialType !== CredentialType.cvmRole ? (
+            <>
+              <InlineFieldRow>
+                <InlineField label="SecretId" labelWidth={30} required={true}>
+                  <Input
+                    width={50}
+                    required={true}
+                    value={jsonData.secretId}
+                    name="secretId"
+                    onChange={this.onJsonDataChange}
+                  />
+                </InlineField>
+              </InlineFieldRow>
+              <InlineFieldRow style={{ marginBottom: 4 }}>
+                <SecretFormField
+                  label="SecretKey"
+                  labelWidth={15}
+                  inputWidth={25}
+                  type="password"
+                  name="secretKey"
+                  value={secureJsonData?.secretKey || ''}
+                  isConfigured={secureJsonFields?.secretKey}
+                  onChange={this.onSecureJsonChange}
+                  onReset={() => {
+                    this.onResetSecureJson('secretKey');
+                  }}
+                  required={true}
+                />
+              </InlineFieldRow>
+            </>
+          ) : null}
+          {jsonData.credentialType === CredentialType.assumeRole ? (
+            <InlineFieldRow>
+              <InlineField label="RoleArn" labelWidth={30} required={true}>
+                <Input
+                  width={50}
+                  required={true}
+                  value={jsonData.roleArn}
+                  name="roleArn"
+                  onChange={this.onJsonDataChange}
+                />
+              </InlineField>
+            </InlineFieldRow>
+          ) : null}
+          {jsonData.credentialType === CredentialType.cvmRole ? (
+            <InlineFieldRow>
+              <InlineField label={t('role_name')} labelWidth={30} required={true}>
+                <Input
+                  width={50}
+                  required={true}
+                  value={jsonData.roleName}
+                  name="roleName"
+                  onChange={this.onJsonDataChange}
+                />
+              </InlineField>
+            </InlineFieldRow>
+          ) : null}
           <InlineFieldRow>
             <InlineField label={t('language')} labelWidth={30}>
               <Select
                 value={jsonData.language || Language.Chinese}
-                className="width-10"
+                className="width-25"
                 options={[
                   { value: Language.English, label: 'English' },
                   { value: Language.Chinese, label: '简体中文' },

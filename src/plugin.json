@@ -33,6 +33,16 @@
       ]
     },
     {
+      "path": "sts-internal",
+      "url": "https://sts.internal.tencentcloudapi.com",
+      "headers": [
+        {
+          "name": "Content-Type",
+          "content": "application/json"
+        }
+      ]
+    },
+    {
       "path": "api-internal",
       "url": "https://api.internal.tencentcloudapi.com",
       "headers": [
@@ -1215,6 +1225,16 @@
     {
       "path": "cls",
       "url": "https://cls.tencentcloudapi.com",
+      "headers": [
+        {
+          "name": "Content-Type",
+          "content": "application/json"
+        }
+      ]
+    },
+    {
+      "path": "sts",
+      "url": "https://sts.tencentcloudapi.com",
       "headers": [
         {
           "name": "Content-Type",

@@ -77,11 +77,20 @@ export interface VariableQuery {
   logServiceParams?: QueryInfo['logServiceParams'];
 }
 
+export enum CredentialType {
+  secretIdKey = 'secretIdKey',
+  assumeRole = 'assumeRole',
+  cvmRole = 'cvmRole',
+}
+
 /**
  * These are options configured for each DataSource instance.
  */
 export interface MyDataSourceOptions extends DataSourceJsonData {
+  credentialType?: CredentialType;
   secretId?: string;
+  roleArn?: string; // for assume role
+  roleName?: string; // for cvm role
   /** 是否使用腾讯云API内网接入点 */
   intranet?: boolean;
   language?: Language;

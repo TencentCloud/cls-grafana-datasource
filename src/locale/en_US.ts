@@ -89,6 +89,9 @@ const en_US: any = {
   node_graph: 'Node graph',
   enable_explore_visualization_types: 'Enable Visualization types in Explore',
   panel_type: 'Panel type to display',
+  credential_type: 'Credential type',
+  permanent_credential: 'Permanent credential',
+  role_name: 'Role name',
   // region
   'ap-guangzhou': 'South China(Guangzhou)',
   'ap-shenzhen-fsi': 'South China(Shenzhen Finance)',

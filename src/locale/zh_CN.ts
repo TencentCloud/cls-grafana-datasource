@@ -89,6 +89,9 @@ const zh_CN: any = {
   node_graph: '节点图(Node graph)',
   enable_explore_visualization_types: '在探索页开启展示类型选项',
   panel_type: '待展示图表类型',
+  credential_type: '凭证类型',
+  permanent_credential: '永久密钥',
+  role_name: '角色名称',
   // region
   'ap-guangzhou': '华南地区(广州)',
   'ap-shenzhen-fsi': '华南地区(深圳金融)',
