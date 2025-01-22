@@ -13,9 +13,10 @@ type QueryModel struct {
 }
 
 type LogServiceParams struct {
-	Region  string `json:"region"`
-	TopicId string `json:"topicId"`
-	Query   string `json:"Query"`
+	Region     string `json:"region"`
+	TopicId    string `json:"topicId"`
+	Query      string `json:"Query"`
+	SyntaxRule uint64 `json:"SyntaxRule"`
 }
 
 type ApiOpts struct {
