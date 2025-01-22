@@ -42,6 +42,7 @@ func SearchLog(ctx context.Context, param *clsAPI.SearchLogRequest, region strin
 	request.Query = param.Query
 	request.Context = param.Context
 	request.UseNewAnalysis = param.UseNewAnalysis
+	request.SyntaxRule = param.SyntaxRule
 
 	// 通过 client 对象调用想要访问的接口，需要传入请求对象
 	response, err = client.SearchLog(request)

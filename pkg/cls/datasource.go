@@ -39,15 +39,16 @@ func QueryLog(ctx context.Context, logServiceParams pluginCommon.LogServiceParam
 		To:             common.Int64Ptr(query.TimeRange.To.UnixNano() / 1e6),
 		Query:          common.StringPtr(logServiceParams.Query),
 		UseNewAnalysis: common.BoolPtr(true),
+		SyntaxRule:     common.Uint64Ptr(logServiceParams.SyntaxRule),
 	}
 	searchLogResponse, searchLogErr := SearchLog(ctx, &requestParam, logServiceParams.Region, opts)
 
 	if searchLogErr != nil {
-		log.DefaultLogger.Error("CLS_SEARCHLOG_ERROR", Stringify(query), Stringify(searchLogErr))
+		log.DefaultLogger.Error("CLS_SEARCHLOG_ERROR", "query", query, "RequestId", Stringify(searchLogErr))
 		dataRes.Error = searchLogErr
 		return dataRes
 	}
-	log.DefaultLogger.Info("CLS_SEARCHLOG_SUCCESS", Stringify(query), searchLogResponse.Response.RequestId) //云 api 不保存入参
+	log.DefaultLogger.Info("CLS_SEARCHLOG_SUCCESS", "query", query, "RequestId", searchLogResponse.Response.RequestId) //云 api 不保存入参
 	searchLogResult := *searchLogResponse.Response
 
 	if *searchLogResult.Analysis {

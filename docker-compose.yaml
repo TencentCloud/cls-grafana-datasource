@@ -30,5 +30,7 @@ services:
       NODE_ENV: development
       GF_LOG_FILTERS: plugin.tencent-cls-grafana-datasource:debug
       GF_LOG_LEVEL: debug
+      #GF_LOG_CONSOLE_FORMAT: json
+      #GF_LOG_FILE_FORMAT: json
       GF_DATAPROXY_LOGGING: 1
       GF_PLUGINS_ALLOW_LOADING_UNSIGNED_PLUGINS: tencent-cls-grafana-datasource
