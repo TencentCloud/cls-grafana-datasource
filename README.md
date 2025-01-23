@@ -129,14 +129,17 @@ keep_alive_seconds = 60
 
    在**Data Sources**页，单击**Add data source**，选中**Tencent Cloud Log Service Datasource**，按照以下说明配置数据源。
 
-   | 配置项                 | 说明                                                                         |
-   |---------------------|----------------------------------------------------------------------------|
-   | SecretId、SecretKey  | API请求密钥，用于身份鉴权。获取地址前往[API密钥管理](https://console.cloud.tencent.com/cam/capi) |
-   | 语言                  | 插件展示语言                                                                     |
-   | 开启内网API模式           | 是否通过内网访问云API                                                               |
-   | 在探索页开启展示类型选项        | 在探索页开启展示类型选项，控制探索页展示的图表类型                                   |
+   | 配置项                 | 说明                                                                                                                                                                                                                                                     |
+   |---------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+   | 凭证类型                | “永久密钥”：通过填入的SecretId, SecretKey发起请求；<br>“[Assume Role](https://cloud.tencent.com/document/product/598/19419)”：通过扮演角色身份获取临时密钥发起请求；<br>“[CVM Role](https://cloud.tencent.com/document/product/213/47668)”：通过扮演CVM绑定角色获取临时密钥请求。只支持在腾讯云CVM上部署的Grafana实例使用。 |
+   | SecretId, SecretKey | API请求密钥，用于身份鉴权。获取地址前往[API密钥管理](https://console.cloud.tencent.com/cam/capi)。凭证类型为“永久密钥”或“Assume Role”时填写。                                                                                                                                               |
+   | RoleArn             | 角色的资源描述，可在[访问管理](https://console.cloud.tencent.com/cam/role)，点击角色名获取。凭证类型为“Assume Role”时填写。                                                                                                                                                            |
+   | 角色名称             | 角色名称，可在[访问管理](https://console.cloud.tencent.com/cam/role)获取。凭证类型为“CVM Role”时填写。必须与CVM绑定的角色名一致。                                                                                                                                                         |
+   | 语言                  | 插件展示语言                                                                                                                                                                                                                                                 |
+   | 开启内网API模式           | 是否通过内网访问云API                                                                                                                                                                                                                                           |
+   | 在探索页开启展示类型选项        | 在探索页开启展示类型选项，控制探索页展示的图表类型                                                                                                                                                                                                                              |
 
-   ![配置数据源](https://main.qcloudimg.com/raw/86f9e4c2735d64e3f9b0e08acb0a7aa9.png)
+   ![配置数据源](https://main.qcloudimg.com/raw/b83785ce4e92a85d5749031dbad626d9.png)
 
 ## dashboard配置
 
