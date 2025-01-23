@@ -8,7 +8,7 @@ const pkgName = 'tencent-cls-grafana-datasource'
 const execScripts = [
   'rm -rf dist',
   'npm run build',
-  '$(go env GOPATH)/bin/mage',
+  'mage || $(go env GOPATH)/bin/mage',
   `cp -r dist ${pkgName}`,
   `zip -r ${pkgName}.zip ${pkgName}`,
   `rm -rf ${pkgName}`,
