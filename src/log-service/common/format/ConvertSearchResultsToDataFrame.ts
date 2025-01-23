@@ -13,6 +13,7 @@ import { SpanStatusCode } from '@opentelemetry/api';
 import { collectorTypes } from '@opentelemetry/exporter-collector';
 import { SemanticResourceAttributes } from '@opentelemetry/semantic-conventions';
 import _, { isNil } from 'lodash-es';
+import safeJsonStringify from 'safe-json-stringify';
 
 import { parseLogJsonStr, safeParseJson } from './formatSearchLog';
 import { CoreApp } from '../../../common/constants';
@@ -151,8 +152,9 @@ function ConvertLogJsonToDataFrameDTO(
       },
     },
   });
+  const logMessageFieldMap = new Map<string, FieldDTO<any>>();
 
-  Results.forEach((logItem) => {
+  Results.forEach((logItem, logIndex) => {
     (timeField.values as number[]).push(logItem.Time);
     (sourceField.values as string[]).push(logItem.Source);
     (filenameField.values as string[]).push(logItem.FileName);
@@ -166,6 +168,42 @@ function ConvertLogJsonToDataFrameDTO(
        */
       // 这里的值可以是 string | object, Grafana内部自动进行序列化处理。
       (logField.values as string[]).push(JSON.stringify(logJson));
+
+      /**
+       * set log message fields, since grafana removes support for "detected fields"
+       * @reference https://github.com/grafana/grafana/pull/60448
+       */
+      Object.keys(logJson).forEach((key) => {
+        const value = logJson[key];
+
+        let field: FieldDTO<any>;
+        if (logMessageFieldMap.has(key)) {
+          field = logMessageFieldMap.get(key) as FieldDTO<any>;
+        } else {
+          field = {
+            name: key,
+            values: new Array(Results.length),
+          };
+          if (typeof value === 'string') {
+            field.type = FieldType.string;
+          } else if (typeof value === 'number') {
+            field.type = FieldType.number;
+          } else if (typeof value === 'boolean') {
+            field.type = FieldType.boolean;
+          } else if (typeof value === 'object') {
+            field.type = FieldType.string;
+          } else {
+            field.type = FieldType.other;
+          }
+          logMessageFieldMap.set(key, field);
+        }
+
+        if (typeof value === 'object') {
+          (field.values as any[])[logIndex] = safeJsonStringify(value);
+        } else {
+          (field.values as any[])[logIndex] = value;
+        }
+      });
 
       // 提取OTLP数据
       if (oltpKeys.every((key) => Object.prototype.hasOwnProperty.call(logJson, key))) {
@@ -255,13 +293,6 @@ function ConvertLogJsonToDataFrameDTO(
           references,
         });
       }
-
-      /** 使用 LogsParsers.logfmt 进行自动解析，缩略展示上更友好，但是LogDetail提取会有问题 */
-      // let logStr = '';
-      // Object.entries(logJson).forEach(([k, v])=>{
-      //   logStr += `${k}=${_.isObject(v) ? JSON.stringify(v) : `${v}` } `
-      // });
-      // (logField.values as string[]).push(logStr);
     } catch (e) {}
   });
 
@@ -275,7 +306,15 @@ function ConvertLogJsonToDataFrameDTO(
       },
       executedQueryString: searchLogResult.Query,
     },
-    fields: [timeField, logField, sourceField, filenameField, hostnameField, metaField],
+    fields: [
+      timeField,
+      logField,
+      Array.from(sourceField.values as string[]).filter(Boolean).length ? sourceField : null,
+      Array.from(filenameField.values as string[]).filter(Boolean).length ? filenameField : null,
+      Array.from(hostnameField.values as string[]).filter(Boolean).length ? hostnameField : null,
+      metaField,
+      ...Array.from(logMessageFieldMap.values()).sort((a, b) => String.prototype.localeCompare.call(a.name, b.name)),
+    ].filter(Boolean) as FieldDTO<any>[],
   };
 
   const result = [];

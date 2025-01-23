@@ -65,6 +65,9 @@ importers:
       rxjs:
         specifier: 6.6.7
         version: 6.6.7
+      safe-json-stringify:
+        specifier: ^1.2.0
+        version: 1.2.0
       tslib:
         specifier: 2.5.3
         version: 2.5.3
@@ -120,6 +123,9 @@ importers:
       '@types/redux':
         specifier: ^3.6.0
         version: 3.6.0
+      '@types/safe-json-stringify':
+        specifier: ^1.1.5
+        version: 1.1.5
       '@types/testing-library__jest-dom':
         specifier: 5.14.8
         version: 5.14.8
@@ -1106,6 +1112,9 @@ packages:
   '@types/redux@3.6.0':
     resolution: {integrity: sha512-ic+60DXHW5seNyqFvfr7Sk5cnXs+HsF9tIeIaxjOuSP5kzgDXC+AzKTYmjAfuLx4Sccm/0vjwBQj3OOkUkwOqg==}
     deprecated: This is a stub types definition for Redux (https://github.com/reactjs/redux). Redux provides its own type definitions, so you don't need @types/redux installed!
+
+  '@types/safe-json-stringify@1.1.5':
+    resolution: {integrity: sha512-wQ1unJoajjDOP7bkg7FHOYelVp6BSsuBIFSvifNKeiMHegXWa6vddoqM/dHTVkX8bn9fJcor4Hukff9AtFybcA==}
 
   '@types/scheduler@0.16.1':
     resolution: {integrity: sha512-EaCxbanVeyxDRTQBkdLb3Bvl/HK7PBK6UJjsSixB0iHKoWxE5uu2Q/DgtpOhPIojN0Zl1whvOd7PoHs2P0s5eA==}
@@ -4469,6 +4478,9 @@ packages:
   safe-json-parse@1.0.1:
     resolution: {integrity: sha512-o0JmTu17WGUaUOHa1l0FPGXKBfijbxK6qoHzlkihsDXxzBHvJcA7zgviKR92Xs841rX9pK16unfphLq0/KqX7A==}
 
+  safe-json-stringify@1.2.0:
+    resolution: {integrity: sha512-gH8eh2nZudPQO6TytOvbxnuhYBOvDBBLW52tz5q6X58lJcd/tkmqFR+5Z9adS8aJtURSXWThWy/xJtJwixErvg==}
+
   safe-push-apply@1.0.0:
     resolution: {integrity: sha512-iKE9w/Z7xCzUMIZqdBsp6pEQvwuEebH4vdpjcDWnyzaI6yl6O9FHvVpmGelvEHNsoY6wGblkxR6Zty/h00WiSA==}
     engines: {node: '>= 0.4'}
@@ -6543,6 +6555,8 @@ snapshots:
   '@types/redux@3.6.0':
     dependencies:
       redux: 4.0.5
+
+  '@types/safe-json-stringify@1.1.5': {}
 
   '@types/scheduler@0.16.1': {}
 
@@ -10832,6 +10846,8 @@ snapshots:
   safe-buffer@5.2.1: {}
 
   safe-json-parse@1.0.1: {}
+
+  safe-json-stringify@1.2.0: {}
 
   safe-push-apply@1.0.0:
     dependencies:
