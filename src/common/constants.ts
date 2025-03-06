@@ -462,11 +462,11 @@ const FINANCE_HOST = {
 };
 
 // 获取对应业务的 API 接口信息
-export function GetServiceAPIInfo(region: string, service: string) {
-  return { ...(SERVICES_API_INFO[service] || {}), ...getHostAndPath(region, service) };
+export function GetServiceAPIInfo(service: string, region?: string) {
+  return { ...(SERVICES_API_INFO[service] || {}), ...getHostAndPath(service, region) };
 }
 // get host and path for finance regions
-function getHostAndPath(region: string, service: string) {
+function getHostAndPath(service: string, region?: string) {
   if (_.indexOf(FINANCE_REGIONS, region) === -1) {
     return {};
   }
@@ -499,7 +499,7 @@ export async function GetRequestParams(
     secretId,
     payload: options.data || '',
     ...signObj,
-    ...(_.pick(GetServiceAPIInfo(signObj.region || '', service), ['service', 'host', 'version']) || {}),
+    ...(_.pick(GetServiceAPIInfo(service, signObj.region), ['service', 'host', 'version']) || {}),
     backendSrv,
     datasourceId,
   };

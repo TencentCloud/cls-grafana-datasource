@@ -4,6 +4,7 @@ import _ from 'lodash-es';
 
 import { IApiError, IRegionItem, IResourceRegionInfo } from './interface';
 import * as TYPES from './types';
+import { MyDataSourceOptions } from '../../types';
 import { GetRequestParams, GetServiceAPIInfo } from '../constants';
 
 /**
@@ -12,7 +13,7 @@ import { GetRequestParams, GetServiceAPIInfo } from '../constants';
  * 出参 全部大写，不再转换
  */
 export interface IRequestParam {
-  region: string;
+  region?: string;
   action: string;
   data: any;
 }
@@ -24,7 +25,7 @@ export interface ICapiRequestParam extends IRequestParam {
 /** 通用请求参数。instanceSettings目前无法单例化，后续尝试优化API请求调用方法 */
 interface IRequestOpts {
   // 用于调用后端 Sign 方法
-  instanceSettings: DataSourceInstanceSettings;
+  instanceSettings: DataSourceInstanceSettings<MyDataSourceOptions>;
   // internal?: boolean;
   // clientTimeout?: number;
 }
@@ -34,10 +35,10 @@ interface IRequestOpts {
  */
 export async function capiRequest({ serviceType, region, action, data }: ICapiRequestParam, opts: IRequestOpts) {
   const { instanceSettings } = opts;
-  const serviceInfo = GetServiceAPIInfo(region, serviceType);
+  const serviceInfo = GetServiceAPIInfo(serviceType, region);
   const backendSrc = getBackendSrv();
   const requestOptions = await GetRequestParams(
-    { url: instanceSettings.url + serviceInfo.path, data },
+    { url: instanceSettings.url + (!!instanceSettings?.jsonData?.cloudApiProxy ? '/proxy' : serviceInfo.path), data },
     serviceType,
     {
       region: getTemplateSrv().replace(region),
@@ -159,10 +160,9 @@ export async function DescribeTopics(
  * @description 请求当前用户支持cls所有地域，已做白名单过滤
  */
 async function DescribeRegionsAndZonesRequest(product: string, opts: IRequestOpts): Promise<IResourceRegionInfo[]> {
-  return regionCapiRequest(
-    { action: 'DescribeRegionsAndZones', data: { Product: product }, region: 'ap-guangzhou' },
-    opts,
-  ).then((data) => data.ResourceRegionSet);
+  return regionCapiRequest({ action: 'DescribeRegionsAndZones', data: { Product: product } }, opts).then(
+    (data) => data.ResourceRegionSet,
+  );
 }
 
 export async function DescribeRegions(opts: IRequestOpts): Promise<{ regionList: IRegionItem[] }> {
