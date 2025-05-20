@@ -22,10 +22,10 @@ import {
   formatSearchLog,
   LogFieldReservedName,
 } from './common/format';
-import { toTimeSeriesMany } from './common/format/prepareTimeSeries';
-import { addQueryResultLimit, getRawQuery, replaceClsQueryWithTemplateSrv } from './common/utils/query';
 import { DescribeLogContext, LogInfo, SearchLog } from '../common/model';
 import { MyDataSourceOptions, QueryInfo } from '../types';
+import { toTimeSeriesMany } from './common/format/prepareTimeSeries';
+import { addQueryResultLimit, getRawQuery, replaceClsQueryWithTemplateSrv } from './common/utils/query';
 
 export class LogServiceDataSource extends DataSourceApi<QueryInfo, MyDataSourceOptions> {
   public readonly instanceSettings: DataSourceInstanceSettings<MyDataSourceOptions>;
