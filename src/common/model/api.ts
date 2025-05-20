@@ -38,7 +38,7 @@ export async function capiRequest({ serviceType, region, action, data }: ICapiRe
   const serviceInfo = GetServiceAPIInfo(serviceType, region);
   const backendSrc = getBackendSrv();
   const requestOptions = await GetRequestParams(
-    { url: instanceSettings.url + (!!instanceSettings?.jsonData?.cloudApiProxy ? '/proxy' : serviceInfo.path), data },
+    { url: instanceSettings.url + serviceInfo.path, data },
     serviceType,
     {
       region: getTemplateSrv().replace(region),
