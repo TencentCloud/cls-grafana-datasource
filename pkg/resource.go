@@ -1,16 +1,11 @@
 package main
 
 import (
-	"context"
 	"encoding/json"
-	"fmt"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/resource/httpadapter"
-	"github.com/tencentyun/cos-go-sdk-v5"
-	"github.com/tencentyun/cos-go-sdk-v5/debug"
 	"io"
 	"net/http"
-	"net/url"
 	"strings"
 	"text/template"
 )
@@ -35,7 +30,6 @@ func newResourceHandler(ds *clsDatasource) backend.CallResourceHandler {
 	mux := http.NewServeMux()
 
 	// register route
-	mux.HandleFunc("/tc_cos_list", ds.CosApi)
 	mux.HandleFunc("/sign_v3", ds.SignApi(true))
 	mux.HandleFunc("/sign_v2", ds.SignApi(false))
 
@@ -104,51 +98,4 @@ func (ds *clsDatasource) getSigned(isV3 bool, req *http.Request) (interface{}, e
 		Host:          query.Host,
 		Intranet:      shouldUseIntranet,
 	}, nil
-}
-
-func (ds *clsDatasource) CosApi(rw http.ResponseWriter, req *http.Request) {
-	regions := req.URL.Query()["region"]
-
-	baseURL := "https://service.cos.myqcloud.com"
-	if len(regions) > 0 {
-		// cos.<Region>.myqcloud.com
-		// TODO: support intranet
-		baseURL = fmt.Sprintf("http://cos.%s.myqcloud.com", regions[0])
-	}
-
-	su, _ := url.Parse(baseURL)
-	b := &cos.BaseURL{ServiceURL: su}
-
-	datasourceInstanceSettings := httpadapter.PluginConfigFromContext(req.Context()).DataSourceInstanceSettings
-
-	apiOpts := getInsSetting(*datasourceInstanceSettings)
-
-	c := cos.NewClient(b, &http.Client{
-		Transport: &cos.AuthorizationTransport{
-			SecretID:  apiOpts.SecretId,
-			SecretKey: apiOpts.SecretKey,
-			Transport: &debug.DebugRequestTransport{
-				RequestHeader:  true,
-				RequestBody:    true,
-				ResponseHeader: true,
-				ResponseBody:   true,
-			},
-		},
-	})
-
-	s, _, err := c.Service.Get(context.Background())
-	if err != nil {
-		rw.WriteHeader(http.StatusBadGateway)
-		rw.Write([]byte(err.Error()))
-		return
-	}
-	data, error := json.Marshal(s)
-	if error != nil {
-		rw.Write([]byte(err.Error()))
-		rw.WriteHeader(http.StatusInternalServerError)
-		return
-	}
-	rw.Header().Add("Content-Type", "application/json")
-	rw.WriteHeader(http.StatusOK)
-	rw.Write(data)
 }
