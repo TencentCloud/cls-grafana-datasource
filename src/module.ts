@@ -1,12 +1,22 @@
-import { DataSourcePlugin } from '@grafana/data';
+import { GenericDatasource } from './datasource';
+import { GenericDatasourceQueryCtrl } from './query_ctrl';
 
-import { ConfigEditor } from './ConfigEditor';
-import { DataSource } from './DataSource';
-import { QueryEditor } from './QueryEditor';
-import { QueryInfo, MyDataSourceOptions, MySecureJsonData } from './types';
-import { VariableQueryEditor } from './VariableQueryEditor';
+class GenericConfigCtrl {
+  static templateUrl = 'partials/config.html';
+}
 
-export const plugin = new DataSourcePlugin<DataSource, QueryInfo, MyDataSourceOptions, MySecureJsonData>(DataSource)
-  .setConfigEditor(ConfigEditor)
-  .setQueryEditor(QueryEditor)
-  .setVariableQueryEditor(VariableQueryEditor);
+class GenericQueryOptionsCtrl {
+  static templateUrl = 'partials/query.options.html';
+}
+
+class GenericAnnotationsQueryCtrl {
+  static templateUrl = 'partials/annotations.editor.html';
+}
+
+export {
+  GenericDatasource as Datasource,
+  GenericDatasourceQueryCtrl as QueryCtrl,
+  GenericConfigCtrl as ConfigCtrl,
+  GenericQueryOptionsCtrl as QueryOptionsCtrl,
+  GenericAnnotationsQueryCtrl as AnnotationsQueryCtrl,
+};

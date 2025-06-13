@@ -1,7 +1,32 @@
 {
-  "extends": "./.config/tsconfig.json",
   "compilerOptions": {
-    "alwaysStrict": false
-  },
-  "include": ["../src", "./types", "./.eslintrc.js", "./webpack.config.ts"]
+    "moduleResolution": "node",
+    "target": "es6",
+    "lib": ["es6", "dom"],
+    "rootDir": "./src",
+    "jsx": "react",
+    "module": "es6",
+    "baseUrl": "./src",
+    "declaration": false,
+    "allowSyntheticDefaultImports": true,
+    "esModuleInterop": true,
+    "forceConsistentCasingInFileNames": true,
+    "importHelpers": false,
+    "noEmitHelpers": true,
+    "removeComments": false,
+    "inlineSourceMap": false,
+    "sourceMap": true,
+    "noEmitOnError": false,
+    "emitDecoratorMetadata": false,
+    "experimentalDecorators": true,
+    "noImplicitReturns": true,
+    "noImplicitThis": true,
+    "noImplicitUseStrict": false,
+    "noImplicitAny": false,
+    "downlevelIteration": true,
+    // "noUnusedLocals": true,
+    "pretty": true,
+    "typeRoots": ["node_modules/@types"],
+    "skipLibCheck": true
+  }
 }

@@ -4,33 +4,13 @@ module.exports = {
     'eslint-config-tencent/ts',
     'eslint-config-tencent/prettier',
     'plugin:react/recommended',
-    'plugin:react-hooks/recommended',
-    'plugin:import/typescript',
+    'plugin:react-hooks/recommended'
   ],
-  parser: '@typescript-eslint/parser',
-  parserOptions: {
-    project: ['./tsconfig.json'],
-    tsconfigRootDir: '.',
-    ecmaVersion: 2021,
-    sourceType: 'module',
-    ecmaFeatures: {
-      jsx: true,
-    },
-  },
   settings: {
     react: {
       pragma: 'React',
       version: '17',
-    },
-    'import/parsers': {
-      '@typescript-eslint/parser': ['.ts', '.tsx'],
-    },
-    'import/resolver': {
-      typescript: {
-        alwaysTryTypes: true,
-        project: ['./tsconfig.json'],
-      },
-    },
+    }
   },
   env: {
     browser: true,
@@ -43,11 +23,10 @@ module.exports = {
     seajs: false,
     process: false,
   },
-  plugins: ['@typescript-eslint', 'import', 'prettier', 'react', 'react-hooks'],
+  plugins: ['import', 'prettier', 'react', 'react-hooks'],
   rules: {
     'react/display-name': 'warn',
     'react/prop-types': 'off',
-    '@typescript-eslint/class-literal-property-style': 'off',
     'import/order': [
       'error',
       {
