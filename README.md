@@ -40,10 +40,6 @@
    wget https://github.com/TencentCloud/cls-grafana-datasource/releases/download/v0.1.0/tencent-cls-grafana-datasource.zip
    unzip tencent-cls-grafana-datasource
    ```
-   或使用一键安装脚本（末尾参数为插件安装目录）
-   ```shell
-   /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/TencentCloud/cls-grafana-datasource/master/toolkit/update.sh)" bash /var/lib/grafana/plugins/
-   ```
 
 2. 修改Grafana配置文件，配置CLS数据源ID。配置文件路径参考[配置文档](https://grafana.com/docs/grafana/latest/setup-grafana/configure-grafana/)
   * 1. 在**plugins**中设置**allow_loading_unsigned_plugins**参数
@@ -107,13 +103,12 @@ services:
 
    在**Data Sources**页，单击**Add data source**，选中**Tencent Cloud Log Service Datasource**，按照以下说明配置数据源。
 
-   | 配置项               | 说明                                                                                                       |
-   |---------------------|----------------------------------------------------------------------------------------------------------|
-   | SecretId, SecretKey | API请求密钥，用于身份鉴权。获取地址前往[API密钥管理](https://console.cloud.tencent.com/cam/capi)。凭证类型为“永久密钥”或“Assume Role”时填写。 |
-   | RoleArn             | 角色的资源描述，可在[访问管理](https://console.cloud.tencent.com/cam/role)，点击角色名获取。凭证类型为“Assume Role”时填写。              |
-   | Region              | 地域，如 ap-guangzhou。                                                                                       |
-   | TopicId             | 日志主题ID。如 xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx。                                                           |
-   | 开启内网API模式       | 是否通过内网访问云API                                                                                             |
+   | 配置项                    | 说明                                                                          |
+   |--------------------------|-----------------------------------------------------------------------------|
+   | SecretId, SecretKey      | API请求密钥，用于身份鉴权。获取地址前往[API密钥管理](https://console.cloud.tencent.com/cam/capi)。 |
+   | Region                   | 地域，如 ap-guangzhou。                                                          |
+   | TopicId                  | 日志主题ID。如 xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx。                              |
+   | Enable Intranet API Mode | 是否通过内网访问云API。                                                               |
 
    ![配置数据源](https://main.qcloudimg.com/raw/c070ad7a091b167de55527b0fd51c38b.png)
 
