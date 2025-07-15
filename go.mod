@@ -1,8 +1,6 @@
 module github.com/tencentcloud/tencent-cls-grafana-datasource
 
-go 1.21
-
-toolchain go1.21.6
+go 1.24.5
 
 require (
 	github.com/grafana/grafana-plugin-sdk-go v0.250.0
