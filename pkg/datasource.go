@@ -175,7 +175,7 @@ func (ds *ClsDatasource) QueryLogs(ch chan *datasource.QueryResult, query *datas
 		request.From = common.Int64Ptr(from)
 		request.To = common.Int64Ptr(to)
 		request.Query = common.StringPtr(queryInfo.Query)
-		request.SyntaxRule = common.Uint64Ptr(1)
+		request.SyntaxRule = common.Uint64Ptr(queryInfo.SyntaxRule)
 		ds.logger.Info("DescribeLogHistogram request", "request", Stringify(request))
 
 		describeHistogramsResp, err := client.DescribeLogHistogram(request)
@@ -202,7 +202,7 @@ func (ds *ClsDatasource) QueryLogs(ch chan *datasource.QueryResult, query *datas
 	request.To = common.Int64Ptr(to)
 	request.Query = common.StringPtr(queryInfo.Query)
 	request.UseNewAnalysis = common.BoolPtr(true)
-	request.SyntaxRule = common.Uint64Ptr(1)
+	request.SyntaxRule = common.Uint64Ptr(queryInfo.SyntaxRule)
 	ds.logger.Info("SearchLog request", "request", Stringify(request))
 
 	searchLogResponse, err := client.SearchLog(request)

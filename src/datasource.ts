@@ -13,6 +13,7 @@ interface TSDBQuery {
   refId?: string;
   hide?: boolean;
   type?: 'timeserie' | 'table';
+  syntaxRule?: number;
 }
 
 type TSDBQueryType = 'query' | 'search';
@@ -161,6 +162,7 @@ export class GenericDatasource {
       logsPerPage: target.logsPerPage,
       currentPage: target.currentPage,
       mode: target.mode,
+      syntaxRule: target.syntaxRule,
     }));
 
     return options;

@@ -37,6 +37,12 @@ export class GenericDatasourceQueryCtrl extends QueryCtrl {
     ctrl.target.target = ctrl.target.ycol;
 
     ctrl.target.type = ctrl.panel.type || 'timeserie';
+
+    ctrl.syntaxRuleOptions = [
+      { name: 'CQL', value: 1 },
+      { name: 'Lucene', value: 0 },
+    ];
+    ctrl.target.syntaxRule = 1;
   }
 
   queryChanged() {

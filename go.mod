@@ -1,8 +1,6 @@
 module github.com/tencentcloud/tencent-cls-grafana-datasource
 
-go 1.23.0
-
-toolchain go1.23.9
+go 1.24.5
 
 require (
 	github.com/araddon/dateparse v0.0.0-20210429162001-6b43995a97de

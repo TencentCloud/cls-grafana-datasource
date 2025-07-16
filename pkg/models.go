@@ -11,6 +11,7 @@ type QueryInfo struct {
 	QueryType   string `json:"type"`
 	QueryMode   string `json:"mode"`
 	Query       string `json:"query"`
+	SyntaxRule  uint64 `json:"syntaxRule"`
 	Xcol        string `json:"xcol"`
 	Ycol        string `json:"ycol"`
 	LogsPerPage int64  `json:"logsPerPage"`
