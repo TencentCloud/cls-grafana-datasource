@@ -270,7 +270,7 @@ func (ds *ClsDatasource) BuildFlowGraph(ch chan *datasource.QueryResult, logs []
 	ds.SortLogs(logs, xcol)
 	if len(ycols) < 2 {
 		ch <- &datasource.QueryResult{
-			Error: "The len of ycols must greater than 2 ",
+			Error: "The len of ycols must greater than or equals to 2 ",
 		}
 	}
 	var set map[string]bool
@@ -283,7 +283,7 @@ func (ds *ClsDatasource) BuildFlowGraph(ch chan *datasource.QueryResult, logs []
 		var points []*datasource.Point
 		for _, alog := range logs {
 			if flowId == alog[ycols[0]] {
-				if alog[ycols[1]] == "null" {
+				if len(ycols) < 2 || alog[ycols[1]] == "null" {
 					continue
 				}
 				floatV, err := strconv.ParseFloat(fmt.Sprintf("%v", alog[ycols[1]]), 10)
@@ -325,12 +325,12 @@ func (ds *ClsDatasource) BuildFlowGraph(ch chan *datasource.QueryResult, logs []
 func (ds *ClsDatasource) BuildPieGraph(ch chan *datasource.QueryResult, logs []map[string]interface{}, xcol string, ycols []string, refId string) {
 	if len(ycols) < 2 {
 		ch <- &datasource.QueryResult{
-			Error: "The len of ycols must greater than 2 ",
+			Error: "The len of ycols must greater than or equals to 2 ",
 		}
 	}
 	var series []*datasource.TimeSeries
 	for _, alog := range logs {
-		if alog[ycols[1]] == "null" {
+		if len(ycols) < 2 || alog[ycols[1]] == "null" {
 			continue
 		}
 		floatV, err := strconv.ParseFloat(fmt.Sprintf("%v", alog[ycols[1]]), 10)

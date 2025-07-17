@@ -37,7 +37,7 @@
 
    ```sh
    cd /var/lib/grafana/plugins/
-   wget https://github.com/TencentCloud/cls-grafana-datasource/releases/download/v0.1.1/tencent-cls-grafana-datasource.zip
+   wget https://github.com/TencentCloud/cls-grafana-datasource/releases/download/v0.1.2/tencent-cls-grafana-datasource.zip
    unzip tencent-cls-grafana-datasource
    ```
 
@@ -67,7 +67,7 @@ service grafana-server restart
 docker run命令：
 ```
 docker run -d -p 3000:3000 --name=grafana6 \
-  -e "GF_INSTALL_PLUGINS=https://github.com/TencentCloud/cls-grafana-datasource/releases/download/v0.1.1/tencent-cls-grafana-datasource.zip;tencent-cls-grafana-datasource,https://github.com/grafana/piechart-panel/releases/download/v1.6.4/grafana-piechart-panel-1.6.4.zip;grafana-piechart-panel" \
+  -e "GF_INSTALL_PLUGINS=https://github.com/TencentCloud/cls-grafana-datasource/releases/download/v0.1.2/tencent-cls-grafana-datasource.zip;tencent-cls-grafana-datasource,https://github.com/grafana/piechart-panel/releases/download/v1.6.4/grafana-piechart-panel-1.6.4.zip;grafana-piechart-panel" \
   -e "GF_PLUGINS_ALLOW_LOADING_UNSIGNED_PLUGINS=tencent-cls-grafana-datasource" \
   -e "GF_DATAPROXY_TIMEOUT=60" \
   -e "GF_DATAPROXY_DIALTIMEOUT=60" \
@@ -86,7 +86,7 @@ services:
     ports:
       - '3000:3000'
     environment:
-      - GF_INSTALL_PLUGINS=https://github.com/TencentCloud/cls-grafana-datasource/releases/download/v0.1.1/tencent-cls-grafana-datasource.zip;tencent-cls-grafana-datasource,https://github.com/grafana/piechart-panel/releases/download/v1.6.4/grafana-piechart-panel-1.6.4.zip;grafana-piechart-panel
+      - GF_INSTALL_PLUGINS=https://github.com/TencentCloud/cls-grafana-datasource/releases/download/v0.1.2/tencent-cls-grafana-datasource.zip;tencent-cls-grafana-datasource,https://github.com/grafana/piechart-panel/releases/download/v1.6.4/grafana-piechart-panel-1.6.4.zip;grafana-piechart-panel
       - GF_PLUGINS_ALLOW_LOADING_UNSIGNED_PLUGINS=tencent-cls-grafana-datasource
       - GF_DATAPROXY_TIMEOUT=60
       - GF_DATAPROXY_DIALTIMEOUT=60
