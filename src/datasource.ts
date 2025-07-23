@@ -1,5 +1,6 @@
 import _ from 'lodash';
 
+import { PanelDisplayType } from './constant';
 interface TSDBRequest {
   queries: any[];
   from?: string;
@@ -12,7 +13,7 @@ interface TSDBQuery {
   queryType?: TSDBQueryType;
   refId?: string;
   hide?: boolean;
-  type?: 'timeserie' | 'table';
+  type?: PanelDisplayType;
   syntaxRule?: number;
 }
 
@@ -154,11 +155,15 @@ export class GenericDatasource {
       target: this.templateSrv.replace(target.target, options.scopedVars, 'regex'),
       refId: target.refId,
       // hide: target.hide,
-      type: target.type || 'timeserie',
+      panelDisplayType:
+        (target.panelDisplayType === 'grafana-piechart-panel'
+          ? PanelDisplayType.TimeSeries
+          : target.panelDisplayType) || PanelDisplayType.TimeSeries,
       datasourceId: this.id,
       query: this.replaceQueryParameters(target, options),
       xcol: this.templateSrv.replace(target.xcol, options.scopedVars, 'regex'),
       ycol: this.templateSrv.replace(target.ycol, options.scopedVars, 'regex'),
+      tcol: this.templateSrv.replace(target.tcol, options.scopedVars, 'regex'),
       logsPerPage: target.logsPerPage,
       currentPage: target.currentPage,
       mode: target.mode,

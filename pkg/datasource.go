@@ -4,17 +4,20 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/common"
-	"github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/common/profile"
+	"regexp"
 	"sort"
 	"strconv"
 	"strings"
 
+	"github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/common"
+	"github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/common/profile"
+	"golang.org/x/net/context"
+
 	"github.com/grafana/grafana-plugin-model/go/datasource"
 	"github.com/hashicorp/go-hclog"
 	"github.com/hashicorp/go-plugin"
+	"github.com/samber/lo"
 	clsAPI "github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/cls/v20201016"
-	"golang.org/x/net/context"
 )
 
 type ClsDatasource struct {
@@ -24,6 +27,14 @@ type ClsDatasource struct {
 
 var cpf = profile.NewClientProfile()
 var intranetCpf = profile.NewClientProfile()
+
+type PanelType string
+
+const (
+	TimeseriesType PanelType = "timeseries"
+	TableType      PanelType = "table"
+	LogsType       PanelType = "logs"
+)
 
 func init() {
 	intranetCpf.HttpProfile.RootDomain = "internal.tencentcloudapi.com"
@@ -166,7 +177,10 @@ func (ds *ClsDatasource) QueryLogs(ch chan *datasource.QueryResult, query *datas
 		}
 		return
 	}
-	xcol := queryInfo.Xcol
+
+	panelDisplayType := queryInfo.PanelDisplayType
+	// 时间列
+	tcol := strings.Replace(queryInfo.Tcol, " ", "", -1)
 
 	queryType := queryInfo.QueryType
 	if queryType == "histograms" {
@@ -194,7 +208,11 @@ func (ds *ClsDatasource) QueryLogs(ch chan *datasource.QueryResult, query *datas
 		}
 		return
 	}
-
+	// 维度列
+	var xcols []string = lo.Filter(strings.Split(strings.Replace(queryInfo.Xcol, " ", "", -1), ","), func(str string, _ int) bool {
+		return str != ""
+	})
+	// 指标列
 	var ycols []string
 	request := clsAPI.NewSearchLogRequest()
 	request.TopicId = common.StringPtr(jsonData.TopicId)
@@ -220,9 +238,13 @@ func (ds *ClsDatasource) QueryLogs(ch chan *datasource.QueryResult, query *datas
 	queryInfo.Ycol = strings.Replace(queryInfo.Ycol, " ", "", -1)
 	isFlowGraph := strings.Contains(queryInfo.Ycol, "#:#")
 	if isFlowGraph {
-		ycols = strings.Split(queryInfo.Ycol, "#:#")
+		ycols = lo.Filter(strings.Split(queryInfo.Ycol, "#:#"), func(str string, _ int) bool {
+			return str != ""
+		})
 	} else {
-		ycols = strings.Split(queryInfo.Ycol, ",")
+		ycols = lo.Filter(strings.Split(queryInfo.Ycol, ","), func(str string, _ int) bool {
+			return str != ""
+		})
 	}
 
 	var series []*datasource.TimeSeries
@@ -245,17 +267,76 @@ func (ds *ClsDatasource) QueryLogs(ch chan *datasource.QueryResult, query *datas
 				Error: err.Error(),
 			}
 		}
+		logColumnsMap := make(map[string]bool)
+		for _, column := range columns {
+			logColumnsMap[*column.Name] = true
+		}
 
+		hasTime := lo.SomeBy(columns, func(column *clsAPI.Column) bool {
+			return isTimeColumn(*column.Type)
+		})
+
+		if panelDisplayType == string(TimeseriesType) && hasTime {
+			if tcol == "" {
+				// display type is timeseries, but not set any time columns, should display first time columns
+				timeColumnNames := lo.Map(
+					lo.Filter(columns, func(column *clsAPI.Column, _ int) bool {
+						return isTimeColumn(*column.Type)
+					}),
+					func(column *clsAPI.Column, _ int) string { return *column.Name },
+				)
+				if len(timeColumnNames) > 0 {
+					tcol = timeColumnNames[0]
+					ds.logger.Debug("no time columns found. use first time column", "columns", timeColumnNames[0])
+				}
+			}
+			if len(xcols) < 1 {
+				// display type is timeseries, but not set any dimension columns, should display all dimension columns
+				textColumnNames := lo.Map(
+					lo.Filter(columns, func(column *clsAPI.Column, _ int) bool {
+						return isTextColumn(*column.Type)
+					}),
+					func(column *clsAPI.Column, _ int) string { return *column.Name },
+				)
+				if len(textColumnNames) > 0 {
+					xcols = append(xcols, textColumnNames...)
+					ds.logger.Debug("no dimension columns found. use all text columns as dimensions", "columns", textColumnNames)
+				}
+			}
+			if len(ycols) < 1 {
+				// display type is timeseries, but not set any metric columns, should display all metric columns
+				numericColumnNames := lo.Map(
+					lo.Filter(columns, func(column *clsAPI.Column, _ int) bool {
+						return isNumericColumn(*column.Type)
+					}),
+					func(column *clsAPI.Column, _ int) string { return *column.Name },
+				)
+				if len(numericColumnNames) > 0 {
+					ycols = append(ycols, numericColumnNames...)
+					ds.logger.Debug("no metric columns found. use all numeric columns as metric", "columns", numericColumnNames)
+				}
+			}
+		}
+
+		xcols = lo.Filter(xcols, func(xcol string, _ int) bool {
+			if !logColumnsMap[xcol] {
+				ds.logger.Debug(fmt.Sprintf("dimension column \"%s\" is not in search result columns", xcol))
+			}
+			return logColumnsMap[xcol]
+		})
+		ycols = lo.Filter(ycols, func(ycol string, _ int) bool {
+			if !logColumnsMap[ycol] {
+				ds.logger.Debug(fmt.Sprintf("metric column \"%s\" is not in search result columns", ycol))
+			}
+			return logColumnsMap[ycol]
+		})
 		if isFlowGraph {
-			ds.BuildFlowGraph(ch, logs, xcol, ycols, query.RefId)
+			ds.BuildFlowGraph(ch, logs, tcol, xcols, ycols, query.RefId)
 			return
-		} else if xcol == "pie" {
-			ds.BuildPieGraph(ch, logs, xcol, ycols, query.RefId)
-			return
-		} else if xcol != "" && xcol != "map" && xcol != "pie" && xcol != "bar" && xcol != "table" {
-			ds.BuildTimingGraph(ch, logs, xcol, ycols, &series)
+		} else if panelDisplayType == string(TimeseriesType) {
+			ds.BuildTimingGraph(ch, logs, tcol, xcols, ycols, &series)
 		} else {
-			ds.BuildTable(ch, logs, xcol, ycols, columns, &tables)
+			ds.BuildTable(ch, logs, tcol, xcols, ycols, columns, &tables)
 		}
 		ch <- &datasource.QueryResult{
 			RefId:  query.RefId,
@@ -266,8 +347,8 @@ func (ds *ClsDatasource) QueryLogs(ch chan *datasource.QueryResult, query *datas
 
 }
 
-func (ds *ClsDatasource) BuildFlowGraph(ch chan *datasource.QueryResult, logs []map[string]interface{}, xcol string, ycols []string, refId string) {
-	ds.SortLogs(logs, xcol)
+func (ds *ClsDatasource) BuildFlowGraph(ch chan *datasource.QueryResult, logs []map[string]interface{}, tcol string, xcols []string, ycols []string, refId string) {
+	ds.SortLogs(logs, tcol)
 	if len(ycols) < 2 {
 		ch <- &datasource.QueryResult{
 			Error: "The len of ycols must greater than or equals to 2 ",
@@ -294,7 +375,7 @@ func (ds *ClsDatasource) BuildFlowGraph(ch chan *datasource.QueryResult, logs []
 					}
 					return
 				}
-				floatV1, err := convertTimeStrToTimestamp(fmt.Sprintf("%v", alog[xcol]), ds)
+				floatV1, err := convertTimeStrToTimestamp(fmt.Sprintf("%v", alog[tcol]), ds)
 				if err != nil {
 					ds.logger.Error("convertTimeStrToTimestamp xcol", "error ", err)
 					ch <- &datasource.QueryResult{
@@ -322,53 +403,37 @@ func (ds *ClsDatasource) BuildFlowGraph(ch chan *datasource.QueryResult, logs []
 	}
 }
 
-func (ds *ClsDatasource) BuildPieGraph(ch chan *datasource.QueryResult, logs []map[string]interface{}, xcol string, ycols []string, refId string) {
-	if len(ycols) < 2 {
-		ch <- &datasource.QueryResult{
-			Error: "The len of ycols must greater than or equals to 2 ",
-		}
-	}
-	var series []*datasource.TimeSeries
-	for _, alog := range logs {
-		if len(ycols) < 2 || alog[ycols[1]] == "null" {
-			continue
-		}
-		floatV, err := strconv.ParseFloat(fmt.Sprintf("%v", alog[ycols[1]]), 10)
-		if err != nil {
-			ds.logger.Error("ParseFloat ycols[1]", "error ", err)
-			ch <- &datasource.QueryResult{
-				Error: err.Error(),
+func (ds *ClsDatasource) BuildTimingGraph(ch chan *datasource.QueryResult, logs []map[string]interface{}, tcol string, xCols []string, ycols []string, series *[]*datasource.TimeSeries) {
+	ds.SortLogs(logs, tcol)
+	ds.logger.Debug("BuildTimingGraph logs", "logs ", logs)
+	if len(xCols) > 0 {
+		// has dimensions
+		for _, xCol := range xCols {
+			// group by dimension
+			var groupedDimensions = lo.GroupBy(logs, func(alog map[string]interface{}) string {
+				return fmt.Sprintf("%v", alog[xCol])
+			})
+			for dimensionValue, groupedLogs := range groupedDimensions {
+				// build timeseries for each dimension
+				ds.BuildTimingGraphCore(ch, groupedLogs, tcol, ycols, xCol, dimensionValue, series)
 			}
-			return
 		}
-		point := &datasource.Point{
-			Timestamp: 0,
-			Value:     floatV,
-		}
-		var points []*datasource.Point
-		points = append(points, point)
-		timeSeries := &datasource.TimeSeries{
-			Name:   fmt.Sprintf("%v", alog[ycols[0]]),
-			Points: points,
-		}
-		series = append(series, timeSeries)
+	} else {
+		// has no dimensions
+		ds.BuildTimingGraphCore(ch, logs, tcol, ycols, "", "", series)
 	}
 
-	ch <- &datasource.QueryResult{
-		RefId:  refId,
-		Series: series,
-	}
 }
 
-func (ds *ClsDatasource) BuildTimingGraph(ch chan *datasource.QueryResult, logs []map[string]interface{}, xcol string, ycols []string, series *[]*datasource.TimeSeries) {
-	ds.SortLogs(logs, xcol)
+func (ds *ClsDatasource) BuildTimingGraphCore(ch chan *datasource.QueryResult, logs []map[string]interface{}, tcol string, ycols []string, xcol string, seriesName string, series *[]*datasource.TimeSeries) {
+	yColLen := len(ycols)
 	for _, ycol := range ycols {
 		var points []*datasource.Point
 		for _, alog := range logs {
 			var timestamp int64
 			var value float64
 			for k, v := range alog {
-				if k == xcol {
+				if k == tcol {
 					var err error
 					timestamp, err = convertTimeStrToTimestamp(fmt.Sprintf("%v", v), ds)
 					if err != nil {
@@ -400,15 +465,28 @@ func (ds *ClsDatasource) BuildTimingGraph(ch chan *datasource.QueryResult, logs 
 			}
 			points = append(points, point)
 		}
+		timeSeriesName := ycol
+		if seriesName != "" {
+			if yColLen == 1 {
+				timeSeriesName = seriesName
+			} else {
+				timeSeriesName = fmt.Sprintf("%s(%s)", seriesName, ycol)
+			}
+		}
 		timeSeries := &datasource.TimeSeries{
-			Name:   ycol,
+			Name:   timeSeriesName,
 			Points: points,
+		}
+		if xcol != "" {
+			timeSeries.Tags = map[string]string{
+				xcol: seriesName,
+			}
 		}
 		*series = append(*series, timeSeries)
 	}
 }
 
-func (ds *ClsDatasource) BuildTable(ch chan *datasource.QueryResult, logs []map[string]interface{}, xcol string, ycols []string, resColumns []*clsAPI.Column, tables *[]*datasource.Table) {
+func (ds *ClsDatasource) BuildTable(ch chan *datasource.QueryResult, logs []map[string]interface{}, tcol string, xcol []string, ycols []string, resColumns []*clsAPI.Column, tables *[]*datasource.Table) {
 	var columns []*datasource.TableColumn
 
 	if len(ycols) > 0 && !(len(ycols) == 1 && ycols[0] == "") {
@@ -513,4 +591,18 @@ func (ds *ClsDatasource) BuildLogs(ch chan *datasource.QueryResult, logInfos []*
 		Rows:    rows,
 	}
 	*tables = append(*tables, table)
+}
+
+// 判断是否为时间类型列
+func isTimeColumn(columnType string) bool {
+	matched, _ := regexp.MatchString(`(?i)^(timestamp with time zone|timestamp|date|datetime)$`, columnType)
+	return matched
+}
+func isTextColumn(columnType string) bool {
+	matched, _ := regexp.MatchString(`(?i)^(varchar|char|text|keyword|uuid|ipaddress|time|time with time zone)$`, columnType)
+	return matched
+}
+func isNumericColumn(columnType string) bool {
+	matched, _ := regexp.MatchString(`(?i)^(real|double|decimal|tinyint|samllint|integer|bigint|long)$`, columnType)
+	return matched
 }

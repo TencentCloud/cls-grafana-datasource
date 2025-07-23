@@ -30,3 +30,5 @@ tencent-cls-grafana-datasource.zip
 
 dist
 .tscache
+grafana-data
+plugins
