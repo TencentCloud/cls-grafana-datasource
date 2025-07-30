@@ -272,49 +272,43 @@ func (ds *ClsDatasource) QueryLogs(ch chan *datasource.QueryResult, query *datas
 			logColumnsMap[*column.Name] = true
 		}
 
-		hasTime := lo.SomeBy(columns, func(column *clsAPI.Column) bool {
-			return isTimeColumn(*column.Type)
-		})
-
-		if panelDisplayType == string(TimeseriesType) && hasTime {
-			if tcol == "" {
-				// display type is timeseries, but not set any time columns, should display first time columns
-				timeColumnNames := lo.Map(
-					lo.Filter(columns, func(column *clsAPI.Column, _ int) bool {
-						return isTimeColumn(*column.Type)
-					}),
-					func(column *clsAPI.Column, _ int) string { return *column.Name },
-				)
-				if len(timeColumnNames) > 0 {
-					tcol = timeColumnNames[0]
-					ds.logger.Debug("no time columns found. use first time column", "columns", timeColumnNames[0])
-				}
+		if tcol == "" {
+			// display type is timeseries, but not set any time columns, should display first time columns
+			timeColumnNames := lo.Map(
+				lo.Filter(columns, func(column *clsAPI.Column, _ int) bool {
+					return isTimeColumn(*column.Type)
+				}),
+				func(column *clsAPI.Column, _ int) string { return *column.Name },
+			)
+			if len(timeColumnNames) > 0 {
+				tcol = timeColumnNames[0]
+				ds.logger.Debug("no time columns found. use first time column", "columns", timeColumnNames[0])
 			}
-			if len(xcols) < 1 {
-				// display type is timeseries, but not set any dimension columns, should display all dimension columns
-				textColumnNames := lo.Map(
-					lo.Filter(columns, func(column *clsAPI.Column, _ int) bool {
-						return isTextColumn(*column.Type)
-					}),
-					func(column *clsAPI.Column, _ int) string { return *column.Name },
-				)
-				if len(textColumnNames) > 0 {
-					xcols = append(xcols, textColumnNames...)
-					ds.logger.Debug("no dimension columns found. use all text columns as dimensions", "columns", textColumnNames)
-				}
+		}
+		if len(xcols) < 1 {
+			// display type is timeseries, but not set any dimension columns, should display all dimension columns
+			textColumnNames := lo.Map(
+				lo.Filter(columns, func(column *clsAPI.Column, _ int) bool {
+					return isTextColumn(*column.Type)
+				}),
+				func(column *clsAPI.Column, _ int) string { return *column.Name },
+			)
+			if len(textColumnNames) > 0 {
+				xcols = append(xcols, textColumnNames...)
+				ds.logger.Debug("no dimension columns found. use all text columns as dimensions", "columns", textColumnNames)
 			}
-			if len(ycols) < 1 {
-				// display type is timeseries, but not set any metric columns, should display all metric columns
-				numericColumnNames := lo.Map(
-					lo.Filter(columns, func(column *clsAPI.Column, _ int) bool {
-						return isNumericColumn(*column.Type)
-					}),
-					func(column *clsAPI.Column, _ int) string { return *column.Name },
-				)
-				if len(numericColumnNames) > 0 {
-					ycols = append(ycols, numericColumnNames...)
-					ds.logger.Debug("no metric columns found. use all numeric columns as metric", "columns", numericColumnNames)
-				}
+		}
+		if len(ycols) < 1 {
+			// display type is timeseries, but not set any metric columns, should display all metric columns
+			numericColumnNames := lo.Map(
+				lo.Filter(columns, func(column *clsAPI.Column, _ int) bool {
+					return isNumericColumn(*column.Type)
+				}),
+				func(column *clsAPI.Column, _ int) string { return *column.Name },
+			)
+			if len(numericColumnNames) > 0 {
+				ycols = append(ycols, numericColumnNames...)
+				ds.logger.Debug("no metric columns found. use all numeric columns as metric", "columns", numericColumnNames)
 			}
 		}
 
@@ -488,24 +482,19 @@ func (ds *ClsDatasource) BuildTimingGraphCore(ch chan *datasource.QueryResult, l
 
 func (ds *ClsDatasource) BuildTable(ch chan *datasource.QueryResult, logs []map[string]interface{}, tcol string, xcol []string, ycols []string, resColumns []*clsAPI.Column, tables *[]*datasource.Table) {
 	var columns []*datasource.TableColumn
-
-	if len(ycols) > 0 && !(len(ycols) == 1 && ycols[0] == "") {
-		for _, ycol := range ycols {
-			columns = append(columns, &datasource.TableColumn{
-				Name: ycol,
-			})
-			ds.logger.Debug("BuildTable ycols", "ycol ", ycol)
-
-		}
-	} else {
-		for _, ycol := range resColumns {
-			columns = append(columns, &datasource.TableColumn{
-				Name: *ycol.Name,
-			})
-			ds.logger.Debug("BuildTable resColumns", "ycol name", *ycol.Name, "ycol type", *ycol.Type)
-		}
+	availableColumns := lo.Filter(resColumns, func(item *clsAPI.Column, index int) bool {
+		columnName := *item.Name
+		return columnName == tcol || lo.Contains(ycols, columnName) || lo.Contains(xcol, columnName)
+	})
+	if len(availableColumns) < 1 {
+		availableColumns = resColumns
 	}
-
+	for _, ycol := range availableColumns {
+		columns = append(columns, &datasource.TableColumn{
+			Name: *ycol.Name,
+		})
+		ds.logger.Debug("BuildTable resColumns", "ycol name", *ycol.Name, "ycol type", *ycol.Type)
+	}
 	var rows []*datasource.TableRow
 	for _, alog := range logs {
 		var values []*datasource.RowValue
