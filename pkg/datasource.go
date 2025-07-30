@@ -289,7 +289,7 @@ func (ds *ClsDatasource) QueryLogs(ch chan *datasource.QueryResult, query *datas
 			// display type is timeseries, but not set any dimension columns, should display all dimension columns
 			textColumnNames := lo.Map(
 				lo.Filter(columns, func(column *clsAPI.Column, _ int) bool {
-					return isTextColumn(*column.Type)
+					return isTextColumn(*column.Type) && *column.Name != tcol
 				}),
 				func(column *clsAPI.Column, _ int) string { return *column.Name },
 			)
