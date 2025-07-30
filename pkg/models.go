@@ -18,4 +18,5 @@ type QueryInfo struct {
 	PanelDisplayType string `json:"panelDisplayType"`
 	LogsPerPage      int64  `json:"logsPerPage"`
 	CurrentPage      int64  `json:"currentPage"`
+	MaxResultNumber  int64  `json:"maxResultNumber"`
 }

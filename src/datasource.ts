@@ -168,6 +168,7 @@ export class GenericDatasource {
       currentPage: target.currentPage,
       mode: target.mode,
       syntaxRule: target.syntaxRule,
+      maxResultNumber: target.maxResultNumber || 100,
     }));
 
     return options;

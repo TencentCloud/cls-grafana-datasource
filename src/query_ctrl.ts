@@ -47,6 +47,7 @@ export class GenericDatasourceQueryCtrl extends QueryCtrl {
     ];
     ctrl.target.syntaxRule = 1;
     ctrl.panelDisplayTypeOptions = QueryEditorFormatOptions;
+    ctrl.target.maxResultNumber = ctrl.target.maxResultNumber || 100;
   }
 
   queryChanged() {

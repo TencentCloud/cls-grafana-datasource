@@ -221,6 +221,7 @@ func (ds *ClsDatasource) QueryLogs(ch chan *datasource.QueryResult, query *datas
 	request.Query = common.StringPtr(queryInfo.Query)
 	request.UseNewAnalysis = common.BoolPtr(true)
 	request.SyntaxRule = common.Uint64Ptr(queryInfo.SyntaxRule)
+	request.Limit = common.Int64Ptr(queryInfo.MaxResultNumber)
 	ds.logger.Info("SearchLog request", "request", Stringify(request))
 
 	searchLogResponse, err := client.SearchLog(request)
