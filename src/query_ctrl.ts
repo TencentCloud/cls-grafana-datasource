@@ -3,7 +3,7 @@
 import type { auto } from 'angular';
 import _ from 'lodash';
 
-import { maxResultNumber, PanelDisplayType } from './constant';
+import { maxResultNumber, PanelDisplayType, SyntaxRule } from './constant';
 
 export class QueryCtrl {
   target: any;
@@ -42,12 +42,16 @@ export class GenericDatasourceQueryCtrl extends QueryCtrl {
       ctrl.target.panelDisplayType || typeMap[ctrl.panel.type] || PanelDisplayType.TimeSeries;
 
     ctrl.syntaxRuleOptions = [
-      { name: 'CQL', value: 1 },
-      { name: 'Lucene', value: 0 },
+      { name: 'CQL', value: SyntaxRule.Cql },
+      { name: 'Lucene', value: SyntaxRule.Lucene },
     ];
-    ctrl.target.syntaxRule = 1;
+    if (_.isNil(ctrl.target.syntaxRule)) {
+      ctrl.target.syntaxRule = SyntaxRule.Cql;
+    }
     ctrl.panelDisplayTypeOptions = QueryEditorFormatOptions;
-    ctrl.target.maxResultNumber = ctrl.target.maxResultNumber || maxResultNumber;
+    if (!ctrl.target.maxResultNumber) {
+      ctrl.target.maxResultNumber = maxResultNumber;
+    }
   }
 
   queryChanged() {

@@ -180,7 +180,7 @@ func (ds *ClsDatasource) QueryLogs(ch chan *datasource.QueryResult, query *datas
 
 	panelDisplayType := queryInfo.PanelDisplayType
 	// 时间列
-	tcol := strings.Replace(queryInfo.Tcol, " ", "", -1)
+	tcol := queryInfo.Tcol
 
 	queryType := queryInfo.QueryType
 	if queryType == "histograms" {
@@ -209,7 +209,7 @@ func (ds *ClsDatasource) QueryLogs(ch chan *datasource.QueryResult, query *datas
 		return
 	}
 	// 维度列
-	var xcols []string = lo.Filter(strings.Split(strings.Replace(queryInfo.Xcol, " ", "", -1), ","), func(str string, _ int) bool {
+	var xcols []string = lo.Filter(strings.Split(queryInfo.Xcol, ","), func(str string, _ int) bool {
 		return str != ""
 	})
 	// 指标列
@@ -236,7 +236,6 @@ func (ds *ClsDatasource) QueryLogs(ch chan *datasource.QueryResult, query *datas
 	ds.logger.Info("SearchLog RequestId", "RequestId : ", *searchLogResult.RequestId)
 	ds.logger.Debug("SearchLog Result ", "result : ", Stringify(searchLogResult))
 
-	queryInfo.Ycol = strings.Replace(queryInfo.Ycol, " ", "", -1)
 	isFlowGraph := strings.Contains(queryInfo.Ycol, "#:#")
 	if isFlowGraph {
 		ycols = lo.Filter(strings.Split(queryInfo.Ycol, "#:#"), func(str string, _ int) bool {

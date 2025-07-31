@@ -3,4 +3,8 @@ export enum PanelDisplayType {
   TimeSeries = 'timeseries',
   Log = 'logs',
 }
-export const maxResultNumber = 100
+export const maxResultNumber = 100;
+export const SyntaxRule = {
+  Cql: 1,
+  Lucene: 0,
+};
