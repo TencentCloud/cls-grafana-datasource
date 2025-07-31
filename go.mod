@@ -8,6 +8,7 @@ require (
 	github.com/grafana/grafana-plugin-sdk-go v0.250.0
 	github.com/hashicorp/go-hclog v1.6.3
 	github.com/hashicorp/go-plugin v1.6.1
+	github.com/samber/lo v1.51.0
 	github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/cls v1.0.1175
 	github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/common v1.0.1175
 	golang.org/x/net v0.40.0

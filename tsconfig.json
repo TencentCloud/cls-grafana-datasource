@@ -28,5 +28,6 @@
     "pretty": true,
     "typeRoots": ["node_modules/@types"],
     "skipLibCheck": true
-  }
+  },
+  "exclude": ["plugins"]
 }

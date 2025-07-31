@@ -3,10 +3,11 @@ package main
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/araddon/dateparse"
-	clsAPI "github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/cls/v20201016"
 	"strings"
 	"time"
+
+	"github.com/araddon/dateparse"
+	clsAPI "github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/cls/v20201016"
 )
 
 func GetRequestClient() string {
@@ -95,7 +96,7 @@ func Stringify(v interface{}) string {
 func convertToTime(val string, ds *ClsDatasource) (time.Time, error) {
 	t, tErr := dateparse.ParseLocal(val)
 	if tErr != nil {
-		ds.logger.Error("convertToTime", "err", tErr)
+		ds.logger.Error("convertToTime", "err", val, tErr)
 		return time.Unix(0, 0), tErr
 	} else {
 		return t, nil

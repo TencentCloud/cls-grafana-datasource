@@ -30,3 +30,8 @@ tencent-cls-grafana-datasource.zip
 
 dist
 .tscache
+grafana-data
+plugins
+tencent-cls-grafana-datasource
+tscommand-*.tmp.txt
+mage_output_file.go

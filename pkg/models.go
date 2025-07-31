@@ -8,12 +8,15 @@ type JsonData struct {
 }
 
 type QueryInfo struct {
-	QueryType   string `json:"type"`
-	QueryMode   string `json:"mode"`
-	Query       string `json:"query"`
-	SyntaxRule  uint64 `json:"syntaxRule"`
-	Xcol        string `json:"xcol"`
-	Ycol        string `json:"ycol"`
-	LogsPerPage int64  `json:"logsPerPage"`
-	CurrentPage int64  `json:"currentPage"`
+	QueryType        string `json:"queryType"`
+	QueryMode        string `json:"mode"`
+	Query            string `json:"query"`
+	SyntaxRule       uint64 `json:"syntaxRule"`
+	Xcol             string `json:"xcol"`
+	Ycol             string `json:"ycol"`
+	Tcol             string `json:"tcol"`
+	PanelDisplayType string `json:"panelDisplayType"`
+	LogsPerPage      int64  `json:"logsPerPage"`
+	CurrentPage      int64  `json:"currentPage"`
+	MaxResultNumber  int64  `json:"maxResultNumber"`
 }
