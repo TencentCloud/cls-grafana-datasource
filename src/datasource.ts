@@ -151,15 +151,16 @@ export class GenericDatasource {
     options.targets = _.filter(options.targets, (target) => target.target !== 'select metric');
 
     options.targets = _.map(options.targets, (target) => {
-      const panelDisplayType = (target.panelDisplayType === 'grafana-piechart-panel'
-        ? PanelDisplayType.TimeSeries
-        : target.panelDisplayType) || PanelDisplayType.TimeSeries
-      return ({
+      const panelDisplayType: PanelDisplayType =
+        (target.panelDisplayType === 'grafana-piechart-panel'
+          ? PanelDisplayType.TimeSeries
+          : target.panelDisplayType) || PanelDisplayType.TimeSeries;
+      return {
         queryType: 'query',
         target: this.templateSrv.replace(target.target, options.scopedVars, 'regex'),
         refId: target.refId,
         // hide: target.hide,
-        panelDisplayType: panelDisplayType,
+        panelDisplayType,
         datasourceId: this.id,
         query: this.replaceQueryParameters(target, options),
         xcol: this.templateSrv.replace(target.xcol, options.scopedVars, 'regex'),
@@ -169,8 +170,9 @@ export class GenericDatasource {
         currentPage: target.currentPage,
         mode: target.mode,
         syntaxRule: target.syntaxRule,
-        maxResultNumber: panelDisplayType === PanelDisplayType.Log ? (target.maxResultNumber || maxResultNumber) : maxResultNumber,
-      })
+        maxResultNumber:
+          panelDisplayType === PanelDisplayType.Log ? target.maxResultNumber || maxResultNumber : maxResultNumber,
+      };
     });
 
     return options;
