@@ -402,24 +402,31 @@ func (ds *ClsDatasource) BuildTimingGraph(ch chan *datasource.QueryResult, logs 
 	ds.logger.Debug("BuildTimingGraph logs", "logs ", logs)
 	if len(xCols) > 0 {
 		// has dimensions
-		for _, xCol := range xCols {
-			// group by dimension
-			var groupedDimensions = lo.GroupBy(logs, func(alog map[string]interface{}) string {
-				return fmt.Sprintf("%v", alog[xCol])
-			})
-			for dimensionValue, groupedLogs := range groupedDimensions {
-				// build timeseries for each dimension
-				ds.BuildTimingGraphCore(ch, groupedLogs, tcol, ycols, xCol, dimensionValue, series)
+		// group by dimension
+		var groupedDimensions = lo.GroupBy(logs, func(alog map[string]interface{}) string {
+			// Create a JSON object with all xCols key-values
+			dimensionObj := make(map[string]interface{})
+			for _, col := range xCols {
+				if val, exists := alog[col]; exists {
+					dimensionObj[col] = val
+				}
 			}
+			dimensionJson, _ := json.Marshal(dimensionObj)
+			return string(dimensionJson)
+		})
+		for seriesName, groupedLogs := range groupedDimensions {
+			// build timeseries for each dimension
+			// dimensionValue is a json string, like. { a:1, b:2 }
+			ds.BuildTimingGraphCore(ch, groupedLogs, tcol, ycols, seriesName, series)
 		}
 	} else {
 		// has no dimensions
-		ds.BuildTimingGraphCore(ch, logs, tcol, ycols, "", "", series)
+		ds.BuildTimingGraphCore(ch, logs, tcol, ycols, "", series)
 	}
 
 }
 
-func (ds *ClsDatasource) BuildTimingGraphCore(ch chan *datasource.QueryResult, logs []map[string]interface{}, tcol string, ycols []string, xcol string, seriesName string, series *[]*datasource.TimeSeries) {
+func (ds *ClsDatasource) BuildTimingGraphCore(ch chan *datasource.QueryResult, logs []map[string]interface{}, tcol string, ycols []string, seriesName string, series *[]*datasource.TimeSeries) {
 	yColLen := len(ycols)
 	for _, ycol := range ycols {
 		var points []*datasource.Point
@@ -464,17 +471,12 @@ func (ds *ClsDatasource) BuildTimingGraphCore(ch chan *datasource.QueryResult, l
 			if yColLen == 1 {
 				timeSeriesName = seriesName
 			} else {
-				timeSeriesName = fmt.Sprintf("%s(%s)", seriesName, ycol)
+				timeSeriesName = fmt.Sprintf("%s %s", ycol, seriesName)
 			}
 		}
 		timeSeries := &datasource.TimeSeries{
 			Name:   timeSeriesName,
 			Points: points,
-		}
-		if xcol != "" {
-			timeSeries.Tags = map[string]string{
-				xcol: seriesName,
-			}
 		}
 		*series = append(*series, timeSeries)
 	}
