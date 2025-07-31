@@ -32,3 +32,4 @@ dist
 .tscache
 grafana-data
 plugins
+tencent-cls-grafana-datasource

@@ -3,7 +3,7 @@
 import type { auto } from 'angular';
 import _ from 'lodash';
 
-import { PanelDisplayType } from './constant';
+import { maxResultNumber, PanelDisplayType } from './constant';
 
 export class QueryCtrl {
   target: any;
@@ -47,7 +47,7 @@ export class GenericDatasourceQueryCtrl extends QueryCtrl {
     ];
     ctrl.target.syntaxRule = 1;
     ctrl.panelDisplayTypeOptions = QueryEditorFormatOptions;
-    ctrl.target.maxResultNumber = ctrl.target.maxResultNumber || 100;
+    ctrl.target.maxResultNumber = ctrl.target.maxResultNumber || maxResultNumber;
   }
 
   queryChanged() {
