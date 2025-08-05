@@ -120,7 +120,7 @@ services:
 
    ![选择数据源](https://main.qcloudimg.com/raw/b6c39c32c4a45f26997efcdcfb2d3055.png)
 
-3. 用户输入Query语句、x轴、y轴。下方具体事例会针对具体介绍x轴、y轴配置方式。
+3. 用户输入Query语句、Time column(时间列)、Dimension column(维度列)、Metric Column(指标列)。下方具体事例会针对具体介绍配置方式。
 
 ## 示例
 
@@ -128,7 +128,7 @@ services:
 
 展示请求状态码按时间分布
 
-![Time Series](https://main.qcloudimg.com//raw/893f9fe08a074c9c2a89ff5b0258ad18.png)
+![Time Series](https://main.qcloudimg.com/raw/0f065e7d606f7720c17632079f800a71.png)
 
 query语句：
 
@@ -136,47 +136,53 @@ query语句：
 * | SELECT count(*) AS cnt, cast("status" as varchar) AS "status", histogram(__TIMESTAMP__, INTERVAL 10 SECOND) AS analytic_time WHERE "status" IN (SELECT "status" GROUP BY "status" ORDER BY count(*) DESC LIMIT 5) GROUP BY analytic_time, "status" LIMIT 10000
 ```
 
-y轴：status#:#cnt
+Time column(时间列): analytic_time 或 空
+Dimension column(维度列): status 或 空
+Metric Column(指标列): cnt 或 空
 
-其中status作为维度字段，cnt作为指标字段
-
-x轴(时间字段): analytic_time
+默认会自动从时序场景中提取时间字段，维度字段，指标字段填充到对应的轴上
 
 ### 饼图 Pie
 
 展示请求状态码分布
 
-![Pie](https://main.qcloudimg.com/raw/37d9ed83e755ab591d4ed402bdd50ee1.png)
+![Pie](https://main.qcloudimg.com/raw/7ec2c217968136f84cdc013d1141e4b8.png)
 
 query语句：
 
 ```
-* | select "status", count(*) as cnt ,concat(cast(round(100.0 * count(*)/(select count(*)),2) as varchar),'%') as pct group by "status" order by cnt desc limit 1000
+* | SELECT count(*) AS cnt, cast("status" as varchar) AS "status", histogram(__TIMESTAMP__, INTERVAL 10 SECOND) AS analytic_time WHERE "status" IN (SELECT "status" GROUP BY "status" ORDER BY count(*) DESC LIMIT 5) GROUP BY analytic_time, "status" LIMIT 10000
 ```
 
-y轴：status,cnt
+Time column(时间列): analytic_time 或 空
+Dimension column(维度列): status 或 空
+Metric Column(指标列): cnt 或 空
 
-其中status作为维度字段，cnt作为指标字段
-
-x轴(时间字段): pie
+grafana 6.5的饼图需要依赖时序结果，默认会自动从时序场景中提取时间字段，维度字段，指标字段填充到对应的轴上
 
 ### 柱状图，压力图 Bar gauge
 
 展示请求状态码分布
 
-![Bar](https://main.qcloudimg.com/raw/f64ade671ec7191adb2b5eee64e3c261.png)
+![Bar](https://main.qcloudimg.com/raw/f46b812c9bde2b18885e8f9a87c754ae.png)
 
-y轴：status,cnt
+query语句：
 
-其中status作为维度字段，cnt作为指标字段
+```
+* | SELECT count(*) AS cnt, cast("status" as varchar) AS "status", histogram(__TIMESTAMP__, INTERVAL 10 SECOND) AS analytic_time WHERE "status" IN (SELECT "status" GROUP BY "status" ORDER BY count(*) DESC LIMIT 5) GROUP BY analytic_time, "status" LIMIT 10000
+```
 
-x轴(时间字段): pie
+Time column(时间列): analytic_time 或 空
+Dimension column(维度列): status 或 空
+Metric Column(指标列): cnt 或 空
+
+默认会自动从时序场景中提取时间字段，维度字段，指标字段填充到对应的列上
 
 ### 表格Table
 
 展示各IP访问量及百分比
 
-![Table](https://main.qcloudimg.com/raw/e7e3c02116f1b1d9eb99f54a1084a9f3.png)
+![Table](https://main.qcloudimg.com/raw/e1a8bac8bd0f5e6b953f8b1b8a9cc77f.png)
 
 query语句：
 
@@ -184,25 +190,24 @@ query语句：
 * | select "remote_addr", count(*) as cnt ,concat(cast(round(100.0 * count(*)/(select count(*)),2) as varchar),'%') as pct group by "remote_addr" order by cnt desc limit 1000
 ```
 
-y轴：指定列 或 空
-
-x轴(时间字段): table 或 空
+Time column(时间列): 空
+Dimension column(维度列): remote_addr 或 空
+Metric Column(指标列): cnt 或 空
 
 ### 日志 Logs
 
 展示原始日志
 
-![Logs](https://main.qcloudimg.com/raw/dcc1eece9bf83e56e9d19c0a0e0ea331.png)
+![Logs](https://main.qcloudimg.com/raw/100c607b4cd8fec3b06ff16a5beabb08.png)
 
 query语句：
 
 ```
 *
 ```
-
-y轴：空
-
-x轴(时间字段): table 或 空
+Time column(时间列): 空
+Dimension column(维度列): 空
+Metric Column(指标列): 空
 
 <br/>
 

@@ -1,5 +1,6 @@
 import _ from 'lodash';
 
+import { maxResultNumber, PanelDisplayType } from './constant';
 interface TSDBRequest {
   queries: any[];
   from?: string;
@@ -12,7 +13,7 @@ interface TSDBQuery {
   queryType?: TSDBQueryType;
   refId?: string;
   hide?: boolean;
-  type?: 'timeserie' | 'table';
+  type?: PanelDisplayType;
   syntaxRule?: number;
 }
 
@@ -149,21 +150,30 @@ export class GenericDatasource {
     // remove placeholder targets
     options.targets = _.filter(options.targets, (target) => target.target !== 'select metric');
 
-    options.targets = _.map(options.targets, (target) => ({
-      queryType: 'query',
-      target: this.templateSrv.replace(target.target, options.scopedVars, 'regex'),
-      refId: target.refId,
-      // hide: target.hide,
-      type: target.type || 'timeserie',
-      datasourceId: this.id,
-      query: this.replaceQueryParameters(target, options),
-      xcol: this.templateSrv.replace(target.xcol, options.scopedVars, 'regex'),
-      ycol: this.templateSrv.replace(target.ycol, options.scopedVars, 'regex'),
-      logsPerPage: target.logsPerPage,
-      currentPage: target.currentPage,
-      mode: target.mode,
-      syntaxRule: target.syntaxRule,
-    }));
+    options.targets = _.map(options.targets, (target) => {
+      const panelDisplayType: PanelDisplayType =
+        (target.panelDisplayType === 'grafana-piechart-panel'
+          ? PanelDisplayType.TimeSeries
+          : target.panelDisplayType) || PanelDisplayType.TimeSeries;
+      return {
+        queryType: 'query',
+        target: this.templateSrv.replace(target.target, options.scopedVars, 'regex'),
+        refId: target.refId,
+        // hide: target.hide,
+        panelDisplayType,
+        datasourceId: this.id,
+        query: this.replaceQueryParameters(target, options),
+        xcol: this.templateSrv.replace(target.xcol, options.scopedVars, 'regex'),
+        ycol: this.templateSrv.replace(target.ycol, options.scopedVars, 'regex'),
+        tcol: this.templateSrv.replace(target.tcol, options.scopedVars, 'regex'),
+        logsPerPage: target.logsPerPage,
+        currentPage: target.currentPage,
+        mode: target.mode,
+        syntaxRule: target.syntaxRule,
+        maxResultNumber:
+          panelDisplayType === PanelDisplayType.Log ? target.maxResultNumber || maxResultNumber : maxResultNumber,
+      };
+    });
 
     return options;
   }

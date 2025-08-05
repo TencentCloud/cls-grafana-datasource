@@ -2,25 +2,46 @@
   <div class="gf-form-inline">
     <div class="gf-form gf-form--grow" style="flex-grow:90">
       <label class="gf-form-label query-keyword width-7">Query</label>
-      <input type="text" class="gf-form-input" ng-model="ctrl.target.query"
-            spellcheck="false" placeholder="log query" ng-blur="ctrl.refresh()">
+      <input type="text" class="gf-form-input" ng-model="ctrl.target.query" spellcheck="false" placeholder="log query"
+        ng-blur="ctrl.refresh()">
     </div>
     <div class="gf-form gf-form--grow">
       <label class="gf-form-label width-7">Syntax</label>
       <select class="gf-form-input" ng-model="ctrl.target.syntaxRule"
-              ng-options="s.value as s.name for s in ctrl.syntaxRuleOptions" ng-change="ctrl.refresh()"></select>
+        ng-options="s.value as s.name for s in ctrl.syntaxRuleOptions" ng-change="ctrl.refresh()"></select>
     </div>
   </div>
+
   <div class="gf-form-inline">
     <div class="gf-form gf-form--grow">
-      <label class="gf-form-label query-keyword width-7">Y - column</label>
-      <input type="text" class="gf-form-input" ng-model="ctrl.target.ycol"
-        spellcheck="false" placeholder="y column name" ng-blur="ctrl.refresh()">
+      <label class="gf-form-label query-keyword">Time - column</label>
+      <input type="text" class="gf-form-input" ng-model="ctrl.target.tcol" spellcheck="false"
+        placeholder="time column name" ng-blur="ctrl.refresh()">
     </div>
     <div class="gf-form gf-form--grow">
-      <label class="gf-form-label query-keyword">X - column [time]</label>
-      <input type="text" class="gf-form-input" ng-model="ctrl.target.xcol"
-        spellcheck="false" placeholder="x column name" ng-blur="ctrl.refresh()">
+      <label class="gf-form-label query-keyword">Dimension - column</label>
+      <input type="text" class="gf-form-input" ng-model="ctrl.target.xcol" spellcheck="false"
+        placeholder="x column name" ng-blur="ctrl.refresh()">
+    </div>
+    <div class="gf-form gf-form--grow">
+      <label class="gf-form-label query-keyword">Metric - column</label>
+      <input type="text" class="gf-form-input" ng-model="ctrl.target.ycol" spellcheck="false"
+        placeholder="y column name" ng-blur="ctrl.refresh()">
+    </div>
+
+  </div>
+
+  <div class="gf-form-inline">
+    <div class="gf-form gf-form--grow">
+      <label class="gf-form-label query-keyword">Panel type to display</label>
+      <select class="gf-form-input" ng-model="ctrl.target.panelDisplayType"
+        ng-options="tOption.value as tOption.name for tOption in ctrl.panelDisplayTypeOptions" ng-change="ctrl.refresh()"></select>
+    </div>
+  </div>
+  <div class="gf-form-inline" ng-if="ctrl.target.panelDisplayType === 'logs'">
+    <div class="gf-form gf-form--grow">
+      <label class="gf-form-label query-keyword">Max result number</label>
+      <input type="number" class="gf-form-input" ng-model="ctrl.target.maxResultNumber" spellcheck="false"  ng-change="ctrl.refresh()"/>
     </div>
   </div>
 </query-editor-row>
