@@ -6,8 +6,19 @@ $:
         script: echo ${CNB_BUILD_USER} 通过 ${CNB_BRANCH} 分支触发了 ${CNB_EVENT} 事件
       - name: get release body from github
         script:
-          - while output=$(curl -L -H "Accept:application/vnd.github+json" -H "X-GitHub-Api-Version:2022-11-28" https://api.github.com/repos/TencentCloud/cls-grafana-datasource/releases/$CNB_BRANCH); exitCode=$?; ((exitCode != 0)); do sleep 30; done; echo "$output" > release.json; echo "$(jq '.body' release.json)" > release_body.txt
+          - while output=$(curl -L -H "Accept:application/vnd.github+json" -H "X-GitHub-Api-Version:2022-11-28" https://api.github.com/repos/TencentCloud/cls-grafana-datasource/releases/tags/$CNB_BRANCH); exitCode=$?; ((exitCode != 0)); do sleep 30; done
+          - echo "$output" > release.json
+          - echo "$(jq '.body' release.json)" > release_body.txt
         timeout: 600000
+      - name: set isLatest env
+        script:
+          - while output=$(curl -L -H "Accept:application/vnd.github+json" -H "X-GitHub-Api-Version:2022-11-28" https://api.github.com/repos/TencentCloud/cls-grafana-datasource/releases/latest); exitCode=$?; ((exitCode != 0)); do sleep 30; done
+          - echo "$output" > release_latest.json
+          - export LATEST_TAG_NAME="$(jq '.tag_name' release_latest.json)"
+          - export isLatest="$([[ "$LATEST_TAG_NAME" = "$CNB_BRANCH" ]] && echo true || echo false)"
+          - echo "##[set-output isLatest=$isLatest]"
+        exports:
+          isLatest: isLatest
       - name: download attachment from github
         script:
           - curl -L -O https://github.com/TencentCloud/cls-grafana-datasource/releases/download/$CNB_BRANCH/tencent-cls-grafana-datasource.zip
