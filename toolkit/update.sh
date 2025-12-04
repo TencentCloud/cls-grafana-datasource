@@ -12,13 +12,13 @@ echo "targetDir: ${targetDir}"
 filename="${clsDsName}.zip"
 tmpFileName="/tmp/${filename}"
 clsRemotePkg="https://github.com/TencentCloud/cls-grafana-datasource/releases/latest/download/${filename}"
-
+clsRemotePkgFromCnb="https://cnb.cool/tencent/cloud/cls/frontend/cls-grafana-datasource/-/releases/latest/download/${filename}"
 
 # download file
 echo $tmpFileName
 echo $clsRemotePkg
 rm -rf $tmpFileName "/tmp/${clsDsName}"
-curl -LJ $clsRemotePkg -o "$tmpFileName"
+timeout 60s wget --timeout=10 --tries=1 -O $tmpFileName $clsRemotePkg || wget -O $tmpFileName $clsRemotePkgFromCnb
 
 if [ $? -ne 0 ]; then
   echo "download failed!"

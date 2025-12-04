@@ -44,7 +44,7 @@
    ```
    或使用一键安装脚本（末尾参数为插件安装目录）
    ```shell
-   /bin/bash -c "$(curl -fsSL --max-time 10 https://raw.githubusercontent.com/TencentCloud/cls-grafana-datasource/master/toolkit/update.sh || curl -fsSL https://cnb.cool/tencent/cloud/cls/frontend/cls-grafana-datasource/-/git/raw/main/toolkit/update_from_cnb.sh)" bash /var/lib/grafana/plugins/
+   /bin/bash -c "$(curl -fsL --max-time 10 https://raw.githubusercontent.com/TencentCloud/cls-grafana-datasource/master/toolkit/update.sh || curl -fsSL https://cnb.cool/tencent/cloud/cls/frontend/cls-grafana-datasource/-/git/raw/main/toolkit/update_from_cnb.sh)" bash /var/lib/grafana/plugins/
    ```
 
 2. 修改Grafana配置文件，配置CLS数据源ID。配置文件路径参考[配置文档](https://grafana.com/docs/grafana/latest/setup-grafana/configure-grafana/)
