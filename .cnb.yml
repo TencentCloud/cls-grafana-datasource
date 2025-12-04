@@ -1,0 +1,24 @@
+$:
+  tag_push:
+    - stages:
+      # 使用流水线输出你的构建配置数据
+      - name: echo your build data
+        script: echo ${CNB_BUILD_USER} 通过 ${CNB_BRANCH} 分支触发了 ${CNB_EVENT} 事件
+      - name: get release body from github
+        script:
+          - while output=$(curl -L -H "Accept:application/vnd.github+json" -H "X-GitHub-Api-Version:2022-11-28" https://api.github.com/repos/TencentCloud/cls-grafana-datasource/releases/$CNB_BRANCH); exitCode=$?; ((exitCode != 0)); do sleep 30; done; echo "$output" > release.json; echo "$(jq '.body' release.json)" > release_body.txt
+        timeout: 600000
+      - name: download attachment from github
+        script:
+          - curl -L -O https://github.com/TencentCloud/cls-grafana-datasource/releases/download/$CNB_BRANCH/tencent-cls-grafana-datasource.zip
+      - name: upload release
+        type: git:release
+        options:
+          title: $CNB_BRANCH
+          descriptionFromFile: release_body.txt
+      - name: release 上传附件
+        image: cnbcool/attachments:latest
+        settings:
+          tag: $CNB_BRANCH
+          attachments:
+            - "tencent-cls-grafana-datasource.zip"
