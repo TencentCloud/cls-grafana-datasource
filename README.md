@@ -39,12 +39,12 @@
 
    ```sh
    cd /var/lib/grafana/plugins/
-   wget https://github.com/TencentCloud/cls-grafana-datasource/releases/latest/download/tencent-cls-grafana-datasource.zip
+   timeout 60s wget --timeout=10 --tries=1 -O tencent-cls-grafana-datasource.zip https://github.com/TencentCloud/cls-grafana-datasource/releases/latest/download/tencent-cls-grafana-datasource.zip || wget -O tencent-cls-grafana-datasource.zip https://cnb.cool/tencent/cloud/cls/frontend/cls-grafana-datasource/-/releases/latest/download/tencent-cls-grafana-datasource.zip
    unzip tencent-cls-grafana-datasource
    ```
    或使用一键安装脚本（末尾参数为插件安装目录）
    ```shell
-   /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/TencentCloud/cls-grafana-datasource/master/toolkit/update.sh)" bash /var/lib/grafana/plugins/
+   /bin/bash -c "$(curl -fsSL --max-time 10 https://raw.githubusercontent.com/TencentCloud/cls-grafana-datasource/master/toolkit/update.sh || curl -fsSL https://cnb.cool/tencent/cloud/cls/frontend/cls-grafana-datasource/-/git/raw/main/toolkit/update_from_cnb.sh)" bash /var/lib/grafana/plugins/
    ```
 
 2. 修改Grafana配置文件，配置CLS数据源ID。配置文件路径参考[配置文档](https://grafana.com/docs/grafana/latest/setup-grafana/configure-grafana/)
@@ -98,6 +98,10 @@ services:
       - GF_DATAPROXY_DIALTIMEOUT=60
       - GF_DATAPROXY_KEEP_ALIVE_SECONDS=60
 ```
+
+#### 注意：
+1. 如果在腾讯云CVM中访问docker源较慢，可参考 [在云服务器上使用腾讯云 Docker 软件源](https://cloud.tencent.com/document/product/213/8623#.E4.BD.BF.E7.94.A8.E8.85.BE.E8.AE.AF.E4.BA.91.E9.95.9C.E5.83.8F.E6.BA.90.E5.8A.A0.E9.80.9F-docker) 加速。
+2. 如果访问github较慢，可把 ```GF_INSTALL_PLUGINS``` 环境变量替换为 ```GF_INSTALL_PLUGINS=https://cnb.cool/tencent/cloud/cls/frontend/cls-grafana-datasource/-/releases/latest/download/tencent-cls-grafana-datasource.zip;tencent-cls-grafana-datasource```
 
 ### 腾讯云Grafana服务
 
