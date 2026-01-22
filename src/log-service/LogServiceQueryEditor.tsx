@@ -2,6 +2,7 @@ import { DataSourceApi, QueryEditorProps } from '@grafana/data';
 import { PreferredVisualisationType } from '@grafana/data/types/data';
 import { InlineField, QueryField, Select, InlineFieldRow, Input, Checkbox } from '@grafana/ui';
 import { clone, debounce, isNil, pick } from 'lodash-es';
+import moment from 'moment-timezone';
 import React, { FC, useCallback, useRef } from 'react';
 import { useEffectOnce, useLatest } from 'react-use';
 
@@ -18,6 +19,8 @@ type Props = QueryEditorProps<DataSourceApi<any>, QueryInfo, MyDataSourceOptions
   // grafana 8 才有，这里自己定义上
   app?: CoreApp;
 };
+
+const browserTimeZone = moment.tz.guess();
 
 export const LogServiceQueryEditor: FC<Props> = React.memo((props: Props) => {
   const propsRef = useLatest(props);
@@ -41,7 +44,9 @@ export const LogServiceQueryEditor: FC<Props> = React.memo((props: Props) => {
 
   const enableExploreVisualizationTypes =
     (datasource as LogServiceDataSource).instanceSettings.jsonData.enableExploreVisualizationTypes || false;
-  const logServiceParamsRef = useRef(query.logServiceParams || clone(defaultQueryInfo.logServiceParams)!);
+  const logServiceParamsRef = useRef<Required<QueryInfo>['logServiceParams']>(
+    query.logServiceParams || clone(defaultQueryInfo.logServiceParams)!,
+  );
   const preferredVisualisationTypes = logServiceParamsRef.current?.preferredVisualisationTypes || [
     ...(defaultQueryInfo.logServiceParams?.preferredVisualisationTypes as PreferredVisualisationType[]),
   ];
@@ -61,6 +66,9 @@ export const LogServiceQueryEditor: FC<Props> = React.memo((props: Props) => {
     }
     if (isNil(logServiceParamsRef.current.format)) {
       logServiceParamsRef.current.format = 'Graph';
+    }
+    if (isNil(logServiceParamsRef.current.TimeZone)) {
+      logServiceParamsRef.current.TimeZone = 'UTC';
     }
     partialOnChange({
       app,
@@ -84,8 +92,9 @@ export const LogServiceQueryEditor: FC<Props> = React.memo((props: Props) => {
       partialOnChange({
         logServiceParams: logServiceParamsRef.current,
       });
+      onRunQuery?.();
     },
-    [partialOnChange, propsRef],
+    [onRunQuery, partialOnChange, propsRef],
   );
 
   const showPanelTypeOption = app === CoreApp.PanelEditor || app === CoreApp.Explore;
@@ -226,6 +235,52 @@ export const LogServiceQueryEditor: FC<Props> = React.memo((props: Props) => {
               onChange={onPreferredVisualisationTypesChange}
             />
           </>
+        </InlineField>
+      ) : null}
+
+      {app === CoreApp.UnifiedAlerting ? (
+        <InlineField
+          label={t('time_zone')}
+          tooltip={t('time_zone_description')}
+          labelWidth={20}
+          style={{
+            alignItems: 'center',
+            alignSelf: 'center',
+          }}
+        >
+          <Select
+            value={logServiceParamsRef.current.TimeZone}
+            onChange={(v) => {
+              logServiceParamsRef.current = {
+                ...(propsRef.current?.query?.logServiceParams || ({} as any)),
+                TimeZone: v.value,
+              };
+              partialOnChange({
+                logServiceParams: logServiceParamsRef.current,
+              });
+              onRunQuery?.();
+            }}
+            menuPlacement="bottom"
+            options={[
+              {
+                label: 'UTC',
+                value: 'UTC',
+              },
+              {
+                label: browserTimeZone,
+                value: browserTimeZone,
+              },
+              ...moment.tz
+                .names()
+                .filter((name) => name !== 'UTC' && name !== browserTimeZone)
+                .map((name) => ({
+                  label: name,
+                  value: name,
+                })),
+            ]}
+            width={25}
+            className="log-service-monospaced-font-family"
+          />
         </InlineField>
       ) : null}
     </div>

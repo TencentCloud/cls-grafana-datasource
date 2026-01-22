@@ -92,6 +92,8 @@ const en_US: any = {
   credential_type: 'Credential type',
   permanent_credential: 'Permanent credential',
   role_name: 'Role name',
+  time_zone: 'Time zone',
+  time_zone_description: 'Time zone used to parse time fields',
   // region
   'ap-guangzhou': 'South China(Guangzhou)',
   'ap-shenzhen-fsi': 'South China(Shenzhen Finance)',
