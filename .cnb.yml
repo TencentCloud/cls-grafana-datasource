@@ -21,7 +21,7 @@ $:
           isLatest: isLatest
       - name: download attachment from github
         script:
-          - curl -L -O https://github.com/TencentCloud/cls-grafana-datasource/releases/download/$CNB_BRANCH/tencent-cls-grafana-datasource.zip
+          - curl -L -O -fail https://github.com/TencentCloud/cls-grafana-datasource/releases/download/$CNB_BRANCH/tencent-cls-grafana-datasource.zip
       - name: upload release
         type: git:release
         options:
