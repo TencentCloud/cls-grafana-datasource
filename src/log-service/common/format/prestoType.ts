@@ -1,5 +1,5 @@
 import { FieldType } from '@grafana/data';
-import moment from 'moment';
+import moment from 'moment-timezone';
 
 import { IAnalysisColumn } from '../../../common/model/interface';
 

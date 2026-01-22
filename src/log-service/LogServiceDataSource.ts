@@ -12,7 +12,7 @@ import {
 } from '@grafana/data';
 import { getTemplateSrv } from '@grafana/runtime';
 import { RowContextOptions } from '@grafana/ui/components/Logs/LogRowContextProvider';
-import moment from 'moment';
+import moment from 'moment-timezone';
 import { Observable } from 'rxjs';
 import { share } from 'rxjs/operators';
 

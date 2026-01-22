@@ -39,6 +39,7 @@ export interface QueryInfo extends DataQuery {
     preferredVisualisationTypes?: PreferredVisualisationType[];
     // 解析使用字段
     format?: 'Graph' | 'Table' | 'Log';
+    TimeZone?: string;
   };
 }
 
@@ -52,6 +53,7 @@ export const defaultQueryInfo: Omit<QueryInfo, 'refId'> = {
     SyntaxRule: SearchSyntaxRule.CQL,
     preferredVisualisationTypes: ['logs', 'trace', 'nodeGraph'],
     format: 'Graph',
+    TimeZone: 'UTC',
   },
 };
 

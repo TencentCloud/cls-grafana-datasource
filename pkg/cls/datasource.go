@@ -2,6 +2,8 @@ package cls
 
 import (
 	"context"
+	"time"
+
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
 	pluginCommon "github.com/tencentcloud/tencent-cls-grafana-datasource/pkg/common"
@@ -60,7 +62,12 @@ func QueryLog(ctx context.Context, logServiceParams pluginCommon.LogServiceParam
 		for _, col := range searchLogResult.Columns {
 			colNames = append(colNames, *col)
 		}
-		dataRes.Frames = TransferAnalysisRecordsToFrame(logItems, colNames, "", "")
+		var loc, err = time.LoadLocation(logServiceParams.TimeZone)
+		if err != nil {
+			log.DefaultLogger.Warn("LoadLocation_ERROR", "TimeZone", logServiceParams.TimeZone, "error", err.Error())
+			loc = time.UTC
+		}
+		dataRes.Frames = TransferAnalysisRecordsToFrame(logItems, colNames, "", "", loc)
 	}
 
 	//log.DefaultLogger.Info("Query call ended", "result", Stringify(dataRes))

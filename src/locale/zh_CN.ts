@@ -92,6 +92,8 @@ const zh_CN: any = {
   credential_type: '凭证类型',
   permanent_credential: '永久密钥',
   role_name: '角色名称',
+  time_zone: '时区',
+  time_zone_description: '解析时间字段所用的时区',
   // region
   'ap-guangzhou': '华南地区(广州)',
   'ap-shenzhen-fsi': '华南地区(深圳金融)',

@@ -17,6 +17,7 @@ type LogServiceParams struct {
 	TopicId    string `json:"topicId"`
 	Query      string `json:"Query"`
 	SyntaxRule uint64 `json:"SyntaxRule"`
+	TimeZone   string `json:"TimeZone"`
 }
 
 type ApiOpts struct {
