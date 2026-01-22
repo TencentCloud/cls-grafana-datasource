@@ -27,6 +27,7 @@ $:
         options:
           title: $CNB_BRANCH
           descriptionFromFile: release_body.txt
+          latest: true
       - name: release 上传附件
         image: cnbcool/attachments:latest
         settings:
