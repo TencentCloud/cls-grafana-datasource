@@ -49,7 +49,7 @@ Or use the one-click installation script (parameter at the end is the plug-in in
    /bin/bash -c "$(curl -fsL --max-time 10 https://raw.githubusercontent.com/TencentCloud/cls-grafana-datasource/master/toolkit/update.sh || curl -fsSL https://cnb.cool/tencent/cloud/cls/frontend/cls-grafana-datasource/-/git/raw/main/toolkit/update_from_cnb.sh)" bash /var/lib/grafana/plugins/
    ```
 
-2. Modify the Grafana configuration file to configure the CLS data source ID. For the path to the configuration file, see the configuration document (https://grafana.com/docs/grafana/latest/setup-grafana/configure-grafana/)
+2. Modify the Grafana configuration file to configure the CLS data source ID. For the path to the configuration file, see the [configuration document](https://grafana.com/docs/grafana/latest/setup-grafana/configure-grafana/)
 * 1. Set the **allow_loading_unsigned_plugins** parameter in **plugins**
 ```
 [plugins]
