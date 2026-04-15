@@ -3,7 +3,7 @@ import { InlineField, InlineFieldRow, InlineSwitch, Input, LegacyForms, Select }
 import React, { ChangeEvent, PureComponent } from 'react';
 
 import { getRequestClient } from './common/utils';
-import { Language, setLanguage, t } from './locale';
+import { getGrafanaLanguage, Language, setLanguage, t } from './locale';
 import { CredentialType, MyDataSourceOptions, MySecureJsonData } from './types';
 
 type Props = DataSourcePluginOptionsEditorProps<MyDataSourceOptions, MySecureJsonData>;
@@ -11,17 +11,19 @@ type Props = DataSourcePluginOptionsEditorProps<MyDataSourceOptions, MySecureJso
 const { SecretFormField } = LegacyForms;
 
 export class ConfigEditor extends PureComponent<Props> {
-  constructor(props: Props) {
-    super(props);
-    setLanguage(props.options.jsonData.language || Language.Chinese);
-  }
-
   componentDidMount() {
     const { options } = this.props;
+    const resolvedLanguage = options.jsonData.language || getGrafanaLanguage() || Language.English;
+    setLanguage(resolvedLanguage);
+    const patch: Record<string, any> = {};
     if (!options.jsonData.credentialType) {
-      this.patchJsonData({
-        credentialType: CredentialType.secretIdKey,
-      });
+      patch.credentialType = CredentialType.secretIdKey;
+    }
+    if (!options.jsonData.language) {
+      patch.language = resolvedLanguage;
+    }
+    if (Object.keys(patch).length > 0) {
+      this.patchJsonData(patch);
     }
   }
 
@@ -255,7 +257,7 @@ export class ConfigEditor extends PureComponent<Props> {
           <InlineFieldRow>
             <InlineField label={t('language')} labelWidth={30}>
               <Select
-                value={jsonData.language || Language.Chinese}
+                value={jsonData.language || getGrafanaLanguage() || Language.English}
                 className="width-25"
                 options={[
                   { value: Language.English, label: 'English' },

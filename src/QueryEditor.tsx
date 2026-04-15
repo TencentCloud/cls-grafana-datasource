@@ -4,7 +4,7 @@ import React, { PureComponent } from 'react';
 
 import { CoreApp } from './common/constants';
 import { DataSource } from './DataSource';
-import { setLanguage, Language } from './locale';
+import { getGrafanaLanguage, setLanguage, Language } from './locale';
 import { LogServiceQueryEditor } from './log-service/LogServiceQueryEditor';
 import { MyDataSourceOptions, QueryInfo, ServiceType, SERVICE_TYPE_OPTIONS } from './types';
 
@@ -20,7 +20,7 @@ export class QueryEditor extends PureComponent<Props> {
 
   constructor(props: Props) {
     super(props);
-    setLanguage(props.datasource.instanceSettings.jsonData.language || Language.Chinese);
+    setLanguage(props.datasource.instanceSettings.jsonData.language || getGrafanaLanguage() || Language.English);
   }
 
   componentDidMount() {
