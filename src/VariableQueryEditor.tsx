@@ -5,7 +5,7 @@ import { useLatest } from 'react-use';
 
 import { CoreApp } from './common/constants';
 import { DataSource } from './DataSource';
-import { Language, setLanguage, t } from './locale';
+import { getGrafanaLanguage, Language, setLanguage, t } from './locale';
 import { LogServiceQueryEditor } from './log-service/LogServiceQueryEditor';
 import { defaultQueryInfo, ServiceType, VariableQuery, SERVICE_TYPE_OPTIONS } from './types';
 
@@ -21,7 +21,7 @@ export const VariableQueryEditor: React.FC<VariableQueryProps> = (props) => {
   const { query, datasource, app } = props;
 
   useLayoutEffect(() => {
-    setLanguage(props.datasource.instanceSettings.jsonData.language || Language.Chinese);
+    setLanguage(props.datasource.instanceSettings.jsonData.language || getGrafanaLanguage() || Language.English);
   }, [props.datasource.instanceSettings.jsonData.language]);
 
   const onQueryChange = useCallback(
