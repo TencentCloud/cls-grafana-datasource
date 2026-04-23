@@ -119,11 +119,11 @@ dialTimeout = 60
 keep_alive_seconds = 60
 ```
 
-![Configuration Management](https://main.qcloudimg.com/raw/8f8b426137dea9b41c3fd584056a1822.png)
+![Configuration Management](./docs/images/config-management.png)
 
 2. Refer to [install plugin](https://cloud.tencent.com/document/product/1437/61612) and select tencent-cls-grafana-datasource.
 
-![Install plugin](https://main.qcloudimg.com/raw/218f2fe5b35a4356b5b156d5d575c681.png)
+![Install plugin](./docs/images/install-plugin.png)
 
 ## Configure log data source
 
@@ -145,7 +145,7 @@ On the **Data Sources** page, click **Add data source**, select **Tencent Cloud 
 |  Enable private network API Mode | Whether to access cloud API through private network
 | Enable the display type option on the explore page | Enable the display type option on the explore page to control the chart type shown
 
-![Configure Data Source](https://main.qcloudimg.com/raw/b83785ce4e92a85d5749031dbad626d9.png)
+![Configure Data Source](./docs/images/configure-datasource.png)
 
 ## dashboard configuration
 
@@ -153,7 +153,7 @@ On the **Data Sources** page, click **Add data source**, select **Tencent Cloud 
 
 2. Select the newly created CLS datasource in data source selection
 
-![Select Data Source](https://main.qcloudimg.com/raw/a8cb26d3afbfd1213a3ddee1888692a9.png)
+![Select Data Source](./docs/images/select-datasource.png)
 
 3. Enter the Query statement, select the Format based on the chart type to show, and the system will perform data transformation to meet grafana display requirements.
 
@@ -169,7 +169,7 @@ Graph, Pie, Gauge, Time Series Panel | data is transformed to fit Graph, Pie, Ga
 
 Show pv and uv data curve
 
-![Time Series](https://main.qcloudimg.com/raw/6f3a420e4a36085a57c23d23297143a1.png)
+![Time Series](./docs/images/time-series.png)
 
 query statement:
 
@@ -183,7 +183,7 @@ Format: Select **Graph, Pie, Gauge, Time Series Panel**
 
 Show request status code distribution
 
-![Pie](https://main.qcloudimg.com/raw/14c3adbafe7e753ee762e0fce312ee87.png)
+![Pie](./docs/images/pie.png)
 
 query statement:
 
@@ -197,7 +197,7 @@ Format: Select **Graph, Pie, Gauge, Time Series Panel**
 
 Statistics of top 10 webpages by access latency
 
-![Bar](https://main.qcloudimg.com/raw/830bb0cfa6ea07ab468987a766ecb39a.png)
+![Bar](./docs/images/bar.png)
 
 query statement:
 
@@ -211,7 +211,7 @@ Format: Select **Graph, Pie, Gauge, Time Series Panel**
 
 Show top 10 users by access traffic
 
-![Table](https://main.qcloudimg.com/raw/6aebc70dfa66a07ed422be32ab0628dc.png)
+![Table](./docs/images/table.png)
 
 query statement:
 
@@ -225,7 +225,7 @@ Format:Table Panel
 
 Show raw log
 
-![Logs](https://main.qcloudimg.com/raw/412a26c93a36e36e871c4cd4e96530bf.png)
+![Logs](./docs/images/logs.png)
 
 query statement:
 
@@ -251,7 +251,7 @@ Enter the variable name Interval, select type as Custom. In Custom Options, add 
 1 MINUTE,5 MINUTE,15 MINUTE,30 MINUTE,1 HOUR,1 DAY
 ```
 
-![Custom Type Variable](https://main.qcloudimg.com/raw/9f9a6ee136ecb01fe5a73f9668f4d4f3.png)
+![Custom Type Variable](./docs/images/variable-custom.png)
 
 During use, refer to the time line chart in the instance, replace 1 minute with ${Interval} in the Query statement, keep other configuration unchanged, and variables in queries will be replaced with the selected variable value.
 ```sql
@@ -266,7 +266,7 @@ Enter the following Query statement (modify according to business Topic), enter 
 ```sql
 * | select status
 ```
-![Query Type Variable](https://main.qcloudimg.com/raw/c5e3e9beb4665b05f957e0bb4ccfea43.png)
+![Query Type Variable](./docs/images/variable-query.png)
 
 When using variables, you can query with the following statement
 ```sql
@@ -292,8 +292,8 @@ topic (filter by TopicName):
 Region=${region}&ServiceType=cls&Action=DescribeTopics&field=Topics&id=TopicId&name=TopicName&payload={"Filters":[{"Key":"topicName","Values":["your topic name"]}]}
 ```
 
-![Cloud API List Type Variable](https://main.qcloudimg.com/raw/a261d0c4cdebe36aafa5cc0b73da0aaf.png)
-![Cloud API List Type Variable Effect](https://main.qcloudimg.com/raw/095189d680b57386b50408c004ab1bfd.png)
+![Cloud API List Type Variable](./docs/images/variable-cloudapi.png)
+![Cloud API List Type Variable Effect](./docs/images/variable-cloudapi-effect.png)
 
 Statement parameter description:
 
@@ -317,7 +317,7 @@ Preview effect usage as follows
 
 Note: Datasource Type variable is applicable only to the case where multiple indexes of CLS data sources with same configuration (or similar) exist in Grafana.
 
-![Datasource Type Variable](https://main.qcloudimg.com/raw/f59b65ef166f440fafab0886d95ba5bf.png)
+![Datasource Type Variable](./docs/images/variable-datasource.png)
 
 
 
