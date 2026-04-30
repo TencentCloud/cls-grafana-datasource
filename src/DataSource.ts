@@ -31,8 +31,10 @@ export class DataSource extends DataSourceWithBackend<QueryInfo, MyDataSourceOpt
 
     this.logServiceDataSource = new LogServiceDataSource(this.instanceSettings);
     (this.logServiceDataSource as any).meta = this.meta;
+    this.logServiceDataSource.parentDs = this;
     this.cloudApiDataSource = new CloudApiDataSourcce(this.instanceSettings);
     (this.cloudApiDataSource as any).meta = this.meta;
+    this.cloudApiDataSource.parentDs = this;
   }
 
   query(request: DataQueryRequest<QueryInfo>): Observable<DataQueryResponse> {

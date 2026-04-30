@@ -10,7 +10,7 @@ import {
   LogRowModel,
   MetricFindValue,
 } from '@grafana/data';
-import { getTemplateSrv } from '@grafana/runtime';
+import { getTemplateSrv, DataSourceWithBackend } from '@grafana/runtime';
 import { RowContextOptions } from '@grafana/ui/components/Logs/LogRowContextProvider';
 import moment from 'moment-timezone';
 import { Observable } from 'rxjs';
@@ -29,6 +29,8 @@ import { addQueryResultLimit, getRawQuery, replaceClsQueryWithTemplateSrv } from
 
 export class LogServiceDataSource extends DataSourceApi<QueryInfo, MyDataSourceOptions> {
   public readonly instanceSettings: DataSourceInstanceSettings<MyDataSourceOptions>;
+  // 顶层 DataSource 引用，用于通过 postResource 调用后端 sign 资源接口（兼容 Grafana 7.x ~ 13+）
+  public parentDs!: DataSourceWithBackend<any, any>;
   constructor(instanceSettings: DataSourceInstanceSettings<MyDataSourceOptions>) {
     super(instanceSettings);
     this.instanceSettings = instanceSettings;
@@ -72,7 +74,7 @@ export class LogServiceDataSource extends DataSourceApi<QueryInfo, MyDataSourceO
             Limit: target.logServiceParams?.MaxResultNum,
           },
           target.logServiceParams?.region as string,
-          { instanceSettings: this.instanceSettings },
+          { instanceSettings: this.instanceSettings, ds: this.parentDs },
         ).then((result) => ConvertSearchResultsToDataFrame(formatSearchLog(result), target, this.instanceSettings)),
       );
 
@@ -159,6 +161,7 @@ export class LogServiceDataSource extends DataSourceApi<QueryInfo, MyDataSourceO
           region,
           {
             instanceSettings: this.instanceSettings,
+            ds: this.parentDs,
           },
         ),
       );
@@ -188,6 +191,7 @@ export class LogServiceDataSource extends DataSourceApi<QueryInfo, MyDataSourceO
         'ap-shanghai',
         {
           instanceSettings: this.instanceSettings,
+          ds: this.parentDs,
         },
       );
       return {
@@ -254,7 +258,7 @@ export class LogServiceDataSource extends DataSourceApi<QueryInfo, MyDataSourceO
           NextLogs: direction !== 'BACKWARD' ? limit : 0,
         },
         metaField?.labels.region,
-        { instanceSettings: this.instanceSettings },
+        { instanceSettings: this.instanceSettings, ds: this.parentDs },
       );
       const frame = ConvertLogContextToDataFrame(logContext);
       return {

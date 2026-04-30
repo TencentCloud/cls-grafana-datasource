@@ -1,4 +1,4 @@
-import { BackendSrv } from '@grafana/runtime';
+import { DataSourceWithBackend } from '@grafana/runtime';
 import * as _ from 'lodash-es';
 
 import Sign from './sign';
@@ -484,24 +484,21 @@ function getHostAndPath(service: string, region?: string) {
  * @param service 产品名字 'cvm'
  * @param signObj 接口请求相关信息 { region?: string, action: string }
  * @param secretId
- * @param datasourceId
- * @param backendSrv
+ * @param ds 顶层 DataSource 实例 (DataSourceWithBackend)，用于通过 postResource 调用签名接口
  */
 export async function GetRequestParams(
   options: { url: string; data?: object; headers?: object; method?: string },
   service: string,
   signObj: any = {},
   secretId: string,
-  datasourceId: number,
-  backendSrv: BackendSrv,
+  ds: DataSourceWithBackend<any, any>,
 ) {
   const signParams = {
     secretId,
     payload: options.data || '',
     ...signObj,
     ...(_.pick(GetServiceAPIInfo(service, signObj.region), ['service', 'host', 'version']) || {}),
-    backendSrv,
-    datasourceId,
+    ds,
   };
   const sign = new Sign(signParams);
   const { intranet, ...headerSigned } = await sign.getHeader();

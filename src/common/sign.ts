@@ -1,4 +1,4 @@
-import { BackendSrv } from '@grafana/runtime';
+import { DataSourceWithBackend } from '@grafana/runtime';
 import moment from 'moment-timezone';
 
 import { getRequestClient } from './utils';
@@ -31,8 +31,10 @@ export default class Sign {
   region: string;
   timestamp: number;
   date: string;
-  backendSrv: any;
-  datasourceId: Number;
+  // Use DataSourceWithBackend.postResource so the SDK picks the correct URL
+  // (uid-based on Grafana >=7.4, numeric-id on older releases). Grafana 13
+  // removed the legacy numeric-id routes, so hand-rolling the URL breaks there.
+  ds: DataSourceWithBackend<any, any>;
   constructor(options: {
     secretId: string;
     service: string;
@@ -41,10 +43,9 @@ export default class Sign {
     version: string;
     payload?: Record<string, any> | string;
     region: string;
-    backendSrv: BackendSrv;
-    datasourceId: Number;
+    ds: DataSourceWithBackend<any, any>;
   }) {
-    const { secretId, service, action, host, version, payload = '', region, backendSrv, datasourceId } = options;
+    const { secretId, service, action, host, version, payload = '', region, ds } = options;
     this.secretId = secretId;
     // this.secretKey = secretKey;
     this.service = service;
@@ -56,8 +57,7 @@ export default class Sign {
     const nowDate = moment().utc();
     this.timestamp = nowDate.unix();
     this.date = nowDate.format('YYYY-MM-DD');
-    this.backendSrv = backendSrv;
-    this.datasourceId = datasourceId;
+    this.ds = ds;
   }
 
   async getHeader() {
@@ -67,28 +67,22 @@ export default class Sign {
   async getResourceHeader() {
     let res: { authorization?: string; token?: string; intranet?: boolean; host?: string } = {};
     try {
-      const resp = await this.backendSrv.datasourceRequest({
-        url: `/api/datasources/${this.datasourceId}/resources/sign_v3`,
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        data: {
-          Host: this.host,
-          Service: this.service,
-          Version: this.version,
-          Action: this.action,
-          Region: this.region,
-          Timestamp: this.timestamp,
-          Method: HttpRequestMethod,
-          Uri: CanonicalUri,
-          Query: CanonicalQueryString,
-          Body: this.payload,
-          Headers: {
-            'content-type': ContentType,
-            host: this.host,
-          },
+      res = await this.ds.postResource('sign_v3', {
+        Host: this.host,
+        Service: this.service,
+        Version: this.version,
+        Action: this.action,
+        Region: this.region,
+        Timestamp: this.timestamp,
+        Method: HttpRequestMethod,
+        Uri: CanonicalUri,
+        Query: CanonicalQueryString,
+        Body: this.payload,
+        Headers: {
+          'content-type': ContentType,
+          host: this.host,
         },
       });
-      res = resp.data;
     } catch (err) {
       console.error(err);
     }

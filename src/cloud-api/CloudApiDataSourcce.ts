@@ -1,5 +1,5 @@
 import { DataQueryResponse, DataSourceApi, DataSourceInstanceSettings } from '@grafana/data';
-import { getTemplateSrv } from '@grafana/runtime';
+import { getTemplateSrv, DataSourceWithBackend } from '@grafana/runtime';
 import _ from 'lodash-es';
 
 import { sliceLength } from '../common/constants';
@@ -40,6 +40,8 @@ export function ParseMetricQuery(query = '') {
 }
 
 export class CloudApiDataSourcce extends DataSourceApi<QueryInfo, MyDataSourceOptions> {
+  // 顶层 DataSource 引用，用于通过 postResource 调用后端 sign 资源接口（兼容 Grafana 7.x ~ 13+）
+  public parentDs!: DataSourceWithBackend<any, any>;
   private readonly instanceSettings: DataSourceInstanceSettings<MyDataSourceOptions>;
   private readonly templateSrv: any;
 
@@ -115,7 +117,7 @@ export class CloudApiDataSourcce extends DataSourceApi<QueryInfo, MyDataSourceOp
         action,
         data: payload,
       },
-      { instanceSettings: this.instanceSettings },
+      { instanceSettings: this.instanceSettings, ds: this.parentDs },
     ).then((response) =>
       _.filter(
         _.map(response.RegionSet || [], (item) => ({
@@ -151,7 +153,7 @@ export class CloudApiDataSourcce extends DataSourceApi<QueryInfo, MyDataSourceOp
         action,
         data: params,
       },
-      { instanceSettings: this.instanceSettings },
+      { instanceSettings: this.instanceSettings, ds: this.parentDs },
     ).then((response) => {
       result = _.get(response, field) ?? _.get(response, `Result.${field}`) ?? [];
       const total =
@@ -187,7 +189,7 @@ export class CloudApiDataSourcce extends DataSourceApi<QueryInfo, MyDataSourceOp
         action,
         data: { Offset: 0, Limit: 100, ...payload },
       },
-      { instanceSettings: this.instanceSettings },
+      { instanceSettings: this.instanceSettings, ds: this.parentDs },
     ).then((response) => _.get(response, field) ?? _.get(response, `Result.${field}`) ?? []);
   }
 

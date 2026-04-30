@@ -49,7 +49,10 @@ export const TopicSelector: FC<Props> = React.memo((props) => {
 
   const fetchRegions = useCallback(async () => {
     try {
-      const { regionList } = await DescribeRegions({ instanceSettings: (datasource as any).instanceSettings });
+      const { regionList } = await DescribeRegions({
+        instanceSettings: (datasource as any).instanceSettings,
+        ds: datasource as any,
+      });
       setRegionList(regionList);
     } catch (e) {}
   }, []);
@@ -61,7 +64,10 @@ export const TopicSelector: FC<Props> = React.memo((props) => {
           value={value.region}
           onChange={(option) => {
             const region = option.value;
-            DescribeTopics({ Limit: 1 }, region as string, { instanceSettings: (datasource as any).instanceSettings })
+            DescribeTopics({ Limit: 1 }, region as string, {
+              instanceSettings: (datasource as any).instanceSettings,
+              ds: datasource as any,
+            })
               .then((result) => {
                 topicSelectOptionsRef.current = (result.Topics || []).map((item) => ({
                   value: item.TopicId,
@@ -109,6 +115,7 @@ export const TopicSelector: FC<Props> = React.memo((props) => {
             }
             const options = await DescribeTopics({ Filters: filters, Limit: 100 }, value.region as string, {
               instanceSettings: (datasource as any).instanceSettings,
+              ds: datasource as any,
             }).then((result) =>
               result.Topics?.map((item) => ({
                 value: item.TopicId,

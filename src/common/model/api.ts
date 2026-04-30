@@ -1,5 +1,5 @@
 import { DataSourceInstanceSettings } from '@grafana/data';
-import { getBackendSrv, getTemplateSrv } from '@grafana/runtime';
+import { DataSourceWithBackend, getBackendSrv, getTemplateSrv } from '@grafana/runtime';
 import _ from 'lodash-es';
 
 import { IApiError, IRegionItem, IResourceRegionInfo } from './interface';
@@ -26,6 +26,9 @@ export interface ICapiRequestParam extends IRequestParam {
 interface IRequestOpts {
   // 用于调用后端 Sign 方法
   instanceSettings: DataSourceInstanceSettings<MyDataSourceOptions>;
+  // 顶层 DataSource 实例 (DataSourceWithBackend)，用于通过 postResource 调用 sign 接口
+  // 从而兼容 Grafana 7.x ~ 13+（Grafana 13 默认移除了 /api/datasources/:id/resources/* 路由）
+  ds: DataSourceWithBackend<any, any>;
   // internal?: boolean;
   // clientTimeout?: number;
 }
@@ -34,7 +37,7 @@ interface IRequestOpts {
  * 云API请求
  */
 export async function capiRequest({ serviceType, region, action, data }: ICapiRequestParam, opts: IRequestOpts) {
-  const { instanceSettings } = opts;
+  const { instanceSettings, ds } = opts;
   const serviceInfo = GetServiceAPIInfo(serviceType, region);
   const backendSrc = getBackendSrv();
   const requestOptions = await GetRequestParams(
@@ -45,8 +48,7 @@ export async function capiRequest({ serviceType, region, action, data }: ICapiRe
       action,
     },
     '', // 这个参数内部没有使用？
-    instanceSettings.id,
-    backendSrc,
+    ds,
   );
   return backendSrc
     .datasourceRequest(requestOptions)
