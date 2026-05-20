@@ -70,6 +70,50 @@ export const enum LogFieldReservedName {
 
 const oltpKeys = ['traceId', 'spanId', 'traceState'];
 
+/**
+ * 大小写不敏感地解析 OLTP 日志,兼容 traceId/traceID 等不同大小写写法。
+ * - 当 logJson 包含全部 oltpKeys(忽略大小写)时,返回一个标准化副本,把 OLTP 标准字段名(camelCase)映射到原始字段值;
+ * - 否则返回 null,表示不是 OLTP 格式日志。
+ */
+function buildOltpLogJson(logJson: Record<string, any>): Record<string, any> | null {
+  const lowerKeyMap: Record<string, string> = {};
+  Object.keys(logJson).forEach((k) => {
+    lowerKeyMap[k.toLowerCase()] = k;
+  });
+  if (!oltpKeys.every((key) => Object.prototype.hasOwnProperty.call(lowerKeyMap, key.toLowerCase()))) {
+    return null;
+  }
+  const result: Record<string, any> = { ...logJson };
+  // 把 OLTP 标准字段映射到原始字段值,屏蔽大小写差异
+  [
+    'traceId',
+    'spanId',
+    'parentSpanID',
+    'traceState',
+    'name',
+    'kind',
+    'statusCode',
+    'statusMessage',
+    'start',
+    'end',
+    'resource',
+    'resourceAttributes',
+    'service',
+    'host',
+    'attribute',
+    'logs',
+    'links',
+    'otlp.name',
+    'otlp.version',
+  ].forEach((stdKey) => {
+    const actualKey = lowerKeyMap[stdKey.toLowerCase()];
+    if (actualKey !== undefined && actualKey !== stdKey) {
+      result[stdKey] = logJson[actualKey];
+    }
+  });
+  return result;
+}
+
 function ConvertLogJsonToDataFrameDTO(
   searchLogResult: ISearchLogResult,
   queryInfo: QueryInfo,
@@ -205,27 +249,51 @@ function ConvertLogJsonToDataFrameDTO(
         }
       });
 
-      // 提取OTLP数据
-      if (oltpKeys.every((key) => Object.prototype.hasOwnProperty.call(logJson, key))) {
+      // 提取OTLP数据 - 字段名大小写不敏感判断,兼容 traceId/traceID 等不同大小写写法
+      const oltpLogJson = buildOltpLogJson(logJson);
+      if (oltpLogJson) {
         // resource attributes
+        // CLS 现网日志中,资源信息字段名为 `resource`(对象),旧格式为 `resourceAttributes`(JSON 字符串),做兼容
         const serviceTags: TraceKeyValuePair[] = [];
-        const clsResourceAttributes = safeParseJson(logJson.resourceAttributes || '{}');
-        if (logJson[LogFieldReservedName.HostName]) {
+        const rawResource = oltpLogJson.resource ?? oltpLogJson.resourceAttributes ?? '{}';
+        const clsResourceAttributes =
+          typeof rawResource === 'string' ? safeParseJson(rawResource) : rawResource || {};
+        // serviceName 优先取顶层 `service` 字段,回退到 resource 内的 `service` / `service.name`
+        const serviceName =
+          oltpLogJson.service ||
+          clsResourceAttributes.service ||
+          clsResourceAttributes['service.name'] ||
+          '';
+        if (serviceName) {
+          serviceTags.push({
+            key: SemanticResourceAttributes.SERVICE_NAME,
+            value: serviceName,
+          });
+        }
+        // host: 优先取顶层 `host` 字段,其次 CLS 系统字段 __HOSTNAME__
+        const hostName = oltpLogJson.host || oltpLogJson[LogFieldReservedName.HostName];
+        if (hostName) {
           serviceTags.push({
             key: SemanticResourceAttributes.HOST_NAME,
-            value: logJson[LogFieldReservedName.HostName],
+            value: hostName,
           });
         }
         Object.keys(clsResourceAttributes).forEach((key) => {
+          // 跳过已单独处理的 service / service.name,避免重复
+          if (key === 'service' || key === 'service.name') {
+            return;
+          }
           serviceTags.push({
-            key: key === 'service' ? SemanticResourceAttributes.SERVICE_NAME : key,
+            key,
             value: clsResourceAttributes[key],
           });
         });
 
         // tags (attribute)
         const tags: TraceKeyValuePair[] = [];
-        const clsAttributes = safeParseJson(logJson.attribute || '{}');
+        // attribute 字段同样兼容字符串与对象
+        const rawAttribute = oltpLogJson.attribute ?? '{}';
+        const clsAttributes = typeof rawAttribute === 'string' ? safeParseJson(rawAttribute) : rawAttribute || {};
         Object.keys(clsAttributes).forEach((key) => {
           tags.push({
             key,
@@ -235,7 +303,8 @@ function ConvertLogJsonToDataFrameDTO(
 
         // event attributes (logs)
         const logs: TraceLog[] = [];
-        const clsLogs = safeParseJson(logJson.logs || '[]');
+        const rawLogs = oltpLogJson.logs ?? '[]';
+        const clsLogs = typeof rawLogs === 'string' ? safeParseJson(rawLogs) : rawLogs || [];
         clsLogs.forEach((log: any) => {
           const fields: TraceKeyValuePair[] = [];
           if (log.name) {
@@ -261,11 +330,12 @@ function ConvertLogJsonToDataFrameDTO(
 
         // references (links)
         const references: TraceSpanReference[] = [];
-        const clsLinks = safeParseJson(logJson.links || '[]');
+        const rawLinks = oltpLogJson.links ?? '[]';
+        const clsLinks = typeof rawLinks === 'string' ? safeParseJson(rawLinks) : rawLinks || [];
         clsLinks.forEach((link: any) => {
           references.push({
-            traceID: link.traceId,
-            spanID: link.spanId,
+            traceID: link.traceId ?? link.traceID,
+            spanID: link.spanId ?? link.spanID,
             tags: (link.attribute || []).map((attr: any) => ({
               key: attr?.key,
               value: getAttributeValue(attr?.value?.Value || attr?.value),
@@ -273,21 +343,22 @@ function ConvertLogJsonToDataFrameDTO(
           });
         });
 
+        const traceIdVal: string = oltpLogJson.traceId ?? '';
         oltpFrame.add({
-          traceID: logJson.traceId.length > 16 ? logJson.traceId.slice(16) : logJson.traceId,
-          spanID: logJson.spanId,
-          parentSpanID: logJson.parentSpanID || '',
-          operationName: logJson.name || '',
-          serviceName: clsResourceAttributes.service,
-          kind: logJson.kind,
-          statusCode: SpanStatusCode[logJson.statusCode], // UNSET -> 0, OK -> 1, ERROR -> 2,
-          statusMessage: logJson.statusMessage,
-          instrumentationLibraryName: logJson['otlp.name'],
-          instrumentationLibraryVersion: logJson['otlp.version'],
-          traceState: logJson.traceState,
+          traceID: traceIdVal.length > 16 ? traceIdVal.slice(16) : traceIdVal,
+          spanID: oltpLogJson.spanId,
+          parentSpanID: oltpLogJson.parentSpanID || '',
+          operationName: oltpLogJson.name || '',
+          serviceName,
+          kind: oltpLogJson.kind,
+          statusCode: SpanStatusCode[oltpLogJson.statusCode], // UNSET -> 0, OK -> 1, ERROR -> 2,
+          statusMessage: oltpLogJson.statusMessage,
+          instrumentationLibraryName: oltpLogJson['otlp.name'],
+          instrumentationLibraryVersion: oltpLogJson['otlp.version'],
+          traceState: oltpLogJson.traceState,
           serviceTags,
-          startTime: logJson.start! / 1000000,
-          duration: (logJson.end! - logJson.start!) / 1000000,
+          startTime: oltpLogJson.start! / 1000000,
+          duration: (oltpLogJson.end! - oltpLogJson.start!) / 1000000,
           tags,
           logs,
           references,
