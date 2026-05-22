@@ -31,7 +31,7 @@ export interface QueryInfo extends DataQuery {
   /** 数据源Query针对的查询服务，监控 or 日志 */
   serviceType?: ServiceType;
   logServiceParams?: {
-    region: string;
+    region?: string;
     TopicId: string;
     Query: string;
     SyntaxRule?: number;
@@ -97,6 +97,8 @@ export interface MyDataSourceOptions extends DataSourceJsonData {
   intranet?: boolean;
   language?: Language;
   enableExploreVisualizationTypes?: boolean;
+  /** default region, used as fallback when query does not specify region */
+  region?: string;
 }
 
 /**

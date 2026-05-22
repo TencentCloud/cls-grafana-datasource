@@ -3,6 +3,51 @@ import { getTemplateSrv } from '@grafana/runtime';
 import { QueryInfo } from '../../../types';
 
 /**
+ * Compute the CLS SQL histogram interval string for the given time range.
+ *
+ * Uses raw seconds (ceil) matching Grafana's $__interval behavior — no
+ * rounding to "nice" steps. This ensures $__cls_interval_ms is the exact
+ * divisor for TPM/RPM rate normalization, giving consistent values across
+ * different time range selections.
+ *
+ * Minimum bucket is 1 second.
+ *
+ * @example
+ * calcClsInterval(0, 3_600_000)     // "24 second"  (1 h / 150)
+ * calcClsInterval(0, 21_600_000)    // "144 second" (6 h / 150)
+ * calcClsInterval(0, 86_400_000)    // "576 second" (24 h / 150)
+ */
+export function calcClsInterval(fromMs: number, toMs: number, maxDataPoints = 150): string {
+  const rawSeconds = Math.max(1, Math.ceil((toMs - fromMs) / maxDataPoints / 1000));
+  return `${rawSeconds} second`;
+}
+
+/**
+ * Replace all occurrences of `$__cls_interval` in the query string with the
+ * computed CLS SQL interval expression (e.g. "24 second"), and
+ * `$__cls_interval_ms` with the exact corresponding millisecond value.
+ *
+ * Use `$__cls_interval_ms` in SELECT expressions to normalize counts/sums to
+ * per-minute rates — the divisor exactly matches the histogram bucket width:
+ *   count(*) / ($__cls_interval_ms / 60000.0) as rpm
+ *   sum(cast(input_tokens as double)) / ($__cls_interval_ms / 60000.0) as tpm
+ */
+export function replaceClsIntervalMacro(
+  queryString: string,
+  fromMs: number,
+  toMs: number,
+  maxDataPoints?: number,
+): string {
+  if (!queryString.includes('$__cls_interval')) {
+    return queryString;
+  }
+  const rawSeconds = Math.max(1, Math.ceil((toMs - fromMs) / (maxDataPoints ?? 150) / 1000));
+  return queryString
+    .replace(/\$__cls_interval_ms/g, String(rawSeconds * 1000))
+    .replace(/\$__cls_interval/g, `${rawSeconds} second`);
+}
+
+/**
  * 检索语法切割正则
  */
 export const CQL_SPLIT_PATTERN = /(\s*\|\s*)(select\b.*)/i;

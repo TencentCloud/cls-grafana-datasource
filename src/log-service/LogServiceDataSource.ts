@@ -22,10 +22,61 @@ import {
   formatSearchLog,
   LogFieldReservedName,
 } from './common/format';
-import { DescribeLogContext, LogInfo, SearchLog } from '../common/model';
+import { DescribeLogContext, DescribeTopics, LogInfo, SearchLog } from '../common/model';
 import { MyDataSourceOptions, QueryInfo } from '../types';
 import { toTimeSeriesMany } from './common/format/prepareTimeSeries';
-import { addQueryResultLimit, getRawQuery, replaceClsQueryWithTemplateSrv } from './common/utils/query';
+import {
+  addQueryResultLimit,
+  getRawQuery,
+  replaceClsIntervalMacro,
+  replaceClsQueryWithTemplateSrv,
+} from './common/utils/query';
+
+// UUID format: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
+const topicIdRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+function isTopicId(s: string): boolean {
+  return topicIdRegex.test(s);
+}
+
+interface TopicCacheEntry {
+  topicId: string;
+  expiresAt: number;
+}
+
+const topicCache = new Map<string, TopicCacheEntry>();
+const TOPIC_CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes
+
+async function resolveTopicId(
+  topicNameOrId: string,
+  region: string,
+  opts: { instanceSettings: DataSourceInstanceSettings<MyDataSourceOptions>; ds: DataSourceWithBackend<any, any> }
+): Promise<string> {
+  if (!topicNameOrId || isTopicId(topicNameOrId)) {
+    return topicNameOrId;
+  }
+  const cacheKey = `${region}:${topicNameOrId}`;
+  const cached = topicCache.get(cacheKey);
+  if (cached && Date.now() < cached.expiresAt) {
+    return cached.topicId;
+  }
+  // exact match first, fallback to fuzzy
+  for (const preciseSearch of [1, 0]) {
+    const result = await DescribeTopics(
+      { Filters: [{ Key: 'topicName', Values: [topicNameOrId] }], PreciseSearch: preciseSearch, Limit: 10 },
+      region,
+      opts
+    );
+    const topics = (result as any)?.Topics ?? [];
+    const match = topics.find((t: any) => t.TopicName === topicNameOrId) ?? topics[0];
+    if (match?.TopicId) {
+      topicCache.set(cacheKey, { topicId: match.TopicId, expiresAt: Date.now() + TOPIC_CACHE_TTL_MS });
+      return match.TopicId;
+    }
+  }
+  console.warn(`[CLS] topic not found: "${topicNameOrId}" in region "${region}"`);
+  return topicNameOrId; // return as-is, let the API surface the error
+}
 
 export class LogServiceDataSource extends DataSourceApi<QueryInfo, MyDataSourceOptions> {
   public readonly instanceSettings: DataSourceInstanceSettings<MyDataSourceOptions>;
@@ -36,15 +87,27 @@ export class LogServiceDataSource extends DataSourceApi<QueryInfo, MyDataSourceO
     this.instanceSettings = instanceSettings;
   }
 
+  /** Resolve effective region: query region → datasource default region */
+  private getRegion(queryRegion?: string): string {
+    return queryRegion || this.instanceSettings.jsonData.region || '';
+  }
+
   query(request: DataQueryRequest<QueryInfo>) {
-    const { range, targets, scopedVars } = request;
+    const { range, targets, scopedVars, maxDataPoints } = request;
     const [from, to] = [range.from, range.to].map((item) => item.valueOf()) as number[];
     const requestTargets = targets.map((target) => {
-      const region = target.logServiceParams?.region ? getTemplateSrv().replace(target.logServiceParams.region) : '';
+      const region = this.getRegion(
+        target.logServiceParams?.region ? getTemplateSrv().replace(target.logServiceParams.region) : ''
+      );
       const TopicId = target.logServiceParams?.TopicId ? getTemplateSrv().replace(target.logServiceParams.TopicId) : '';
       const Query = addQueryResultLimit(
-        replaceClsQueryWithTemplateSrv(target.logServiceParams?.Query || '', scopedVars),
-        target.logServiceParams,
+        replaceClsIntervalMacro(
+          replaceClsQueryWithTemplateSrv(target.logServiceParams?.Query || '', scopedVars),
+          from,
+          to,
+          maxDataPoints
+        ),
+        target.logServiceParams
       );
 
       return {
@@ -61,24 +124,29 @@ export class LogServiceDataSource extends DataSourceApi<QueryInfo, MyDataSourceO
     // 过滤后的有效 target 列表,需单独保存:framesArray 的下标与 activeTargets 一一对应,
     // 不能用 requestTargets 的原始下标(隐藏的 target 被过滤后会导致下标错位)。
     const activeTargets = requestTargets.filter(
-      (target) => !target.hide && target.logServiceParams?.region && target.logServiceParams?.TopicId,
+      (target) => !target.hide && target.logServiceParams?.region && target.logServiceParams?.TopicId
     );
     const dataFramePromise: Promise<DataFrame[]>[] = activeTargets.map((target) =>
-      SearchLog(
-        {
-          TopicId: target.logServiceParams?.TopicId as string,
-          Query:
-            target.logServiceParams?.format === 'Log'
-              ? getRawQuery(target.logServiceParams?.Query)
-              : (target.logServiceParams?.Query as string),
-          From: from,
-          To: to,
-          SyntaxRule: target.logServiceParams?.SyntaxRule,
-          Limit: target.logServiceParams?.MaxResultNum,
-        },
-        target.logServiceParams?.region as string,
-        { instanceSettings: this.instanceSettings, ds: this.parentDs },
-      ).then((result) => ConvertSearchResultsToDataFrame(formatSearchLog(result), target, this.instanceSettings)),
+      resolveTopicId(target.logServiceParams?.TopicId as string, target.logServiceParams?.region as string, {
+        instanceSettings: this.instanceSettings,
+        ds: this.parentDs,
+      }).then((topicId) =>
+        SearchLog(
+          {
+            TopicId: topicId,
+            Query:
+              target.logServiceParams?.format === 'Log'
+                ? getRawQuery(target.logServiceParams?.Query)
+                : (target.logServiceParams?.Query as string),
+            From: from,
+            To: to,
+            SyntaxRule: target.logServiceParams?.SyntaxRule,
+            Limit: target.logServiceParams?.MaxResultNum,
+          },
+          target.logServiceParams?.region as string,
+          { instanceSettings: this.instanceSettings, ds: this.parentDs }
+        ).then((result) => ConvertSearchResultsToDataFrame(formatSearchLog(result), target, this.instanceSettings))
+      )
     );
 
     const output$ = new Observable<DataQueryResponse>((subscriber) => {
@@ -145,17 +213,25 @@ export class LogServiceDataSource extends DataSourceApi<QueryInfo, MyDataSourceO
 
   async metricFindQuery(query: QueryInfo['logServiceParams'], options: any): Promise<MetricFindValue[]> {
     const logServiceParams = query;
-    const region = logServiceParams?.region ? getTemplateSrv().replace(logServiceParams.region) : '';
-    const TopicId = logServiceParams?.TopicId ? getTemplateSrv().replace(logServiceParams.TopicId) : '';
+    const region = this.getRegion(logServiceParams?.region ? getTemplateSrv().replace(logServiceParams.region) : '');
+    const rawTopicId = logServiceParams?.TopicId ? getTemplateSrv().replace(logServiceParams.TopicId) : '';
     const Query = addQueryResultLimit(
-      replaceClsQueryWithTemplateSrv(logServiceParams?.Query as string),
-      logServiceParams,
+      replaceClsIntervalMacro(
+        replaceClsQueryWithTemplateSrv(logServiceParams?.Query as string),
+        options.range!.from.valueOf(),
+        options.range!.to.valueOf()
+      ),
+      logServiceParams
     );
 
     if (!options.range) {
       return [];
     }
-    if (region && TopicId && Query) {
+    if (rawTopicId && Query) {
+      const TopicId = await resolveTopicId(rawTopicId, region, {
+        instanceSettings: this.instanceSettings,
+        ds: this.parentDs,
+      });
       const { analysisColumns, analysisRecords } = formatSearchLog(
         await SearchLog(
           {
@@ -170,8 +246,8 @@ export class LogServiceDataSource extends DataSourceApi<QueryInfo, MyDataSourceO
           {
             instanceSettings: this.instanceSettings,
             ds: this.parentDs,
-          },
-        ),
+          }
+        )
       );
       if (analysisColumns.length > 0 && analysisRecords.length > 0) {
         const firstColumn = analysisColumns[0];
@@ -186,7 +262,6 @@ export class LogServiceDataSource extends DataSourceApi<QueryInfo, MyDataSourceO
 
   async testDatasource() {
     try {
-      // 使用SearchLog接口直接查询日志，根据是否遇到鉴权错误，判断秘钥合法性
       await SearchLog(
         {
           TopicId: '',
@@ -196,11 +271,11 @@ export class LogServiceDataSource extends DataSourceApi<QueryInfo, MyDataSourceO
           SyntaxRule: 1,
           Limit: 100,
         },
-        'ap-shanghai',
+        this.getRegion() || 'ap-shanghai',
         {
           instanceSettings: this.instanceSettings,
           ds: this.parentDs,
-        },
+        }
       );
       return {
         status: 'success',
@@ -221,16 +296,11 @@ export class LogServiceDataSource extends DataSourceApi<QueryInfo, MyDataSourceO
     }
   }
 
-  /** histogram support
-   * @link https://github.com/grafana/grafana/blob/942be4215afaea27757fb3a034126452aaf3fab2/public/app/plugins/datasource/loki/datasource.ts#L115-L115
-   */
-  getLogsVolumeDataProvider(/* request: DataQueryRequest<QueryInfo> */): Observable<DataQueryResponse> | undefined {
+  getLogsVolumeDataProvider(): Observable<DataQueryResponse> | undefined {
     return undefined;
   }
 
-  /** context disabled */
   showContextToggle = (row: LogRowModel) => {
-    /** ConvertLogJsonToDataFrameDTO 函数中，将上下文相关值处理为 LogFieldReservedName.META field */
     const metaField = row.dataFrame.fields.find((item) => item.name === LogFieldReservedName.META);
     try {
       if (metaField?.labels?.region && metaField?.labels.TopicId) {
@@ -266,7 +336,7 @@ export class LogServiceDataSource extends DataSourceApi<QueryInfo, MyDataSourceO
           NextLogs: direction !== 'BACKWARD' ? limit : 0,
         },
         metaField?.labels.region,
-        { instanceSettings: this.instanceSettings, ds: this.parentDs },
+        { instanceSettings: this.instanceSettings, ds: this.parentDs }
       );
       const frame = ConvertLogContextToDataFrame(logContext);
       return {
