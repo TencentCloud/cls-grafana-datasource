@@ -6,6 +6,7 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
+	"github.com/grafana/grafana-plugin-sdk-go/data"
 	pluginCommon "github.com/tencentcloud/tencent-cls-grafana-datasource/pkg/common"
 	clsAPI "github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/cls/v20201016"
 	"github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/common"
@@ -35,15 +36,28 @@ func QueryLog(ctx context.Context, logServiceParams pluginCommon.LogServiceParam
 
 	dataRes := backend.DataResponse{}
 
+	// Use datasource-level default region if query doesn't specify one
+	region := logServiceParams.Region
+	if region == "" {
+		region = opts.Region
+	}
+
+	// Resolve topic name → ID if not already a UUID
+	topicId, err := resolveTopicId(ctx, region, logServiceParams.TopicId, opts)
+	if err != nil {
+		dataRes.Error = err
+		return dataRes
+	}
+
 	requestParam := clsAPI.SearchLogRequest{
-		TopicId:        common.StringPtr(logServiceParams.TopicId),
+		TopicId:        common.StringPtr(topicId),
 		From:           common.Int64Ptr(query.TimeRange.From.UnixNano() / 1e6),
 		To:             common.Int64Ptr(query.TimeRange.To.UnixNano() / 1e6),
 		Query:          common.StringPtr(logServiceParams.Query),
 		UseNewAnalysis: common.BoolPtr(true),
 		SyntaxRule:     common.Uint64Ptr(logServiceParams.SyntaxRule),
 	}
-	searchLogResponse, searchLogErr := SearchLog(ctx, &requestParam, logServiceParams.Region, opts)
+	searchLogResponse, searchLogErr := SearchLog(ctx, &requestParam, region, opts)
 
 	if searchLogErr != nil {
 		log.DefaultLogger.Error("CLS_SEARCHLOG_ERROR", "query", query, "RequestId", Stringify(searchLogErr))
@@ -68,6 +82,14 @@ func QueryLog(ctx context.Context, logServiceParams pluginCommon.LogServiceParam
 			loc = time.UTC
 		}
 		dataRes.Frames = TransferAnalysisRecordsToFrame(logItems, colNames, "", "", loc)
+		// Convert TypeTimeSeriesLong → TypeTimeSeriesWide for Grafana alerting SSE compatibility.
+		// Graph format (histogram + metric + value) produces Long format which SSE rejects.
+		// Table Panel (no time col) fails conversion silently and stays as TypeTable.
+		for i, frame := range dataRes.Frames {
+			if wideFrame, err := data.LongToWide(frame, nil); err == nil {
+				dataRes.Frames[i] = wideFrame
+			}
+		}
 	}
 
 	//log.DefaultLogger.Info("Query call ended", "result", Stringify(dataRes))

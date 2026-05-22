@@ -25,4 +25,5 @@ type ApiOpts struct {
 	SecretKey string `json:"secretKey"`
 	Token     string
 	Intranet  bool
+	Region    string // default region from datasource settings
 }

@@ -102,6 +102,10 @@ func getInsSetting(instanceSettings backend.DataSourceInstanceSettings) (opts co
 		}
 	}
 
+	if region, ok := jsonData["region"].(string); ok && region != "" {
+		opts.Region = region
+	}
+
 	if credentialType, ok := jsonData["credentialType"].(string); ok {
 		switch credentialType {
 		case "assumeRole":
