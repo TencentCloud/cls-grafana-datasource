@@ -50,7 +50,7 @@ const TOPIC_CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes
 async function resolveTopicId(
   topicNameOrId: string,
   region: string,
-  opts: { instanceSettings: DataSourceInstanceSettings<MyDataSourceOptions>; ds: DataSourceWithBackend<any, any> }
+  opts: { instanceSettings: DataSourceInstanceSettings<MyDataSourceOptions>; ds: DataSourceWithBackend<any, any> },
 ): Promise<string> {
   if (!topicNameOrId || isTopicId(topicNameOrId)) {
     return topicNameOrId;
@@ -65,7 +65,7 @@ async function resolveTopicId(
     const result = await DescribeTopics(
       { Filters: [{ Key: 'topicName', Values: [topicNameOrId] }], PreciseSearch: preciseSearch, Limit: 10 },
       region,
-      opts
+      opts,
     );
     const topics = (result as any)?.Topics ?? [];
     const match = topics.find((t: any) => t.TopicName === topicNameOrId) ?? topics[0];
@@ -97,7 +97,7 @@ export class LogServiceDataSource extends DataSourceApi<QueryInfo, MyDataSourceO
     const [from, to] = [range.from, range.to].map((item) => item.valueOf()) as number[];
     const requestTargets = targets.map((target) => {
       const region = this.getRegion(
-        target.logServiceParams?.region ? getTemplateSrv().replace(target.logServiceParams.region) : ''
+        target.logServiceParams?.region ? getTemplateSrv().replace(target.logServiceParams.region) : '',
       );
       const TopicId = target.logServiceParams?.TopicId ? getTemplateSrv().replace(target.logServiceParams.TopicId) : '';
       const Query = addQueryResultLimit(
@@ -105,9 +105,9 @@ export class LogServiceDataSource extends DataSourceApi<QueryInfo, MyDataSourceO
           replaceClsQueryWithTemplateSrv(target.logServiceParams?.Query || '', scopedVars),
           from,
           to,
-          maxDataPoints
+          maxDataPoints,
         ),
-        target.logServiceParams
+        target.logServiceParams,
       );
 
       return {
@@ -124,7 +124,7 @@ export class LogServiceDataSource extends DataSourceApi<QueryInfo, MyDataSourceO
     // 过滤后的有效 target 列表,需单独保存:framesArray 的下标与 activeTargets 一一对应,
     // 不能用 requestTargets 的原始下标(隐藏的 target 被过滤后会导致下标错位)。
     const activeTargets = requestTargets.filter(
-      (target) => !target.hide && target.logServiceParams?.region && target.logServiceParams?.TopicId
+      (target) => !target.hide && target.logServiceParams?.region && target.logServiceParams?.TopicId,
     );
     const dataFramePromise: Promise<DataFrame[]>[] = activeTargets.map((target) =>
       resolveTopicId(target.logServiceParams?.TopicId as string, target.logServiceParams?.region as string, {
@@ -144,9 +144,9 @@ export class LogServiceDataSource extends DataSourceApi<QueryInfo, MyDataSourceO
             Limit: target.logServiceParams?.MaxResultNum,
           },
           target.logServiceParams?.region as string,
-          { instanceSettings: this.instanceSettings, ds: this.parentDs }
-        ).then((result) => ConvertSearchResultsToDataFrame(formatSearchLog(result), target, this.instanceSettings))
-      )
+          { instanceSettings: this.instanceSettings, ds: this.parentDs },
+        ).then((result) => ConvertSearchResultsToDataFrame(formatSearchLog(result), target, this.instanceSettings)),
+      ),
     );
 
     const output$ = new Observable<DataQueryResponse>((subscriber) => {
@@ -219,9 +219,9 @@ export class LogServiceDataSource extends DataSourceApi<QueryInfo, MyDataSourceO
       replaceClsIntervalMacro(
         replaceClsQueryWithTemplateSrv(logServiceParams?.Query as string),
         options.range!.from.valueOf(),
-        options.range!.to.valueOf()
+        options.range!.to.valueOf(),
       ),
-      logServiceParams
+      logServiceParams,
     );
 
     if (!options.range) {
@@ -246,8 +246,8 @@ export class LogServiceDataSource extends DataSourceApi<QueryInfo, MyDataSourceO
           {
             instanceSettings: this.instanceSettings,
             ds: this.parentDs,
-          }
-        )
+          },
+        ),
       );
       if (analysisColumns.length > 0 && analysisRecords.length > 0) {
         const firstColumn = analysisColumns[0];
@@ -275,7 +275,7 @@ export class LogServiceDataSource extends DataSourceApi<QueryInfo, MyDataSourceO
         {
           instanceSettings: this.instanceSettings,
           ds: this.parentDs,
-        }
+        },
       );
       return {
         status: 'success',
@@ -336,7 +336,7 @@ export class LogServiceDataSource extends DataSourceApi<QueryInfo, MyDataSourceO
           NextLogs: direction !== 'BACKWARD' ? limit : 0,
         },
         metaField?.labels.region,
-        { instanceSettings: this.instanceSettings, ds: this.parentDs }
+        { instanceSettings: this.instanceSettings, ds: this.parentDs },
       );
       const frame = ConvertLogContextToDataFrame(logContext);
       return {

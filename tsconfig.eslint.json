@@ -1,0 +1,19 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "allowJs": true,
+    "checkJs": false,
+    "noEmit": true,
+    "rootDir": "."
+  },
+  "include": [
+    "src",
+    ".config/types",
+    ".eslintrc.js",
+    ".prettierrc.js",
+    "jest.config.js",
+    "jest-setup.js",
+    "toolkit/**/*.js",
+    "webpack.config.ts"
+  ]
+}
