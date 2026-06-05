@@ -86,9 +86,14 @@ export class LogServiceDataSource extends DataSourceApi<QueryInfo, MyDataSourceO
           const processedFrames = [];
           for (let framesIndex = 0; framesIndex < framesArray.length; framesIndex += 1) {
             const frames = framesArray[framesIndex];
+            const frameIndexTarget = requestTargets[framesIndex];
             for (const frame of frames) {
+              // 给每个数据帧打上对应查询的 refId(A、B...),否则 Transform/面板的帧选择器无法区分多条查询。
+              // 需在 toTimeSeriesMany 之前赋值,prepareTimeSeries 会把 frame.refId 透传给生成的时序帧。
+              if (frameIndexTarget?.refId) {
+                frame.refId = frameIndexTarget.refId;
+              }
               // 如果是 Analysis 场景，且返回内容可转化为 TimeSeriesMany, 则进行处理以绘制时序图
-              const frameIndexTarget = requestTargets[framesIndex];
               if (
                 !frame?.meta?.preferredVisualisationType &&
                 (!frameIndexTarget?.logServiceParams?.format || frameIndexTarget?.logServiceParams?.format === 'Graph')
