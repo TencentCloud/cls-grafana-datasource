@@ -58,25 +58,28 @@ export class LogServiceDataSource extends DataSourceApi<QueryInfo, MyDataSourceO
       };
     });
 
-    const dataFramePromise: Promise<DataFrame[]>[] = requestTargets
-      .filter((target) => !target.hide && target.logServiceParams?.region && target.logServiceParams?.TopicId)
-      .map((target) =>
-        SearchLog(
-          {
-            TopicId: target.logServiceParams?.TopicId as string,
-            Query:
-              target.logServiceParams?.format === 'Log'
-                ? getRawQuery(target.logServiceParams?.Query)
-                : (target.logServiceParams?.Query as string),
-            From: from,
-            To: to,
-            SyntaxRule: target.logServiceParams?.SyntaxRule,
-            Limit: target.logServiceParams?.MaxResultNum,
-          },
-          target.logServiceParams?.region as string,
-          { instanceSettings: this.instanceSettings, ds: this.parentDs },
-        ).then((result) => ConvertSearchResultsToDataFrame(formatSearchLog(result), target, this.instanceSettings)),
-      );
+    // 过滤后的有效 target 列表,需单独保存:framesArray 的下标与 activeTargets 一一对应,
+    // 不能用 requestTargets 的原始下标(隐藏的 target 被过滤后会导致下标错位)。
+    const activeTargets = requestTargets.filter(
+      (target) => !target.hide && target.logServiceParams?.region && target.logServiceParams?.TopicId,
+    );
+    const dataFramePromise: Promise<DataFrame[]>[] = activeTargets.map((target) =>
+      SearchLog(
+        {
+          TopicId: target.logServiceParams?.TopicId as string,
+          Query:
+            target.logServiceParams?.format === 'Log'
+              ? getRawQuery(target.logServiceParams?.Query)
+              : (target.logServiceParams?.Query as string),
+          From: from,
+          To: to,
+          SyntaxRule: target.logServiceParams?.SyntaxRule,
+          Limit: target.logServiceParams?.MaxResultNum,
+        },
+        target.logServiceParams?.region as string,
+        { instanceSettings: this.instanceSettings, ds: this.parentDs },
+      ).then((result) => ConvertSearchResultsToDataFrame(formatSearchLog(result), target, this.instanceSettings)),
+    );
 
     const output$ = new Observable<DataQueryResponse>((subscriber) => {
       subscriber.next({ data: [], state: LoadingState.Loading });
@@ -86,7 +89,7 @@ export class LogServiceDataSource extends DataSourceApi<QueryInfo, MyDataSourceO
           const processedFrames = [];
           for (let framesIndex = 0; framesIndex < framesArray.length; framesIndex += 1) {
             const frames = framesArray[framesIndex];
-            const frameIndexTarget = requestTargets[framesIndex];
+            const frameIndexTarget = activeTargets[framesIndex];
             for (const frame of frames) {
               // 给每个数据帧打上对应查询的 refId(A、B...),否则 Transform/面板的帧选择器无法区分多条查询。
               // 需在 toTimeSeriesMany 之前赋值,prepareTimeSeries 会把 frame.refId 透传给生成的时序帧。
