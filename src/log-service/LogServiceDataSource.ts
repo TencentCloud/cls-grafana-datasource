@@ -28,8 +28,8 @@ import { toTimeSeriesMany } from './common/format/prepareTimeSeries';
 import {
   addQueryResultLimit,
   getRawQuery,
-  replaceClsIntervalMacro,
   replaceClsQueryWithTemplateSrv,
+  replaceClsSqlMacros,
 } from './common/utils/query';
 
 // UUID format: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
@@ -101,7 +101,7 @@ export class LogServiceDataSource extends DataSourceApi<QueryInfo, MyDataSourceO
       );
       const TopicId = target.logServiceParams?.TopicId ? getTemplateSrv().replace(target.logServiceParams.TopicId) : '';
       const Query = addQueryResultLimit(
-        replaceClsIntervalMacro(
+        replaceClsSqlMacros(
           replaceClsQueryWithTemplateSrv(target.logServiceParams?.Query || '', scopedVars),
           from,
           to,
@@ -216,7 +216,7 @@ export class LogServiceDataSource extends DataSourceApi<QueryInfo, MyDataSourceO
     const region = this.getRegion(logServiceParams?.region ? getTemplateSrv().replace(logServiceParams.region) : '');
     const rawTopicId = logServiceParams?.TopicId ? getTemplateSrv().replace(logServiceParams.TopicId) : '';
     const Query = addQueryResultLimit(
-      replaceClsIntervalMacro(
+      replaceClsSqlMacros(
         replaceClsQueryWithTemplateSrv(logServiceParams?.Query as string),
         options.range!.from.valueOf(),
         options.range!.to.valueOf(),

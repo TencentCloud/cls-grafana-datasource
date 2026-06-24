@@ -2,6 +2,36 @@ import { getTemplateSrv } from '@grafana/runtime';
 
 import { QueryInfo } from '../../../types';
 
+const DEFAULT_MAX_DATA_POINTS = 150;
+const MS_PER_SECOND = 1000;
+const NS_PER_MS = 1_000_000;
+
+export const CLS_SQL_MACRO_NAMES = [
+  '$__time',
+  '$__timeEpoch',
+  '$__timeFilter',
+  '$__timeFrom',
+  '$__timeTo',
+  '$__timeGroup',
+  '$__timeGroupAlias',
+  '$__unixEpochFilter',
+  '$__unixEpochNanoFilter',
+  '$__unixEpochNanoFrom',
+  '$__unixEpochNanoTo',
+  '$__unixEpochGroup',
+  '$__unixEpochGroupAlias',
+  '$__interval',
+  '$__interval_ms',
+  '$__cls_interval',
+  '$__cls_interval_ms',
+];
+
+type MacroContext = {
+  fromMs: number;
+  toMs: number;
+  maxDataPoints?: number;
+};
+
 /**
  * Compute the CLS SQL histogram interval string for the given time range.
  *
@@ -17,34 +47,265 @@ import { QueryInfo } from '../../../types';
  * calcClsInterval(0, 21_600_000)    // "144 second" (6 h / 150)
  * calcClsInterval(0, 86_400_000)    // "576 second" (24 h / 150)
  */
-export function calcClsInterval(fromMs: number, toMs: number, maxDataPoints = 150): string {
-  const rawSeconds = Math.max(1, Math.ceil((toMs - fromMs) / maxDataPoints / 1000));
+export function calcClsInterval(fromMs: number, toMs: number, maxDataPoints = DEFAULT_MAX_DATA_POINTS): string {
+  const rawSeconds = getRawIntervalSeconds({ fromMs, toMs, maxDataPoints });
   return `${rawSeconds} second`;
 }
 
 /**
- * Replace all occurrences of `$__cls_interval` in the query string with the
- * computed CLS SQL interval expression (e.g. "24 second"), and
- * `$__cls_interval_ms` with the exact corresponding millisecond value.
+ * Replace CLS SQL macros and Grafana SQL-style macros in the query string.
  *
- * Use `$__cls_interval_ms` in SELECT expressions to normalize counts/sums to
- * per-minute rates — the divisor exactly matches the histogram bucket width:
- *   count(*) / ($__cls_interval_ms / 60000.0) as rpm
- *   sum(cast(input_tokens as double)) / ($__cls_interval_ms / 60000.0) as tpm
+ * Supported aliases:
+ * - `$__interval` / `$__interval_ms`
+ * - `$__cls_interval` / `$__cls_interval_ms`
+ *
+ * Supported SQL macros, aligned with Grafana SQL macro names where possible:
+ * - `$__time`, `$__timeEpoch`, `$__timeFilter`, `$__timeFrom`, `$__timeTo`
+ * - `$__timeGroup`, `$__timeGroupAlias`
+ * - `$__unixEpochFilter`, `$__unixEpochNanoFilter`, `$__unixEpochNanoFrom`, `$__unixEpochNanoTo`
+ * - `$__unixEpochGroup`, `$__unixEpochGroupAlias`
  */
+export function replaceClsSqlMacros(queryString: string, fromMs: number, toMs: number, maxDataPoints?: number): string {
+  if (!queryString.includes('$__')) {
+    return queryString;
+  }
+
+  const context: MacroContext = { fromMs, toMs, maxDataPoints };
+  let result = queryString;
+
+  result = replaceMacroFunction(result, '$__timeGroupAlias', (args) => {
+    const [column, interval] = args;
+    return `${toTimeGroupExpression(column, interval, context)} as time`;
+  });
+  result = replaceMacroFunction(result, '$__timeGroup', (args) => {
+    const [column, interval] = args;
+    return toTimeGroupExpression(column, interval, context);
+  });
+  result = replaceMacroFunction(result, '$__unixEpochGroupAlias', (args) => {
+    const [column, interval] = args;
+    return `${toUnixEpochGroupExpression(column, interval, context)} as time`;
+  });
+  result = replaceMacroFunction(result, '$__unixEpochGroup', (args) => {
+    const [column, interval] = args;
+    return toUnixEpochGroupExpression(column, interval, context);
+  });
+  result = replaceMacroFunction(result, '$__timeFilter', ([column]) => {
+    const timeColumn = normalizeColumn(column);
+    return `${timeColumn} >= ${fromMs} AND ${timeColumn} <= ${toMs}`;
+  });
+  result = replaceMacroFunction(result, '$__unixEpochFilter', ([column]) => {
+    const timeColumn = normalizeColumn(column);
+    return `${timeColumn} >= ${Math.floor(fromMs / MS_PER_SECOND)} AND ${timeColumn} <= ${Math.floor(
+      toMs / MS_PER_SECOND,
+    )}`;
+  });
+  result = replaceMacroFunction(result, '$__unixEpochNanoFilter', ([column]) => {
+    const timeColumn = normalizeColumn(column);
+    return `${timeColumn} >= ${fromMs * NS_PER_MS} AND ${timeColumn} <= ${toMs * NS_PER_MS}`;
+  });
+  result = replaceMacroFunction(result, '$__timeEpoch', ([column]) => {
+    return `to_unixtime(${toTimestampExpression(column)}) as time`;
+  });
+  result = replaceMacroFunction(result, '$__time', ([column]) => {
+    return `${toTimestampExpression(column)} as time`;
+  });
+  result = replaceZeroArgMacro(result, '$__timeFrom', String(fromMs));
+  result = replaceZeroArgMacro(result, '$__timeTo', String(toMs));
+  result = replaceZeroArgMacro(result, '$__unixEpochNanoFrom', String(fromMs * NS_PER_MS));
+  result = replaceZeroArgMacro(result, '$__unixEpochNanoTo', String(toMs * NS_PER_MS));
+
+  return replaceIntervalTokens(result, context);
+}
+
+/** @deprecated Use replaceClsSqlMacros. */
 export function replaceClsIntervalMacro(
   queryString: string,
   fromMs: number,
   toMs: number,
   maxDataPoints?: number,
 ): string {
-  if (!queryString.includes('$__cls_interval')) {
-    return queryString;
-  }
-  const rawSeconds = Math.max(1, Math.ceil((toMs - fromMs) / (maxDataPoints ?? 150) / 1000));
+  return replaceClsSqlMacros(queryString, fromMs, toMs, maxDataPoints);
+}
+
+function getRawIntervalSeconds({ fromMs, toMs, maxDataPoints = DEFAULT_MAX_DATA_POINTS }: MacroContext): number {
+  return Math.max(1, Math.ceil((toMs - fromMs) / maxDataPoints / MS_PER_SECOND));
+}
+
+function replaceIntervalTokens(queryString: string, context: MacroContext): string {
+  const rawSeconds = getRawIntervalSeconds(context);
+  const intervalMs = String(rawSeconds * MS_PER_SECOND);
+  const interval = `${rawSeconds} second`;
+
   return queryString
-    .replace(/\$__cls_interval_ms/g, String(rawSeconds * 1000))
-    .replace(/\$__cls_interval/g, `${rawSeconds} second`);
+    .replace(/\$__cls_interval_ms/g, intervalMs)
+    .replace(/\$__interval_ms/g, intervalMs)
+    .replace(/\$__cls_interval/g, interval)
+    .replace(/\$__interval/g, interval);
+}
+
+function replaceZeroArgMacro(queryString: string, macroName: string, replacement: string): string {
+  const withParentheses = replaceMacroFunction(queryString, macroName, () => replacement);
+  return replaceBareMacro(withParentheses, macroName, replacement);
+}
+
+function replaceBareMacro(queryString: string, macroName: string, replacement: string): string {
+  return queryString.replace(new RegExp(`${escapeRegExp(macroName)}(?![A-Za-z0-9_])`, 'g'), replacement);
+}
+
+function replaceMacroFunction(
+  queryString: string,
+  macroName: string,
+  replacementFactory: (args: string[], rawArgs: string) => string,
+): string {
+  let result = '';
+  let searchIndex = 0;
+
+  while (searchIndex < queryString.length) {
+    const macroIndex = queryString.indexOf(macroName, searchIndex);
+    if (macroIndex < 0) {
+      result += queryString.slice(searchIndex);
+      break;
+    }
+
+    let openParenIndex = macroIndex + macroName.length;
+    while (/\s/.test(queryString[openParenIndex] ?? '')) {
+      openParenIndex += 1;
+    }
+
+    if (queryString[openParenIndex] !== '(') {
+      result += queryString.slice(searchIndex, macroIndex + macroName.length);
+      searchIndex = macroIndex + macroName.length;
+      continue;
+    }
+
+    const closeParenIndex = findClosingParen(queryString, openParenIndex);
+    if (closeParenIndex < 0) {
+      result += queryString.slice(searchIndex, macroIndex + macroName.length);
+      searchIndex = macroIndex + macroName.length;
+      continue;
+    }
+
+    const rawArgs = queryString.slice(openParenIndex + 1, closeParenIndex);
+    result += queryString.slice(searchIndex, macroIndex);
+    result += replacementFactory(splitMacroArgs(rawArgs), rawArgs);
+    searchIndex = closeParenIndex + 1;
+  }
+
+  return result;
+}
+
+function findClosingParen(input: string, openParenIndex: number): number {
+  let depth = 0;
+  let quote: string | undefined;
+
+  for (let index = openParenIndex; index < input.length; index += 1) {
+    const char = input[index];
+    const previousChar = input[index - 1];
+
+    if (quote) {
+      if (char === quote && previousChar !== '\\') {
+        quote = undefined;
+      }
+      continue;
+    }
+
+    if (char === "'" || char === '"' || char === '`') {
+      quote = char;
+      continue;
+    }
+
+    if (char === '(') {
+      depth += 1;
+      continue;
+    }
+
+    if (char === ')') {
+      depth -= 1;
+      if (depth === 0) {
+        return index;
+      }
+    }
+  }
+
+  return -1;
+}
+
+function splitMacroArgs(rawArgs: string): string[] {
+  const args: string[] = [];
+  let argStart = 0;
+  let depth = 0;
+  let quote: string | undefined;
+
+  for (let index = 0; index < rawArgs.length; index += 1) {
+    const char = rawArgs[index];
+    const previousChar = rawArgs[index - 1];
+
+    if (quote) {
+      if (char === quote && previousChar !== '\\') {
+        quote = undefined;
+      }
+      continue;
+    }
+
+    if (char === "'" || char === '"' || char === '`') {
+      quote = char;
+      continue;
+    }
+
+    if (char === '(') {
+      depth += 1;
+      continue;
+    }
+
+    if (char === ')') {
+      depth -= 1;
+      continue;
+    }
+
+    if (char === ',' && depth === 0) {
+      args.push(rawArgs.slice(argStart, index).trim());
+      argStart = index + 1;
+    }
+  }
+
+  args.push(rawArgs.slice(argStart).trim());
+  return args.filter((arg) => arg.length > 0);
+}
+
+function toTimeGroupExpression(
+  column: string | undefined,
+  interval: string | undefined,
+  context: MacroContext,
+): string {
+  return `histogram(${toTimestampExpression(column)}, interval ${normalizeInterval(interval, context)})`;
+}
+
+function toUnixEpochGroupExpression(
+  column: string | undefined,
+  interval: string | undefined,
+  context: MacroContext,
+): string {
+  return `histogram(from_unixtime(${normalizeColumn(column)}), interval ${normalizeInterval(interval, context)})`;
+}
+
+function toTimestampExpression(column: string | undefined): string {
+  const normalizedColumn = normalizeColumn(column);
+  if (/^(cast|date_parse|from_iso8601_timestamp|from_unixtime)\s*\(/i.test(normalizedColumn)) {
+    return normalizedColumn;
+  }
+  return `cast(${normalizedColumn} as timestamp)`;
+}
+
+function normalizeInterval(interval: string | undefined, context: MacroContext): string {
+  return replaceIntervalTokens(interval?.trim() || '$__interval', context);
+}
+
+function normalizeColumn(column: string | undefined): string {
+  return column?.trim() || '__TIMESTAMP__';
+}
+
+function escapeRegExp(input: string): string {
+  return input.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
 
 /**
