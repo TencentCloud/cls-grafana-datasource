@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"regexp"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
@@ -97,43 +98,46 @@ func TransferAnalysisRecordsToFrame(list []map[string]interface{}, Columns []cls
 	}
 
 	for _, col := range Columns {
-		newFieldName := *col.Name
+		if col.Name == nil {
+			log.DefaultLogger.Warn("skip analysis column with empty name")
+			continue
+		}
+		colName := *col.Name
+		newFieldName := colName
 		if len(fieldName) > 0 {
 			newFieldName = fieldName
 		}
-		colType := GetFieldTypeByPrestoType(*col.Type)
+
+		colType := data.FieldTypeUnknown
+		if col.Type != nil {
+			colType = GetFieldTypeByPrestoType(*col.Type)
+		}
 
 		switch colType {
-		case data.FieldTypeInt64:
+		case data.FieldTypeInt64, data.FieldTypeFloat64:
 			{
-				//  由于是将用 map进行 JSON 解析，故这里用 float64
-				var m []float64
-				for _, v := range list {
-					m = append(m, v[*col.Name].(float64))
-				}
-				frame.Fields = append(frame.Fields, data.NewField(newFieldName, nil, m))
-			}
-		case data.FieldTypeFloat64:
-			{
-				var m []float64
-				for _, v := range list {
-					m = append(m, v[*col.Name].(float64))
+				// 由于是用 map 进行 JSON 解析，数值统一按 float64 透传给 Grafana。
+				m := make([]*float64, 0, len(list))
+				for _, record := range list {
+					m = append(m, toNullableFloat64(record[colName]))
 				}
 				frame.Fields = append(frame.Fields, data.NewField(newFieldName, nil, m))
 			}
 
 		case data.FieldTypeTime:
 			{
-				var m []time.Time
-				for _, v := range list {
-					t, err := parseTimeString(v[*col.Name].(string), loc)
-					if err != nil {
-						// 简单的警告日志，避免依赖问题
-						log.DefaultLogger.Warn("time parsing failed, using current time", "timeString", v[*col.Name].(string), "error", err)
-						m = append(m, time.Now())
-					} else {
-						m = append(m, t)
-					}
+				m := make([]*time.Time, 0, len(list))
+				for _, record := range list {
+					m = append(m, toNullableTime(record[colName], loc, colName))
+				}
+				frame.Fields = append(frame.Fields, data.NewField(newFieldName, nil, m))
+			}
+
+		case data.FieldTypeBool:
+			{
+				m := make([]*bool, 0, len(list))
+				for _, record := range list {
+					m = append(m, toNullableBool(record[colName]))
 				}
 				frame.Fields = append(frame.Fields, data.NewField(newFieldName, nil, m))
 			}
@@ -143,15 +147,158 @@ func TransferAnalysisRecordsToFrame(list []map[string]interface{}, Columns []cls
 			fallthrough
 		case data.FieldTypeString:
 			{
-				var m []string
-				for _, v := range list {
-					m = append(m, v[*col.Name].(string))
+				m := make([]*string, 0, len(list))
+				for _, record := range list {
+					m = append(m, toNullableString(record[colName]))
 				}
 				frame.Fields = append(frame.Fields, data.NewField(newFieldName, nil, m))
 			}
 		}
 	}
 	return []*data.Frame{frame}
+}
+
+func toNullableFloat64(value interface{}) *float64 {
+	switch v := value.(type) {
+	case nil:
+		return nil
+	case float64:
+		return &v
+	case json.Number:
+		f, err := v.Float64()
+		if err != nil {
+			return nil
+		}
+		return &f
+	case string:
+		return parseNullableFloat64(v)
+	case []byte:
+		return parseNullableFloat64(string(v))
+	default:
+		return parseNullableFloat64(fmt.Sprint(v))
+	}
+}
+
+func parseNullableFloat64(value string) *float64 {
+	trimmed := strings.TrimSpace(value)
+	if trimmed == "" {
+		return nil
+	}
+	f, err := strconv.ParseFloat(trimmed, 64)
+	if err != nil {
+		return nil
+	}
+	return &f
+}
+
+func toNullableTime(value interface{}, loc *time.Location, colName string) *time.Time {
+	if loc == nil {
+		loc = time.UTC
+	}
+
+	switch v := value.(type) {
+	case nil:
+		return nil
+	case time.Time:
+		return &v
+	case *time.Time:
+		return v
+	case float64:
+		return unixNumberToTime(v)
+	case json.Number:
+		f, err := v.Float64()
+		if err != nil {
+			return nil
+		}
+		return unixNumberToTime(f)
+	case string:
+		return parseNullableTimeString(v, loc, colName)
+	case []byte:
+		return parseNullableTimeString(string(v), loc, colName)
+	default:
+		return parseNullableTimeString(fmt.Sprint(v), loc, colName)
+	}
+}
+
+func unixNumberToTime(value float64) *time.Time {
+	if value > 1e12 && value < 2e12 {
+		millisec := int64(value)
+		t := time.Unix(millisec/1000, (millisec%1000)*1e6)
+		return &t
+	}
+	if value > 1e9 && value < 2e9 {
+		sec := int64(value)
+		nsec := int64((value - float64(sec)) * 1e9)
+		t := time.Unix(sec, nsec)
+		return &t
+	}
+	return nil
+}
+
+func parseNullableTimeString(value string, loc *time.Location, colName string) *time.Time {
+	trimmed := strings.TrimSpace(value)
+	if trimmed == "" {
+		return nil
+	}
+	t, err := parseTimeString(trimmed, loc)
+	if err != nil {
+		log.DefaultLogger.Warn("time parsing failed, using null", "column", colName, "timeString", trimmed, "error", err)
+		return nil
+	}
+	return &t
+}
+
+func toNullableBool(value interface{}) *bool {
+	switch v := value.(type) {
+	case nil:
+		return nil
+	case bool:
+		return &v
+	case float64:
+		b := v != 0
+		return &b
+	case json.Number:
+		f, err := v.Float64()
+		if err != nil {
+			return nil
+		}
+		b := f != 0
+		return &b
+	case string:
+		return parseNullableBool(v)
+	case []byte:
+		return parseNullableBool(string(v))
+	default:
+		return parseNullableBool(fmt.Sprint(v))
+	}
+}
+
+func parseNullableBool(value string) *bool {
+	trimmed := strings.TrimSpace(value)
+	if trimmed == "" {
+		return nil
+	}
+	b, err := strconv.ParseBool(trimmed)
+	if err == nil {
+		return &b
+	}
+	f, err := strconv.ParseFloat(trimmed, 64)
+	if err == nil {
+		b = f != 0
+		return &b
+	}
+	return nil
+}
+
+func toNullableString(value interface{}) *string {
+	if value == nil {
+		return nil
+	}
+	s, ok := value.(string)
+	if !ok {
+		s = fmt.Sprint(value)
+	}
+	return &s
 }
 
 func GetLog(logInfos []*clsAPI.LogInfo, refId string) []*data.Frame {
