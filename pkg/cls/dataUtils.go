@@ -349,10 +349,9 @@ var PrestoAndFieldTypeMap = []PrestoAndFieldType{
 	},
 	{
 		prestoTypeRegex: "real$|^double$|^decimal$",
-		fieldType:       data.FieldTypeInt64,
+		fieldType:       data.FieldTypeFloat64,
 		// processor: Number,
 	},
-	/** 字符串。字符串和单字符 */
 	{
 		prestoTypeRegex: "varchar$|^char$|^text$|^keyword$",
 		fieldType:       data.FieldTypeString,
