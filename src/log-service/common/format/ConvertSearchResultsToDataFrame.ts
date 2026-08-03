@@ -431,7 +431,10 @@ function ConvertLogJsonToDataFrameDTO(
   if (app === CoreApp.Explore) {
     // 如果开启展示类型选项，则按照展示类型设置来判断是否展示logs数据
     if (enableExploreVisualizationTypes) {
-      if (logServiceParams?.preferredVisualisationTypes?.includes('logs')) {
+      if (
+        isNil(logServiceParams?.preferredVisualisationTypes) ||
+        logServiceParams.preferredVisualisationTypes?.includes('logs')
+      ) {
         result.push(logsFrameDTO);
       }
     } else {
