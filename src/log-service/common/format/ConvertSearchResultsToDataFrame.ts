@@ -98,8 +98,10 @@ function buildOltpLogJson(logJson: Record<string, any>): Record<string, any> | n
   if (!traceIdVal || !spanIdVal || typeof traceIdVal !== 'string' || typeof spanIdVal !== 'string') {
     return null;
   }
-  if (typeof startVal !== 'number' || !Number.isFinite(startVal) ||
-      typeof endVal !== 'number' || !Number.isFinite(endVal)) {
+  // start/end 兼容 number 和数字字符串（部分 OT 导出器如 langfuse 存为字符串）
+  const startNum = Number(startVal);
+  const endNum = Number(endVal);
+  if (!Number.isFinite(startNum) || !Number.isFinite(endNum) || startNum < 0 || endNum < 0 || startNum >= endNum) {
     return null;
   }
   if (!nameVal || typeof nameVal !== 'string') {
@@ -133,6 +135,9 @@ function buildOltpLogJson(logJson: Record<string, any>): Record<string, any> | n
       result[stdKey] = logJson[actualKey];
     }
   });
+  // 将已验证合法的 start/end 归一化为数字，兼容下游直接用算术运算
+  result.start = startNum;
+  result.end = endNum;
   return result;
 }
 
