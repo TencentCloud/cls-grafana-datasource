@@ -79,11 +79,19 @@ function convertTraceToGraph(data: DataFrame): { nodes: Node[]; edges: Edge[] } 
 
   for (let i = 0; i < view.length; i++) {
     const row = view.get(i);
+    if (!row?.spanID || !spanMap[row.spanID]) {
+      continue;
+    }
 
-    const ranges: Array<[number, number]> = spanMap[row.spanID].children.map((c) => {
-      const { span } = spanMap[c];
-      return [span.startTime, span.startTime + span.duration];
-    });
+    const ranges: Array<[number, number]> = spanMap[row.spanID].children
+      .map((c) => {
+        const { span } = spanMap[c];
+        if (!span || typeof span.startTime !== 'number' || typeof span.duration !== 'number') {
+          return null;
+        }
+        return [span.startTime, span.startTime + span.duration] as [number, number];
+      })
+      .filter(Boolean) as Array<[number, number]>;
     const childrenDuration = getNonOverlappingDuration(ranges);
     const selfDuration = row.duration - childrenDuration;
     const stats = getStats(row.duration, traceDuration, selfDuration);
@@ -121,16 +129,17 @@ function findTraceDuration(view: DataFrameView<Row>): number {
   for (let i = 0; i < view.length; i++) {
     const row = view.get(i);
 
-    if (row.startTime < traceStartTime) {
+    if (typeof row.startTime === 'number' && !isNaN(row.startTime) && row.startTime < traceStartTime) {
       traceStartTime = row.startTime;
     }
 
-    if (row.startTime + row.duration > traceEndTime) {
-      traceEndTime = row.startTime + row.duration;
+    const endTime = row.startTime + row.duration;
+    if (typeof endTime === 'number' && !isNaN(endTime) && endTime > traceEndTime) {
+      traceEndTime = endTime;
     }
   }
 
-  return traceEndTime - traceStartTime;
+  return Number.isFinite(traceEndTime - traceStartTime) ? traceEndTime - traceStartTime : 0;
 }
 
 export const secondsMetric = 'traces_service_graph_request_server_seconds_sum';

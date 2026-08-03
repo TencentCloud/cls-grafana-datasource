@@ -68,11 +68,12 @@ export const enum LogFieldReservedName {
   META = '__META__',
 }
 
-const oltpKeys = ['traceId', 'spanId', 'traceState'];
+const requiredTraceKeys = ['traceId', 'spanId', 'start', 'end', 'name'];
 
 /**
  * 大小写不敏感地解析 OLTP 日志,兼容 traceId/traceID 等不同大小写写法。
- * - 当 logJson 包含全部 oltpKeys(忽略大小写)时,返回一个标准化副本,把 OLTP 标准字段名(camelCase)映射到原始字段值;
+ * - 当 logJson 包含全部 requiredTraceKeys(忽略大小写)且值类型合法时,返回标准化副本,
+ *   把 OLTP 标准字段名(camelCase)映射到原始字段值;
  * - 否则返回 null,表示不是 OLTP 格式日志。
  */
 function buildOltpLogJson(logJson: Record<string, any>): Record<string, any> | null {
@@ -80,7 +81,28 @@ function buildOltpLogJson(logJson: Record<string, any>): Record<string, any> | n
   Object.keys(logJson).forEach((k) => {
     lowerKeyMap[k.toLowerCase()] = k;
   });
-  if (!oltpKeys.every((key) => Object.prototype.hasOwnProperty.call(lowerKeyMap, key.toLowerCase()))) {
+  if (!requiredTraceKeys.every((key) => Object.prototype.hasOwnProperty.call(lowerKeyMap, key.toLowerCase()))) {
+    return null;
+  }
+  // 用大小写不敏感的 key 直接从原始 logJson 取值做类型校验
+  const traceIdKey = lowerKeyMap.traceid;
+  const spanIdKey = lowerKeyMap.spanid;
+  const startKey = lowerKeyMap.start;
+  const endKey = lowerKeyMap.end;
+  const nameKey = lowerKeyMap.name;
+  const traceIdVal = logJson[traceIdKey];
+  const spanIdVal = logJson[spanIdKey];
+  const startVal = logJson[startKey];
+  const endVal = logJson[endKey];
+  const nameVal = logJson[nameKey];
+  if (!traceIdVal || !spanIdVal || typeof traceIdVal !== 'string' || typeof spanIdVal !== 'string') {
+    return null;
+  }
+  if (typeof startVal !== 'number' || !Number.isFinite(startVal) ||
+      typeof endVal !== 'number' || !Number.isFinite(endVal)) {
+    return null;
+  }
+  if (!nameVal || typeof nameVal !== 'string') {
     return null;
   }
   const result: Record<string, any> = { ...logJson };
@@ -256,14 +278,10 @@ function ConvertLogJsonToDataFrameDTO(
         // CLS 现网日志中,资源信息字段名为 `resource`(对象),旧格式为 `resourceAttributes`(JSON 字符串),做兼容
         const serviceTags: TraceKeyValuePair[] = [];
         const rawResource = oltpLogJson.resource ?? oltpLogJson.resourceAttributes ?? '{}';
-        const clsResourceAttributes =
-          typeof rawResource === 'string' ? safeParseJson(rawResource) : rawResource || {};
+        const clsResourceAttributes = typeof rawResource === 'string' ? safeParseJson(rawResource) : rawResource || {};
         // serviceName 优先取顶层 `service` 字段,回退到 resource 内的 `service` / `service.name`
         const serviceName =
-          oltpLogJson.service ||
-          clsResourceAttributes.service ||
-          clsResourceAttributes['service.name'] ||
-          '';
+          oltpLogJson.service || clsResourceAttributes.service || clsResourceAttributes['service.name'] || '';
         if (serviceName) {
           serviceTags.push({
             key: SemanticResourceAttributes.SERVICE_NAME,
@@ -355,7 +373,7 @@ function ConvertLogJsonToDataFrameDTO(
           statusMessage: oltpLogJson.statusMessage,
           instrumentationLibraryName: oltpLogJson['otlp.name'],
           instrumentationLibraryVersion: oltpLogJson['otlp.version'],
-          traceState: oltpLogJson.traceState,
+          traceState: oltpLogJson.traceState ?? '',
           serviceTags,
           startTime: oltpLogJson.start! / 1000000,
           duration: (oltpLogJson.end! - oltpLogJson.start!) / 1000000,
@@ -364,7 +382,9 @@ function ConvertLogJsonToDataFrameDTO(
           references,
         });
       }
-    } catch (e) {}
+    } catch (e) {
+      console.warn('[CLS Grafana] Failed to process log entry for OLTP trace extraction:', e);
+    }
   });
 
   const logsFrameDTO: DataFrameDTO = {
