@@ -25,7 +25,7 @@ import {
 import { DescribeLogContext, LogInfo, SearchLog } from '../common/model';
 import { MyDataSourceOptions, QueryInfo } from '../types';
 import { toTimeSeriesMany } from './common/format/prepareTimeSeries';
-import { addQueryResultLimit, getRawQuery, replaceClsQueryWithTemplateSrv } from './common/utils/query';
+import { addQueryResultLimit, getRawQuery, replaceClsQueryWithTemplateSrv, replaceClsSqlMacros } from './common/utils/query';
 
 export class LogServiceDataSource extends DataSourceApi<QueryInfo, MyDataSourceOptions> {
   public readonly instanceSettings: DataSourceInstanceSettings<MyDataSourceOptions>;
@@ -37,13 +37,18 @@ export class LogServiceDataSource extends DataSourceApi<QueryInfo, MyDataSourceO
   }
 
   query(request: DataQueryRequest<QueryInfo>) {
-    const { range, targets, scopedVars } = request;
+    const { range, targets, scopedVars, maxDataPoints } = request;
     const [from, to] = [range.from, range.to].map((item) => item.valueOf()) as number[];
     const requestTargets = targets.map((target) => {
       const region = target.logServiceParams?.region ? getTemplateSrv().replace(target.logServiceParams.region) : '';
       const TopicId = target.logServiceParams?.TopicId ? getTemplateSrv().replace(target.logServiceParams.TopicId) : '';
       const Query = addQueryResultLimit(
-        replaceClsQueryWithTemplateSrv(target.logServiceParams?.Query || '', scopedVars),
+        replaceClsSqlMacros(
+          replaceClsQueryWithTemplateSrv(target.logServiceParams?.Query || '', scopedVars),
+          from,
+          to,
+          maxDataPoints,
+        ),
         target.logServiceParams,
       );
 
@@ -148,7 +153,11 @@ export class LogServiceDataSource extends DataSourceApi<QueryInfo, MyDataSourceO
     const region = logServiceParams?.region ? getTemplateSrv().replace(logServiceParams.region) : '';
     const TopicId = logServiceParams?.TopicId ? getTemplateSrv().replace(logServiceParams.TopicId) : '';
     const Query = addQueryResultLimit(
-      replaceClsQueryWithTemplateSrv(logServiceParams?.Query as string),
+      replaceClsSqlMacros(
+        replaceClsQueryWithTemplateSrv(logServiceParams?.Query as string),
+        options.range!.from.valueOf(),
+        options.range!.to.valueOf(),
+      ),
       logServiceParams,
     );
 
