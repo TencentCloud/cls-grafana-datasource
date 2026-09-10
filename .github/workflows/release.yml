@@ -51,3 +51,4 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           files: tencent-cls-grafana-datasource.zip
+          generate_release_notes: true
